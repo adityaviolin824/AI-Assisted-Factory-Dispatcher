@@ -1,0 +1,33 @@
+# Installed frontend dependencies.
+node_modules/
+.npm/
+
+# Local environment files and credentials; safe examples may be committed.
+.env
+.env.*
+!.env.example
+!.env.sample
+!.env.template
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Generated frontend builds, caches and local deployment state.
+.next/
+out/
+dist/
+build/
+.turbo/
+.vercel/
+*.tsbuildinfo
+
+# Generated browser reports and local logs.
+playwright-report/
+test-results/
+coverage/
+*.log
+
+# Local databases and other shared exclusions are covered by the root .gitignore.
+# Keep source files, package.json, dependency lockfiles and .env.example available.
+# Dockerfile and .dockerignore must remain available to commit.

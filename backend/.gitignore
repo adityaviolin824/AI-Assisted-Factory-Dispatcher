@@ -1,0 +1,38 @@
+# Local secrets. Keep example files with empty or fake values available to commit.
+.env
+.env.*
+!.env.example
+!.env.sample
+!.env.template
+
+# Local Python environment and compiled Python files.
+.venv/
+__pycache__/
+*.py[cod]
+
+# Local Mac files.
+.DS_Store
+
+# Notebook recovery files and generated experiment results, including API response caches.
+.ipynb_checkpoints/
+/experimentation_notebooks/output/
+full_evaluation_suite/rag-eval-deepeval/
+demo_fastapi_backend/
+# Run folders and saved model answers written by the processing modules (config.toml [output]).
+/output/
+
+# Keep Python source, notebooks, pyproject.toml and uv.lock available to commit.
+
+
+
+# Placeholders: enable when the corresponding tools or builds are used.
+# .pytest_cache/
+# .ruff_cache/
+# .mypy_cache/
+# .coverage
+# htmlcov/
+# build/
+# dist/
+# *.egg-info/
+# logs/
+# Dockerfile and .dockerignore must remain available to commit.

@@ -1,0 +1,242 @@
+# SweaterCo dispatch group chat — morning of 2026-04-01.
+# One allocation request per line. This is the inbox your system must handle.
+
+R01 [07:53] Chen: Need scarves for Harbor Knits sent out today, usual quantities.
+R02 [07:59] Ravi: Which workshop did we use for the Harbor Knits batch last October?
+R03 [08:03] Priya: Can we get the TrendCart order moving? They are chasing.
+R04 [08:08] Boss: ORD-029 needs a home today. 1500 beanies, back by Apr 01.
+R05 [08:14] Mei: ORD-066 due date just moved up — will confirm the new date after the call, but line something up.
+R06 [08:18] Chen: Farm out ORD-061 please — 800 scarves for Harbor Knits, ship date Apr 05.
+R07 [08:23] Ravi: ORD-020 — 1200 vests. No special requirements, just make Mar 31.
+R08 [08:29] Priya: Send ORD-073 (400 hoodies) to FreshStart, their quote was good.
+R09 [08:33] Boss: ORD-045 — 150 vests for Cotton Club, due Apr 09. It's urgent. Cost doesn't matter, just the fastest turnaround.
+R10 [08:38] Mei: New rush coming in from Loom & Leaf — details to follow, but book capacity somewhere good.
+R11 [08:44] Chen: OldMill is free right now — give them ORD-008.
+R12 [08:48] Ravi: ORD-053 — 800 polo shirts for UrbanThread, due Apr 10. Boss says nothing new to QuickStitch this week, they're swamped.
+R13 [08:53] Priya: Finance asks: what price did we quote TrendCart on ORD-120?
+R14 [08:59] Boss: QuickStitch for the scarves on ORD-103?
+R15 [09:03] Mei: Boss wants the Loom & Leaf stuff outside asap.
+R16 [09:08] Chen: Northwind Apparel confirmed the reorder: ORD-114, 2000 hoodies. Needs to ship Mar 23, so it has to go out today.
+R17 [09:14] Ravi: ORD-120 — 1500 vests for TrendCart. Factory is full, this one goes outside. Back by Mar 17 please.
+R18 [09:18] Priya: Any movement on ORD-999? Customer is chasing.
+R19 [09:23] Boss: That big reorder from last week — send it to whoever is quickest.
+R20 [09:29] Mei: New one for the network: ORD-103, 2000 scarves for Bright Basics, due Apr 04.
+R21 [09:33] Chen: ORD-081 — 1500 crewneck sweaters for Harbor Knits, due Apr 13. Margin is thin on this one — cheapest shop that can still make Apr 13.
+R22 [09:38] Ravi: ORD-083 ready to dispatch. 1000 hoodies for Maple & Co, back by Mar 23.
+R23 [09:44] Priya: ORD-093 — 100 beanies for Maple & Co, due Mar 29. Split it across two shops if that gets it back faster.
+R24 [09:48] Boss: Little Loom does lovely work — ORD-015 to them?
+R25 [09:53] Mei: ORD-109 — 500 vests for Harbor Knits, due Apr 13. …and keep it away from BudgetWorks, the last batch came back rough.
+R26 [09:59] Chen: Can someone place ORD-107? 2000 cardigans, Northwind Apparel, due Mar 16.
+R27 [10:03] Ravi: ORD-055 — 800 crewneck sweaters for Cotton Club, due Mar 31. Cotton Club rejected a batch last month, so lowest defect rate you can get.
+R28 [10:08] Priya: Sending ORD-002 outside — 1000 crewneck sweaters. Who has room this week? Due Mar 29.
+R29 [10:14] Boss: The vests need to go out this week — who takes them?
+R30 [10:18] Mei: Please allocate ORD-099: 1500 polo shirts, Northwind Apparel. Deadline Apr 05.
+
+R31 [10:21] Chen: ORD-031 is cleared now. 600 cardigans for Bright Basics, due Apr 08. Cheapest feasible option please.
+R32 [10:24] Ravi: Wait, did we already send ORD-031 somewhere yesterday?
+R33 [10:27] Priya: No, yesterday was ORD-030. ORD-031 is still open.
+R34 [10:30] Boss: Then place 031 today.
+R35 [10:33] Mei: Customer changed ORD-066 to Apr 06. 900 hoodies for Loom & Leaf. Need a shop that can genuinely hit that.
+R36 [10:37] Chen: Don't use QuickStitch for 066 either. Their queue looked terrible this morning.
+R37 [10:41] Ravi: ORD-125, 300 beanies, Cotton Club, Apr 12. No rush, optimize cost.
+R38 [10:44] Priya: Does Riverbend still charge the same rate for beanies?
+R39 [10:47] Boss: That's just a pricing question, don't move anything yet.
+R40 [10:50] Mei: ORD-014 can go. 750 scarves for UrbanThread, deadline Apr 07.
+
+R41 [10:54] Chen: Use Little Loom for ORD-014 if they can make the date.
+R42 [10:57] Ravi: If Little Loom can't, pick whoever is next cheapest.
+R43 [11:00] Priya: ORD-088 needs allocation. 1800 crewnecks, TrendCart, Apr 11.
+R44 [11:03] Boss: Quality first on TrendCart. We've had enough returns.
+R45 [11:06] Mei: Specifically for 088, yes. Lowest defect rate among workshops that can make Apr 11.
+R46 [11:10] Chen: ORD-042, 250 polos for Harbor Knits, due Apr 03. Fastest possible.
+R47 [11:13] Ravi: Can we split 042 if needed?
+R48 [11:15] Chen: Yes, split is fine if it gets the whole order back sooner.
+R49 [11:19] Priya: FreshStart says they have some spare capacity Thursday.
+R50 [11:22] Boss: Good to know, but don't dump everything on them.
+
+R51 [11:25] Mei: ORD-071 — 900 vests, Maple & Co, Apr 10. Normal priority.
+R52 [11:28] Chen: Put 071 somewhere sensible. Cost matters more than shaving off a day.
+R53 [11:32] Ravi: ORD-036 is paused. Customer hasn't approved the colour.
+R54 [11:34] Priya: So no allocation for 036 yet.
+R55 [11:38] Boss: Correct. Hold it.
+R56 [11:40] Mei: Need ORD-117 outside: 2200 hoodies, Northwind Apparel, Apr 09.
+R57 [11:44] Chen: 2200 may be too much for one workshop. Split if capacity forces it.
+R58 [11:47] Ravi: But don't split just for fun, freight gets messy.
+R59 [11:51] Priya: ORD-064, 500 scarves, Bright Basics. Due Apr 15, cheapest shop.
+R60 [11:54] Boss: Fine.
+
+R61 [11:58] Mei: Has ORD-045 actually been assigned yet?
+R62 [12:00] Chen: Not from what I can see.
+R63 [12:03] Boss: Then stop discussing it and send it to the fastest shop available.
+R64 [12:06] Ravi: Even if that's BudgetWorks?
+R65 [12:08] Boss: For 045, yes. Speed is the only thing I care about.
+R66 [12:12] Priya: ORD-098 — 1000 cardigans, Loom & Leaf, Apr 12. Avoid Riverbend please.
+R67 [12:15] Mei: Why avoid Riverbend?
+R68 [12:17] Priya: Customer specifically asked after the last sample run.
+R69 [12:20] Chen: Noted. Cheapest compliant option excluding Riverbend then.
+R70 [12:24] Ravi: ORD-006 needs somewhere. 350 beanies, UrbanThread, Apr 05.
+
+R71 [12:27] Boss: Lunch after we clear the urgent ones.
+R72 [12:29] Mei: For ORD-006, normal quality, just make the deadline.
+R73 [12:32] Chen: ORD-112 — 1300 polos for Cotton Club, due Apr 04. They want very clean stitching.
+R74 [12:35] Ravi: So lowest defect rate?
+R75 [12:37] Chen: Yes, among shops that can meet Apr 04.
+R76 [12:40] Priya: ORD-090 isn't approved yet. Please ignore the earlier message from sales.
+R77 [12:43] Boss: Who sent the earlier message?
+R78 [12:45] Priya: Daniel. Wrong channel.
+R79 [12:48] Mei: ORD-052 is approved though: 700 crewnecks, Harbor Knits, Apr 14.
+R80 [12:52] Chen: Cheapest feasible for 052.
+
+R81 [12:55] Ravi: Is OldMill still blocked for large hoodie runs?
+R82 [12:58] Priya: I think only until Friday.
+R83 [13:00] Mei: Can someone check before assigning anything there?
+R84 [13:04] Boss: ORD-127, 2500 hoodies, Northwind, Apr 13. Need this placed today.
+R85 [13:07] Chen: For something that big I'd rather use one shop if possible.
+R86 [13:10] Ravi: Same. Split only if no single feasible shop can make Apr 13.
+R87 [13:13] Priya: ORD-021, 450 vests, Bright Basics, due Apr 06. Lowest cost.
+R88 [13:16] Mei: BudgetWorks quoted well on vests last month.
+R89 [13:19] Priya: That's fine for Bright Basics, no restriction.
+R90 [13:22] Boss: Then use them if they're actually cheapest and can make it.
+
+R91 [13:26] Chen: ORD-104 needs dispatch: 1600 scarves, Maple & Co, Apr 08.
+R92 [13:29] Ravi: Customer says no QuickStitch on that one.
+R93 [13:32] Mei: Correct, that's in the notes for ORD-104.
+R94 [13:35] Priya: What's the status of the 100-beanie Maple order from this morning?
+R95 [13:38] Chen: ORD-093. Still unassigned.
+R96 [13:41] Boss: Then split it if splitting gets it back faster, like Priya said.
+R97 [13:44] Ravi: ORD-041, 850 polos, TrendCart, Apr 09. Cheapest option that meets date.
+R98 [13:48] Mei: TrendCart normally cares about finish though.
+R99 [13:51] Ravi: Not on this SKU. Sales confirmed standard quality.
+R100 [13:54] Priya: Okay, cost priority for 041.
+
+R101 [13:58] Boss: Need someone for the Cotton Club sweaters.
+R102 [14:01] Chen: Which ones, 055?
+R103 [14:03] Boss: Yes.
+R104 [14:06] Ravi: Lowest defect rate for ORD-055, deadline Mar 31. It's already late, so don't make it later.
+R105 [14:09] Mei: ORD-076 — 1200 cardigans, UrbanThread, Apr 16. Plenty of time, minimize cost.
+R106 [14:13] Priya: ORD-118, 300 scarves, Harbor Knits, Apr 02. This is a rush.
+R107 [14:16] Chen: Fastest turnaround for 118. Don't care about price.
+R108 [14:19] Ravi: Even if it's a premium shop?
+R109 [14:21] Chen: Yes.
+R110 [14:24] Boss: Correct.
+
+R111 [14:28] Mei: FreshStart just said they can take another 500 units this week.
+R112 [14:31] Priya: That's capacity info, not an allocation instruction.
+R113 [14:34] Ravi: ORD-059, 500 hoodies for Bright Basics, Apr 11. Could fit there.
+R114 [14:37] Boss: Choose based on cost, not because FreshStart happened to message us.
+R115 [14:40] Chen: ORD-003 — 1000 vests for Loom & Leaf, due Apr 05. Good quality please.
+R116 [14:44] Mei: "Good quality" meaning lowest defect rate?
+R117 [14:47] Chen: Yes. They complained about loose seams last time.
+R118 [14:50] Priya: ORD-132 is not real, by the way. Test order from IT.
+R119 [14:52] Ravi: Please tell them to stop putting those in production channels.
+R120 [14:55] Boss: Ignore ORD-132.
+
+R121 [14:59] Mei: ORD-067, 650 crewnecks, Maple & Co, Apr 07. Normal dispatch.
+R122 [15:02] Chen: Cheapest shop that makes Apr 07 is fine.
+R123 [15:05] Ravi: ORD-110 — 1400 polos, Northwind Apparel, Apr 03. Urgent.
+R124 [15:08] Priya: Fastest single workshop if possible.
+R125 [15:11] Boss: If splitting is materially faster, split it.
+R126 [15:14] Mei: ORD-024, 200 beanies, Harbor Knits, Apr 18. Lowest cost, absolutely no rush.
+R127 [15:18] Chen: Can combine that with another Harbor run if it saves money.
+R128 [15:21] Ravi: System doesn't consolidate orders yet, does it?
+R129 [15:23] Priya: No. Keep ORD-024 separate for now.
+R130 [15:27] Boss: Fine.
+
+R131 [15:30] Mei: Need a home for ORD-086. 950 scarves, Cotton Club, Apr 08.
+R132 [15:33] Chen: Cotton Club wants low defects after the issue last month.
+R133 [15:36] Ravi: Same instruction as 055 then.
+R134 [15:39] Priya: Yes, quality priority.
+R135 [15:42] Boss: ORD-013, 1750 cardigans, TrendCart, Apr 06. Get it out.
+R136 [15:45] Mei: Any workshop exclusions?
+R137 [15:48] Boss: None. Fastest option that can take all 1750.
+R138 [15:51] Chen: If nobody can take all of it?
+R139 [15:53] Boss: Then split.
+R140 [15:56] Ravi: Got it.
+
+R141 [16:00] Priya: ORD-101 has been cancelled by the customer. Do not allocate.
+R142 [16:03] Mei: Was that the Bright Basics vest order?
+R143 [16:05] Priya: Yes, 600 vests.
+R144 [16:08] Chen: Removed from my list.
+R145 [16:11] Ravi: ORD-049 — 400 polos, Loom & Leaf, due Apr 10.
+R146 [16:14] Boss: Normal priority. Cheapest feasible.
+R147 [16:17] Mei: ORD-122, 1100 hoodies, Maple & Co, Apr 04. Quick turnaround needed.
+R148 [16:20] Chen: Fastest workshop excluding QuickStitch.
+R149 [16:22] Ravi: Why excluding them here?
+R150 [16:25] Mei: Capacity restriction from this morning applies to all new work this week.
+
+R151 [16:29] Priya: ORD-033, 800 scarves, Harbor Knits, Apr 12. Little Loom preferred if price isn't crazy.
+R152 [16:32] Boss: Preference, not a hard requirement.
+R153 [16:35] Chen: So use Little Loom if feasible and reasonably priced, otherwise choose cheapest feasible.
+R154 [16:38] Ravi: ORD-070 — 1500 crewnecks, UrbanThread, Apr 05.
+R155 [16:42] Mei: They are launching a campaign, so deadline matters more than cost.
+R156 [16:45] Boss: Fastest option then.
+R157 [16:48] Priya: ORD-058 is already with OldMill. Don't reassign it.
+R158 [16:51] Chen: Good catch, it was still showing in my open view.
+R159 [16:54] Ravi: That's a dashboard sync issue.
+R160 [16:57] Boss: Please don't create duplicate allocations because of it.
+
+R161 [17:01] Mei: ORD-116, 300 vests, Bright Basics, Apr 09. Cheapest.
+R162 [17:04] Chen: BudgetWorks okay?
+R163 [17:06] Mei: Yes, no restriction for Bright Basics.
+R164 [17:09] Priya: ORD-085, 900 cardigans, Cotton Club, Apr 07. Quality over price.
+R165 [17:13] Ravi: Any minimum defect threshold?
+R166 [17:16] Priya: Nothing explicit. Just choose the best historical defect rate among feasible shops.
+R167 [17:19] Boss: ORD-040 — 2100 hoodies for Northwind, Apr 05.
+R168 [17:22] Chen: That's tight.
+R169 [17:25] Boss: Exactly. Fastest feasible allocation, split if necessary.
+R170 [17:28] Mei: Don't send any part to QuickStitch.
+
+R171 [17:32] Ravi: ORD-026, 550 scarves, Maple & Co, Apr 14. Cost first.
+R172 [17:35] Priya: ORD-092 has a typo in the quantity.
+R173 [17:38] Chen: What's correct?
+R174 [17:40] Priya: 1200 polos, not 2100. TrendCart, due Apr 08.
+R175 [17:43] Mei: Should we dispatch 092 now?
+R176 [17:46] Priya: Yes. Cheapest workshop that meets Apr 08.
+R177 [17:50] Boss: ORD-009, 700 beanies, Harbor Knits, Apr 03. Move it now.
+R178 [17:53] Ravi: Speed priority?
+R179 [17:55] Boss: Yes.
+R180 [17:58] Chen: No exclusions on 009?
+
+R181 [18:01] Boss: None.
+R182 [18:04] Mei: ORD-068, 1000 crewnecks, Loom & Leaf, Apr 17. Lowest cost.
+R183 [18:07] Priya: ORD-123 — 450 cardigans, UrbanThread, Apr 02.
+R184 [18:10] Ravi: That's tomorrow. Fastest.
+R185 [18:13] Priya: Correct.
+R186 [18:16] Chen: Split allowed?
+R187 [18:18] Priya: Yes if required.
+R188 [18:21] Boss: Prefer one shop if turnaround is the same.
+R189 [18:24] Mei: ORD-043 isn't ready. Waiting for fabric confirmation.
+R190 [18:27] Ravi: Hold ORD-043 then.
+
+R191 [18:31] Chen: ORD-105, 1300 vests, Bright Basics, Apr 10. Cheapest feasible.
+R192 [18:34] Priya: ORD-028 — 200 scarves, Cotton Club, Apr 05. Best quality available.
+R193 [18:37] Boss: That's a tiny one, but yes, quality first.
+R194 [18:40] Mei: Anyone remember who made Cotton Club's clean scarf batch in January?
+R195 [18:43] Ravi: Think it was Little Loom, but check the records.
+R196 [18:46] Chen: Don't allocate based on memory. Use actual metrics.
+R197 [18:49] Priya: ORD-075, 1600 hoodies, Harbor Knits, Apr 06.
+R198 [18:52] Boss: Fastest feasible. No QuickStitch.
+R199 [18:55] Mei: ORD-119 — 750 polos, Maple & Co, Apr 11. Cheapest.
+R200 [18:58] Ravi: Straightforward.
+
+R201 [19:02] Chen: ORD-016 needs a workshop: 950 cardigans, TrendCart, Apr 07.
+R202 [19:05] Priya: Quality priority for TrendCart on this one.
+R203 [19:08] Boss: And don't use BudgetWorks.
+R204 [19:11] Mei: ORD-060, 500 beanies, UrbanThread, Apr 15. Lowest cost.
+R205 [19:14] Ravi: ORD-134 just came through but sales hasn't signed off.
+R206 [19:17] Chen: Then don't dispatch 134.
+R207 [19:20] Priya: ORD-047, 1250 crewnecks, Northwind Apparel, Apr 06. Need fastest.
+R208 [19:23] Boss: Can OldMill take it?
+R209 [19:26] Mei: That's a question, not an instruction to force it to OldMill.
+R210 [19:29] Boss: Correct. Pick the fastest feasible shop.
+
+R211 [19:33] Ravi: ORD-097 — 300 scarves, Bright Basics, Apr 09. Cheapest.
+R212 [19:36] Chen: ORD-011, 1800 hoodies, Cotton Club, Apr 05. Lowest defect rate, deadline still mandatory.
+R213 [19:39] Priya: Can split if no one shop has enough capacity.
+R214 [19:42] Mei: ORD-080, 600 vests, Loom & Leaf, Apr 12.
+R215 [19:45] Boss: Normal priority, minimize cost.
+R216 [19:48] Ravi: ORD-022 was already completed last week. Ignore the stale open flag.
+R217 [19:51] Chen: ORD-130 — 2400 cardigans, Harbor Knits, Apr 10. Big one.
+R218 [19:54] Priya: Cheapest feasible, split only if required for capacity or deadline.
+R219 [19:57] Mei: ORD-034, 350 beanies, Maple & Co, Apr 03. Rush.
+R220 [20:00] Boss: Fastest shop for 034. Price doesn't matter.

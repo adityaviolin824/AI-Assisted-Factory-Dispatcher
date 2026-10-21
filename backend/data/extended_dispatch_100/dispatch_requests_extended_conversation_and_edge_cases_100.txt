@@ -1,0 +1,149 @@
+R001 [08:01] Chen: Morning team. Please keep each batch tied to its order number.
+R002 [08:02] Ravi: Please allocate ORD-201, 120 crewneck sweater pieces for Maple & Co. Delivery due Apr 14. Normal priority. Use the recorded delivery deadline.
+R003 [08:03] Mei: Find an outside workshop for ORD-202, 180 hoodie pieces for Bright Basics; back by Apr 15. Choose the fastest eligible workshop that meets delivery.
+R004 [08:04] Anika: ORD-203, 240 polo shirt pieces for Harbor Knits needs an outside workshop. Deliver by Apr 13. Choose the cheapest eligible workshop that meets delivery.
+R005 [08:05] Luis: Can you place ORD-204, 90 scarf pieces for Loom & Leaf with an eligible workshop? Delivery due Apr 14. Prioritize the lowest defect rate among eligible on-time workshops.
+R006 [08:06] Chen: Farm out the complete ORD-205 batch: 360 pieces, Vest, TrendCart. Must be back by Apr 15. Normal priority. Use the recorded delivery deadline.
+R007 [08:07] Ravi: Please allocate ORD-206, 120 crewneck sweater pieces for Cotton Club. Delivery due Apr 13. Choose the fastest eligible workshop that meets delivery.
+R008 [08:08] Mei: Find an outside workshop for ORD-207, 180 hoodie pieces for Northwind Apparel; back by Apr 14. Choose the cheapest eligible workshop that meets delivery.
+R009 [08:09] Anika: ORD-208, 120 beanie pieces for UrbanThread needs an outside workshop. Deliver by Apr 15. Prioritize the lowest defect rate among eligible on-time workshops.
+R010 [08:10] Luis: Can you place ORD-209, 300 cardigan pieces for Maple & Co with an eligible workshop? Delivery due Apr 13. Normal priority. Use the recorded delivery deadline.
+R011 [08:11] Chen: Farm out the complete ORD-210 batch: 360 pieces, Vest, Bright Basics. Must be back by Apr 14. Choose the fastest eligible workshop that meets delivery.
+R012 [08:12] Ravi: Please allocate ORD-211, 120 crewneck sweater pieces for Harbor Knits. Delivery due Apr 17. Choose the cheapest eligible workshop that meets delivery.
+R013 [08:13] Mei: Find an outside workshop for ORD-212, 150 scarf pieces for Loom & Leaf; back by Apr 15. Prioritize the lowest defect rate among eligible on-time workshops.
+R014 [08:14] Anika: ORD-213, 240 polo shirt pieces for TrendCart needs an outside workshop. Deliver by Apr 16. Normal priority. Use the recorded delivery deadline.
+R015 [08:15] Luis: Can you place ORD-214, 300 cardigan pieces for Cotton Club with an eligible workshop? Delivery due Apr 17. Choose the fastest eligible workshop that meets delivery.
+R016 [08:16] Chen: Farm out the complete ORD-215 batch: 360 pieces, Vest, Northwind Apparel. Must be back by Apr 15. Choose the cheapest eligible workshop that meets delivery.
+R017 [08:17] Ravi: Please allocate ORD-216, 60 beanie pieces for UrbanThread. Delivery due Apr 16. I will confirm the workshop preference next.
+R018 [08:18] Mei: ORD-216: Prioritize the lowest defect rate among eligible on-time workshops.
+R019 [08:19] Anika: Please allocate ORD-217, 180 hoodie pieces for Maple & Co. Delivery due Apr 17. I will confirm the workshop preference next.
+R020 [08:20] Luis: For that batch, Normal priority. Use the recorded delivery deadline.
+R021 [08:21] Chen: Please allocate ORD-218, 240 polo shirt pieces for Bright Basics. Delivery due Apr 15. I will confirm the workshop preference next.
+R022 [08:22] Ravi: ORD-218: Choose the fastest eligible workshop that meets delivery.
+R023 [08:23] Mei: Please allocate ORD-219, 300 cardigan pieces for Harbor Knits. Delivery due Apr 16. I will confirm the workshop preference next.
+R024 [08:24] Anika: For that batch, Choose the cheapest eligible workshop that meets delivery.
+R025 [08:25] Luis: Please allocate ORD-220, 90 scarf pieces for Loom & Leaf. Delivery due Apr 17. I will confirm the workshop preference next.
+R026 [08:26] Chen: ORD-220: Prioritize the lowest defect rate among eligible on-time workshops.
+R027 [08:27] Ravi: Thanks, noted.
+R028 [08:28] Mei: Please allocate ORD-221, 120 crewneck sweater pieces for TrendCart. Delivery due Apr 17. I will confirm the workshop preference next.
+R029 [08:29] Anika: For that batch, Normal priority. Use the recorded delivery deadline.
+R030 [08:30] Luis: Please allocate ORD-222, 180 hoodie pieces for Cotton Club. Delivery due Apr 18. I will confirm the workshop preference next.
+R031 [08:31] Chen: ORD-222: Choose the fastest eligible workshop that meets delivery.
+R032 [08:32] Ravi: Please allocate ORD-223, 240 polo shirt pieces for Northwind Apparel. Delivery due Apr 19. I will confirm the workshop preference next.
+R033 [08:33] Mei: For that batch, Choose the cheapest eligible workshop that meets delivery.
+R034 [08:34] Anika: Please allocate ORD-224, 120 beanie pieces for UrbanThread. Delivery due Apr 17. I will confirm the workshop preference next.
+R035 [08:35] Luis: ORD-224: Prioritize the lowest defect rate among eligible on-time workshops.
+R036 [08:36] Chen: Please allocate ORD-225, 360 vest pieces for Maple & Co. Delivery due Apr 18. I will confirm the workshop preference next.
+R037 [08:37] Ravi: For that batch, Normal priority. Use the recorded delivery deadline.
+R038 [08:38] Mei: Thanks, noted.
+R039 [08:39] Anika: Please allocate ORD-226, 120 crewneck sweater pieces for Bright Basics. Delivery due Apr 19. I will confirm the workshop preference next.
+R040 [08:40] Luis: ORD-226: Choose the fastest eligible workshop that meets delivery.
+R041 [08:41] Chen: Please allocate ORD-227, 180 hoodie pieces for Harbor Knits. Delivery due Apr 17. I will confirm the workshop preference next.
+R042 [08:42] Ravi: For that batch, Choose the cheapest eligible workshop that meets delivery.
+R043 [08:43] Mei: Please allocate ORD-228, 150 scarf pieces for Loom & Leaf. Delivery due Apr 18. I will confirm the workshop preference next.
+R044 [08:44] Anika: ORD-228: Prioritize the lowest defect rate among eligible on-time workshops.
+R045 [08:45] Luis: Please allocate ORD-229, 300 cardigan pieces for TrendCart. Delivery due Apr 19. I will confirm the workshop preference next.
+R046 [08:46] Chen: For that batch, Normal priority. Use the recorded delivery deadline.
+R047 [08:47] Ravi: Please allocate ORD-230, 360 vest pieces for Cotton Club. Delivery due Apr 17. I will confirm the workshop preference next.
+R048 [08:48] Mei: ORD-230: Choose the fastest eligible workshop that meets delivery.
+R049 [08:49] Anika: Thanks, noted.
+R050 [08:50] Luis: Allocate ORD-231, 120 crewneck sweater pieces for Northwind Apparel. Delivery due Apr 20. Cheapest feasible for now.
+R051 [08:51] Chen: Correction for ORD-231: replace cheapest with quality first. Lowest defect rate matters; keep the same deadline.
+R052 [08:52] Ravi: Allocate ORD-232, 60 beanie pieces for UrbanThread. The old delivery date was May 4. A confirmed update will follow. Prioritize the lowest defect rate among eligible on-time workshops.
+R053 [08:53] Mei: Confirmed update for ORD-232: delivery is Apr 21, replacing May 4. Please use this new deadline.
+R054 [08:54] Anika: Please allocate ORD-233, 240 polo shirt pieces for Maple & Co. Deliver by Apr 19. Normal priority. Use the recorded delivery deadline.
+R055 [08:55] Luis: One restriction for ORD-233: do not use W3. The rest stays the same.
+R056 [08:56] Chen: Allocate ORD-234, 300 cardigan pieces for Bright Basics. Delivery due Apr 20. Cheapest feasible for now.
+R057 [08:57] Ravi: Correction for ORD-234: replace cheapest with quality first. Lowest defect rate matters; keep the same deadline.
+R058 [08:58] Mei: Allocate ORD-235, 360 vest pieces for Harbor Knits. The old delivery date was May 4. A confirmed update will follow. Choose the cheapest eligible workshop that meets delivery.
+R059 [08:59] Anika: Confirmed update for ORD-235: delivery is Apr 21, replacing May 4. Please use this new deadline.
+R060 [09:00] Luis: Please allocate ORD-236, 90 scarf pieces for Loom & Leaf. Deliver by Apr 19. Prioritize the lowest defect rate among eligible on-time workshops.
+R061 [09:01] Chen: One restriction for ORD-236: do not use W4. The rest stays the same.
+R062 [09:02] Ravi: Allocate ORD-237, 180 hoodie pieces for TrendCart. Delivery due Apr 20. Cheapest feasible for now.
+R063 [09:03] Mei: Correction for ORD-237: replace cheapest with quality first. Lowest defect rate matters; keep the same deadline.
+R064 [09:04] Anika: Allocate ORD-238, 240 polo shirt pieces for Cotton Club. The old delivery date was May 4. A confirmed update will follow. Choose the fastest eligible workshop that meets delivery.
+R065 [09:05] Luis: Confirmed update for ORD-238: delivery is Apr 21, replacing May 4. Please use this new deadline.
+R066 [09:06] Chen: Please allocate ORD-239, 300 cardigan pieces for Northwind Apparel. Deliver by Apr 19. Choose the cheapest eligible workshop that meets delivery.
+R067 [09:07] Ravi: One restriction for ORD-239: do not use W3. The rest stays the same.
+R068 [09:08] Mei: Allocate ORD-240, 120 beanie pieces for UrbanThread. Delivery due Apr 20. Cheapest feasible for now.
+R069 [09:09] Anika: Correction for ORD-240: replace cheapest with quality first. Lowest defect rate matters; keep the same deadline.
+R070 [09:10] Luis: Allocate ORD-241, 120 crewneck sweater pieces for Maple & Co. The old delivery date was May 4. A confirmed update will follow. Normal priority. Use the recorded delivery deadline.
+R071 [09:11] Chen: Confirmed update for ORD-241: delivery is Apr 23, replacing May 4. Please use this new deadline.
+R072 [09:12] Ravi: Please allocate ORD-242, 180 hoodie pieces for Bright Basics. Deliver by Apr 21. Choose the fastest eligible workshop that meets delivery.
+R073 [09:13] Mei: One restriction for ORD-242: do not use W3. The rest stays the same.
+R074 [09:14] Anika: Allocate ORD-243, 240 polo shirt pieces for Harbor Knits. Delivery due Apr 22. Cheapest feasible for now.
+R075 [09:15] Luis: Correction for ORD-243: replace cheapest with quality first. Lowest defect rate matters; keep the same deadline.
+R076 [09:16] Chen: Allocate ORD-244, 150 scarf pieces for Loom & Leaf. The old delivery date was May 4. A confirmed update will follow. Prioritize the lowest defect rate among eligible on-time workshops.
+R077 [09:17] Ravi: Confirmed update for ORD-244: delivery is Apr 23, replacing May 4. Please use this new deadline.
+R078 [09:18] Mei: Please allocate ORD-245, 360 vest pieces for TrendCart. Deliver by Apr 21. Normal priority. Use the recorded delivery deadline.
+R079 [09:19] Anika: One restriction for ORD-245: do not use W3. The rest stays the same.
+R080 [09:20] Luis: Allocate ORD-246, 120 crewneck sweater pieces for Cotton Club. Back by Apr 22. Preference to follow.
+R081 [09:21] Chen: Also allocate ORD-247, 180 hoodie pieces for Northwind Apparel. Due Apr 23. This is a different order.
+R082 [09:22] Ravi: ORD-246: Choose the fastest eligible workshop that meets delivery.
+R083 [09:23] Mei: ORD-247: Choose the cheapest eligible workshop that meets delivery.
+R084 [09:24] Anika: Allocate ORD-248, 60 beanie pieces for UrbanThread. Back by Apr 21. Preference to follow.
+R085 [09:25] Luis: Also allocate ORD-249, 300 cardigan pieces for Maple & Co. Due Apr 22. This is a different order.
+R086 [09:26] Chen: ORD-248: Prioritize the lowest defect rate among eligible on-time workshops.
+R087 [09:27] Ravi: ORD-249: Normal priority. Use the recorded delivery deadline.
+R088 [09:28] Mei: Allocate ORD-250, 360 vest pieces for Bright Basics. Back by Apr 23. Preference to follow.
+R089 [09:29] Anika: Also allocate ORD-251, 120 crewneck sweater pieces for Harbor Knits. Due Apr 23. This is a different order.
+R090 [09:30] Luis: ORD-250: Choose the fastest eligible workshop that meets delivery.
+R091 [09:31] Chen: ORD-251: Choose the cheapest eligible workshop that meets delivery.
+R092 [09:32] Ravi: Allocate ORD-252, 90 scarf pieces for Loom & Leaf. Back by Apr 24. Preference to follow.
+R093 [09:33] Mei: Also allocate ORD-253, 240 polo shirt pieces for TrendCart. Due Apr 25. This is a different order.
+R094 [09:34] Anika: ORD-252: Prioritize the lowest defect rate among eligible on-time workshops.
+R095 [09:35] Luis: ORD-253: Normal priority. Use the recorded delivery deadline.
+R096 [09:36] Chen: Allocate ORD-254, 300 cardigan pieces for Cotton Club. Back by Apr 23. Preference to follow.
+R097 [09:37] Ravi: Also allocate ORD-255, 360 vest pieces for Northwind Apparel. Due Apr 24. This is a different order.
+R098 [09:38] Mei: ORD-254: Choose the fastest eligible workshop that meets delivery.
+R099 [09:39] Anika: ORD-255: Choose the cheapest eligible workshop that meets delivery.
+R100 [09:40] Luis: Allocate ORD-256, 120 beanie pieces for UrbanThread. Back by Apr 25. Preference to follow.
+R101 [09:41] Chen: Also allocate ORD-257, 180 hoodie pieces for Maple & Co. Due Apr 23. This is a different order.
+R102 [09:42] Ravi: ORD-256: Prioritize the lowest defect rate among eligible on-time workshops.
+R103 [09:43] Mei: ORD-257: Normal priority. Use the recorded delivery deadline.
+R104 [09:44] Anika: Allocate ORD-258, 240 polo shirt pieces for Bright Basics. Back by Apr 24. Preference to follow.
+R105 [09:45] Luis: Also allocate ORD-259, 300 cardigan pieces for Harbor Knits. Due Apr 25. This is a different order.
+R106 [09:46] Chen: ORD-258: Choose the fastest eligible workshop that meets delivery.
+R107 [09:47] Ravi: ORD-259: Choose the cheapest eligible workshop that meets delivery.
+R108 [09:48] Mei: Allocate ORD-260, 150 scarf pieces for Loom & Leaf. Delivery due Apr 23. Prioritize the lowest defect rate among eligible on-time workshops.
+R109 [09:49] Anika: Thanks. That instruction is confirmed.
+R110 [09:50] Luis: Allocate ORD-261, 120 crewneck sweater pieces for TrendCart. The customer needs delivery by the end of next week. Choose the fastest eligible workshop that meets delivery.
+R111 [09:51] Chen: Allocate ORD-262, 180 hoodie pieces for Cotton Club. The customer needs delivery by the end of next week. Choose the fastest eligible workshop that meets delivery.
+R112 [09:52] Ravi: Allocate ORD-263, 240 polo shirt pieces for Northwind Apparel. The customer needs delivery by the end of next week. Choose the fastest eligible workshop that meets delivery.
+R113 [09:53] Mei: Allocate ORD-264, 60 beanie pieces for UrbanThread. The customer needs delivery by the end of next week. Choose the fastest eligible workshop that meets delivery.
+R114 [09:54] Anika: Allocate ORD-265, 30 scarf pieces for Maple & Co. The customer needs delivery by the end of this week. Choose the fastest eligible workshop that meets delivery.
+R115 [09:55] Luis: Allocate ORD-266, 120 crewneck sweater pieces for Bright Basics. The customer needs delivery by the end of this month. Choose the fastest eligible workshop that meets delivery.
+R116 [09:56] Chen: Allocate ORD-267, 180 hoodie pieces for Harbor Knits. The customer needs delivery by the end of this month. Choose the cheapest eligible workshop that meets delivery.
+R117 [09:57] Ravi: Allocate ORD-268, 90 scarf pieces for Loom & Leaf. The customer needs delivery by the end of this month. Prioritize the lowest defect rate among eligible on-time workshops.
+R118 [09:58] Mei: Allocate ORD-269, 300 cardigan pieces for TrendCart. The customer needs delivery by the end of next month. Normal priority. Use the recorded delivery deadline.
+R119 [09:59] Anika: Send out ORD-270, 360 vest pieces for Cotton Club today. Keep the delivery due date in the order record. Choose the fastest eligible workshop that meets delivery.
+R120 [10:00] Luis: Allocate ORD-271, 120 crewneck sweater pieces for Northwind Apparel. Delivery due Apr 29. Send the whole batch to W8. Choose the cheapest eligible workshop that meets delivery.
+R121 [10:01] Chen: Allocate ORD-272, 120 beanie pieces for UrbanThread. Delivery due Apr 27. Send the whole batch to W4. Prioritize the lowest defect rate among eligible on-time workshops.
+R122 [10:02] Ravi: Allocate ORD-273, 240 polo shirt pieces for Maple & Co. Delivery due Apr 28. Exclude W1 and W3. Normal priority. Use the recorded delivery deadline.
+R123 [10:03] Mei: Allocate ORD-274, 300 cardigan pieces for Bright Basics. Delivery due Apr 29. Send the whole batch to W2. Choose the fastest eligible workshop that meets delivery.
+R124 [10:04] Anika: Allocate ORD-275, 180 vest pieces for Harbor Knits. Delivery due Apr 27. Send the whole batch to W8. Choose the cheapest eligible workshop that meets delivery.
+R125 [10:05] Luis: Allocate ORD-276, 150 scarf pieces for Loom & Leaf. Delivery due Apr 28. Exclude W4. Prioritize the lowest defect rate among eligible on-time workshops.
+R126 [10:06] Chen: Allocate ORD-277, 180 hoodie pieces for TrendCart. Delivery due Apr 29. Send the whole batch to W5. Normal priority. Use the recorded delivery deadline.
+R127 [10:07] Ravi: Allocate ORD-278, 240 polo shirt pieces for Cotton Club. Delivery due Apr 27. Exclude W1. Choose the fastest eligible workshop that meets delivery.
+R128 [10:08] Mei: Allocate ORD-279, 300 cardigan pieces for Northwind Apparel. Delivery due Apr 28. Send the whole batch to W8. Choose the cheapest eligible workshop that meets delivery.
+R129 [10:09] Anika: Allocate ORD-280, 60 beanie pieces for UrbanThread. Delivery due Apr 29. Send the whole batch to W6. Prioritize the lowest defect rate among eligible on-time workshops.
+R130 [10:10] Luis: Allocate ORD-281, 120 crewneck sweater pieces for Maple & Co, delivery due Apr 29. Normal priority. Use the recorded delivery deadline. Also allocate ORD-282, 180 hoodie pieces for Bright Basics, delivery due Apr 30. Choose the fastest eligible workshop that meets delivery.
+R131 [10:11] Chen: Allocate ORD-283, 240 polo shirt pieces for Harbor Knits, delivery due May 1. Choose the cheapest eligible workshop that meets delivery. Also allocate ORD-284, 90 scarf pieces for Loom & Leaf, delivery due Apr 29. Prioritize the lowest defect rate among eligible on-time workshops.
+R132 [10:12] Ravi: Please allocate ORD-285, 360 vest pieces for TrendCart, due Apr 30. Should quality take priority for this batch?
+R133 [10:13] Mei: Yes, lowest defect rate first for that batch. Keep the delivery deadline.
+R134 [10:14] Anika: Allocate ORD-286, 120 crewneck sweater pieces for Cotton Club. Delivery was due Mar 31. No revised deadline has been approved.
+R135 [10:15] Luis: Please allocate ORD-287, 180 hoodie pieces for Northwind Apparel. Delivery is due today, Apr 1.
+R136 [10:16] Chen: Allocate ORD-288, 120 beanie pieces for UrbanThread. Deliver tomorrow, Apr 2. No late delivery has been authorized.
+R137 [10:17] Ravi: Allocate ORD-289, 300 cardigan pieces for Maple & Co to OldMill (W7). Delivery due May 1. Do not substitute another workshop without approval.
+R138 [10:18] Mei: Allocate ORD-290, 360 hoodie pieces for Bright Basics to Little Loom (W4). Delivery due Apr 29.
+R139 [10:19] Anika: Place the whole ORD-291 batch of 500 vests with FreshStart (W8). Deliver by May 2.
+R140 [10:20] Luis: Allocate ORD-292, 150 scarf pieces for Loom & Leaf. Split the batch equally between two workshops. Delivery due May 3.
+R141 [10:21] Chen: Allocate ORD-293, 240 polo shirt pieces for TrendCart. Total production cost must not exceed 100. Delivery due May 1.
+R142 [10:22] Ravi: Allocate ORD-294: 1250 cardigan pieces for Cotton Club. Delivery due May 2. This is the stated quantity, not a confirmed change to the order record.
+R143 [10:23] Mei: Please allocate ORD-295, 360 vest pieces for Northwind Apparel. The customer might move delivery to Apr 10, but has not approved that change. Which deadline applies needs confirmation.
+R144 [10:24] Anika: Please allocate ORD-9999, 180 hoodies, delivery due Apr 20. Check the order record first.
+R145 [10:25] Luis: The customer has cancelled ORD-297. Do not allocate or reserve workshop capacity for this order.
+R146 [10:26] Chen: Pause ORD-298. Fabric is not approved; do not allocate until release is confirmed.
+R147 [10:27] Ravi: Please farm out the blue sweaters for the usual customer. I do not have the order number yet.
+R148 [10:28] Mei: Which workshop handled ORD-300 last year? I am asking about history, not requesting a new allocation.
+R149 [10:29] Mei: End of this dispatch review. Thanks everyone.

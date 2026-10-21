@@ -1,0 +1,7 @@
+R01 [11:02] Adi: Hi there.
+R02 [11:02] Adi: So I thought we need to dispatch the sweaterco order really quick.
+R03 [11:03] Adi: I think it is order number, oh sorry I mean we need to dispatch the Harbor Knit Hoodie. Which order number is that?
+R04 [11:04] Zhang: I think its order number 52.
+R05 [11:05] Zhang: Yes it is 52. And the deadline for that is 30th October.
+R06 [11:05] Adi: Oh ok cool.
+R07 [11:05] Adi: For that we should focus a bit more on quality. It is pretty expensive.

@@ -1,0 +1,62 @@
+# Settings for intake, processing and allocation (order_intake_from_chat/,
+# order_processing_into_tasks/ and task_allocation_to_workshops/).
+#
+# Paths are relative to backend/. An absolute path also works.
+# Each processing run saves its settings in its manifest.json, and each plan records its dispatch
+# date and objective, so a saved run or plan always shows what it used.
+
+[input]
+# The chat file to process: one message per line, such as "R01 [07:53] Chen: ...".
+# Use data/dispatch_requests.txt, or the TXT path shown by the mock chat's "Export for notebook".
+chat_file = "data/dispatch_requests_blocker_cases.txt"
+# The folder holding orders.csv and workshops.csv.
+data_folder = "data"
+# The date the chat messages were written: a TOML date, written without quotes. Relative delivery
+# words such as "by end of next week" are counted from it (a week ends on Friday, a month on its last
+# day). The supplied chat files carry times but no dates; they were written on 1 April 2026.
+message_date = 2026-04-01
+
+[output]
+# Each run is saved in <folder>/runs/<start time>/.
+# Saved model answers are kept in <folder>/response-cache/ and reused, so a repeated request is free.
+folder = "output"
+
+[models]
+# The OpenAI model of each stage that reads the chat.
+# Changing one stage's model makes only that stage's requests new (and paid);
+# the other stages keep reusing their saved answers.
+# Every stage was "gpt-4.1-mini" until 14 Oct 2026. Intake moved to a reasoning model first, to test
+# follow-up labelling (see ../docs/follow-up-linking-diagnosis-2026-10-14.md); link and verify followed
+# later that day (see ../docs/engineering-log.md).
+intake = "gpt-5.6-luna"  # split each message into items
+link = "gpt-5.6-luna"    # attach a follow-up to the task it belongs to
+verify = "gpt-5.6-luna"  # check each task against its original messages
+# Used by every stage without a reasoning effort below (at present, none).
+temperature = 0.0
+
+[reasoning_effort]
+# Only for a stage whose model reasons, such as gpt-5.6-luna: none, low, medium, high, xhigh or max.
+# Such a stage sends its effort and no temperature (GPT-5 reasoning models accept only their default).
+# Leave out a stage whose model does not reason, such as gpt-4.1-mini.
+intake = "high"
+link = "medium"
+verify = "medium"
+
+[batches]
+# The sliding window of the item extraction:
+target_size = 3   # new messages extracted per model call
+context_size = 2  # earlier messages shown as context only; they are never extracted again
+# Tasks checked per verification call.
+verify_batch_size = 3
+# The largest request sent to the model, in characters (not tokens).
+# A bigger input goes to review; it is never cut short.
+max_payload_chars = 24000
+
+[allocation]
+# Every request is planned from this snapshot date: a TOML date, written without quotes.
+dispatch_date = 2026-04-01
+# Leave plan_objective out to rank each request by its own preference (none, fastest, cheapest or
+# quality). Set it to rank every request with one objective instead; that plan is saved as
+# plan-<objective>.json and never overwrites plan.json. Objectives: minimize_tardiness,
+# minimize_cost, minimize_defects, minimize_concentration, minimize_robustness and hybrid.
+# plan_objective = "hybrid"

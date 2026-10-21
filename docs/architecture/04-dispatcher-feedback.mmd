@@ -1,0 +1,69 @@
+flowchart TB
+    PREVIEW["Stored preview and evidence - CURRENT<br/>Recommendation/review is not an assignment"]
+    subgraph APP["PLANNED LIVE DISPATCHER WORKFLOW - proposed explicit-confirmation path"]
+        SCREEN["Dispatcher console<br/>Same request across review and assignment views<br/>Show existing assignment while a move is pending"]
+        HUMAN["One authoritative dispatcher"]
+        WAIT["LangGraph review wait<br/>Persist workflow identity, task/version and preview reference"]
+        ACTION{"Dispatcher feedback type?"}
+        EXPLAIN["Explain existing decision<br/>LLM reads stored evidence and computed comparisons<br/>No schedule recomputation by default"]
+        CORRECTION["Correction or clarification<br/>Preserve feedback evidence; update same task<br/>Increase version and invalidate old verification/preview"]
+        VERIFY["Reverify current facts and constraints<br/>Remaining blockers stay in clarification/review"]
+        WHATIF["What-if or new comparison<br/>Call deterministic calculation tool<br/>Changed requirements need a new preview"]
+        PLAN["Deterministic fresh preview<br/>Current order, workshop and queue snapshot<br/>Requested eligible alternative may be lower-ranked"]
+        CONFIRM["Confirm recommended or selected eligible option<br/>Carry stable operation identity and preview version"]
+        FRESH{"Still valid at commit time?<br/>Task/assignment/queue versions,<br/>live status and hard workshop constraints"}
+        STALE["Stale preview or changed eligibility<br/>Recalculate and return to dispatcher review<br/>Do not commit the old preview"]
+        MOVE{"New assignment or change of workshop?"}
+        MOVABLE{"Existing work can be moved under agreed policy?"}
+        POLICY["Started/completed work or unclear remaining quantity<br/>Resolve remaining-work, recall or rework policy<br/>Do not erase work already performed"]
+        TX["Transactional assignment service<br/>New: reserve work and create assignment<br/>Move: release only movable old work and reserve replacement<br/>Append feedback, snapshots and assignment history"]
+        DB[("Authoritative operational database<br/>Assignments, reservations and outcome history<br/>Duplicate operation is not a second assignment")]
+        SUCCESS["Committed outcome<br/>Update dispatcher view and originating chat<br/>Recorded instruction may be acted on operationally"]
+        REJECT["Reject or cancel proposal<br/>Record reason when supplied<br/>Retain any previous assignment and reservation"]
+        FAILED["Transaction failure<br/>Keep previous valid assignment/reservations<br/>Show failure; no partial replacement"]
+        SAME["Same workshop / repeated confirmation<br/>No duplicate reservation or false move"]
+        SCREEN --> HUMAN --> WAIT --> ACTION
+        ACTION -->|Why was this chosen?| EXPLAIN --> SCREEN
+        ACTION -->|Missing fact or correction| CORRECTION --> VERIFY --> PLAN
+        ACTION -->|Changed deadline/destination or uncomputed comparison| WHATIF --> PLAN
+        PLAN --> SCREEN
+        ACTION -->|Confirm selection| CONFIRM --> FRESH
+        FRESH -->|No| STALE --> PLAN
+        FRESH -->|Yes| MOVE
+        MOVE -->|New| TX
+        MOVE -->|Replace existing assignment| MOVABLE
+        MOVABLE -->|No or unknown| POLICY --> SCREEN
+        MOVABLE -->|Yes; movable queued work| TX
+        MOVE -->|Already applied or same workshop| SAME --> SCREEN
+        TX -->|Commit succeeds| DB --> SUCCESS
+        TX -->|Write fails; rollback| FAILED --> SCREEN
+        ACTION -->|Reject/cancel| REJECT --> SCREEN
+        REJECT -.->|Audit outcome; preserve active work| DB
+        SUCCESS --> SCREEN
+    end
+    PREVIEW --> SCREEN
+    RECORDS[("Stored decision records and comparisons")]
+    RECORDS -.->|Evidence only| EXPLAIN
+    PLAN --> RECORDS
+    CP[("PLANNED durable LangGraph checkpoints<br/>Progress, outstanding question and resume identity<br/>Workflow checkpoint is separate from assignment transaction")]
+    WAIT -.-> CP
+    CP -.->|Reply resumes the same request workflow| ACTION
+    ORIGIN["Originating operations channel/user<br/>Answer clarification or receive recorded outcome"]
+    VERIFY -->|More facts needed| ORIGIN
+    ORIGIN -->|Reply linked to task/version| CORRECTION
+    SUCCESS --> ORIGIN
+    REJECT -->|Recorded proposal outcome| ORIGIN
+
+    classDef frontend fill:#e6f0ff,stroke:#3773b9,color:#142e51;
+    classDef langgraph fill:#eee7fb,stroke:#7750ad,color:#382454;
+    classDef code fill:#e1f3ed,stroke:#27806a,color:#163f35;
+    classDef human fill:#fff0d5,stroke:#b27a22,color:#563b15;
+    classDef store fill:#edf0f4,stroke:#718096,color:#293444;
+    classDef planned stroke-dasharray:5 4;
+    class SCREEN,SUCCESS,ORIGIN frontend;
+    class WAIT,ACTION langgraph;
+    class EXPLAIN,CORRECTION,VERIFY,WHATIF,PLAN,FRESH,MOVE,MOVABLE,TX,STALE,FAILED,SAME code;
+    class HUMAN,CONFIRM,POLICY,REJECT human;
+    class PREVIEW,DB,RECORDS,CP store;
+    class SCREEN,SUCCESS,ORIGIN,WAIT,ACTION,EXPLAIN,CORRECTION,VERIFY,WHATIF,PLAN,FRESH,MOVE,MOVABLE,TX,STALE,FAILED,SAME,HUMAN,CONFIRM,POLICY,REJECT,DB,CP planned;
+    style APP fill:#f7f2ff,stroke:#7750ad,stroke-width:2px,stroke-dasharray:5 4

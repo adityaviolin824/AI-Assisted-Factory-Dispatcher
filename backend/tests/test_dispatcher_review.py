@@ -1,0 +1,551 @@
+"""Tests for the dispatcher review modules (dispatcher_review/), with notebook 06 Part 8 as the
+reference. Fully offline.
+
+Run from backend/:  uv run python -m unittest discover -s tests -v
+
+What they prove:
+- the moved code has the notebook's logic (same syntax tree; docstrings and comments ignored), every
+  other definition is declared changed or new, and the per-row approval code is gone (the dispatcher
+  approves the whole shown review once; decision of 20 October 2026);
+- with no decision, the review of every saved run (copied and planned again with today's rules) equals
+  notebook 06's review and the run's plan.json: decisions, routes, planning order, queues and rows;
+- the same decisions give the notebook's review, and the same decision entries when a workshop is
+  chosen (the modules plan a chosen workshop first);
+- notebook 06's controlled decision checks that do not use per-row approval hold for the modules,
+  except that the dispatcher's workshop choice is always used, even when late, past the deadline or
+  against a hard rule;
+- finalize_review approves the shown allocations without planning again;
+- apply_answer applies a valid answer and refuses an invalid one with nothing changed, including when
+  the order or workshop data or the dispatch date changed;
+- every name the modules use is defined or imported.
+No model is called, and every network connection is refused.
+"""
+import contextlib
+import copy
+import importlib
+import io
+import json
+import shutil
+import socket
+import tempfile
+import unittest
+from datetime import date
+from pathlib import Path
+from unittest import mock
+
+from notebook_reference import load_notebook_06_part_8, notebook_06_cell, top_level_definitions
+from test_allocation_modules import NOTEBOOK_SETTINGS, pinned_settings
+from test_processing_modules import logic, module_definitions, undefined_names
+
+from dispatcher_review import dispatcher_decisions, dispatcher_plan
+from dispatcher_review.dispatcher_decisions import (
+    CHANGED_INPUTS, accept_late, apply_answer, choose_workshop, clear, correct, save_dispatcher_files,
+    verified_tasks_by_id, warnings_checked)
+from dispatcher_review.dispatcher_plan import blockers, build_dispatcher_plan, finalize_review
+from order_processing_into_tasks.settings_and_data import RUNS_DIR
+from task_allocation_to_workshops.allocation_plan import plan_saved_run
+
+# The definitions each module copies unchanged from notebook 06 (Parts 1, 4a, 8a and 8b).
+MOVED = {
+    "dispatcher_review.dispatcher_plan": [
+        "CORRECTABLE", "blockers", "derive_task", "batch_of", "option_text", "reserve"],
+    "dispatcher_review.dispatcher_decisions": ["PRINT_WIDTH", "show", "save_dispatcher_files"],
+}
+# Moved from notebook 06, then changed on purpose (20 October 2026). One final approval replaces
+# per-row approval: RESERVING has no "approved" status, build_dispatcher_plan has no approved-first
+# stage and no finalize mode, records the input signature, and choose_workshop removes no approval.
+# The dispatcher decides: build_dispatcher_plan plans the tasks with a chosen workshop first, then the
+# other ready tasks around them (each group earliest deadline first); named_option estimates a chosen
+# workshop even when a hard rule forbids it and returns that rule; flexible_decision always uses the
+# chosen workshop, accepting its lateness (also for a past deadline), and writes a broken rule in the reason. The helpers take the decisions and the run's
+# tasks as arguments instead of notebook globals; correct takes its facts as a dict and refuses a
+# blocker number outside the list (the notebook's -1 silently took the last blocker); entry_for and
+# accept_late refuse with ValueError, not KeyError; warnings_checked takes a list; print_review takes
+# the tasks and has no "after approved work" queue column.
+CHANGED = {
+    "dispatcher_review.dispatcher_plan": ["RESERVING", "named_option", "flexible_decision", "build_dispatcher_plan"],
+    "dispatcher_review.dispatcher_decisions": [
+        "entry_for", "correct", "choose_workshop", "accept_late", "warnings_checked", "clear",
+        "open_blockers", "print_review"],
+}
+# Definitions that are new in the modules.
+NEW = {
+    "dispatcher_review.dispatcher_plan": ["input_signature", "finalize_review"],
+    "dispatcher_review.dispatcher_decisions": [
+        "DECISION_FIELDS", "REQUIRED_FIELDS", "FIELD_FORMS", "CHANGED_INPUTS", "verified_tasks_by_id",
+        "valid_field", "answer_problem", "apply_decision", "apply_answer"],
+}
+# Notebook 06's per-row approval code, which the modules leave out.
+DROPPED = ["approved_decision", "approve", "release"]
+
+DECISIONS_RUN = "2026-10-14_14-40-08"  # the 30-request run of check_notebook_06.py
+T4, T5, T8, T9, T10, T11, T12, T21, T25 = (
+    "T:L0004:J1", "T:L0005:J1", "T:L0008:J1", "T:L0009:J1", "T:L0010:J1", "T:L0011:J1", "T:L0012:J1",
+    "T:L0021:J1", "T:L0025:J1")
+
+
+def refuse_network(*args, **kwargs):
+    """Stand-in for opening a network connection: these tests are offline."""
+    raise AssertionError("These tests are offline; a network connection was attempted.")
+
+
+def block_network():
+    """Refuse every network connection until the calling test module's tests end."""
+    for target, name in ((socket.socket, "connect"), (socket, "create_connection")):
+        patcher = mock.patch.object(target, name, refuse_network)
+        patcher.start()
+        unittest.addModuleCleanup(patcher.stop)
+
+
+def setUpModule():
+    block_network()
+
+
+@contextlib.contextmanager
+def pinned_review_settings():
+    """pinned_settings, with the same dispatch date in dispatcher_plan."""
+    with (pinned_settings(),
+          mock.patch.object(dispatcher_plan, "DISPATCH_DATE", NOTEBOOK_SETTINGS["DISPATCH_DATE"])):
+        yield
+
+
+def copy_and_plan(run_name, runs_dir):
+    """Copy a saved run's manifest and state into runs_dir and plan the copy with today's rules.
+    Returns the copy's folder and its plan.
+    """
+    run_dir = runs_dir / run_name
+    run_dir.mkdir()
+    for name in ("manifest.json", "state.json"):
+        shutil.copy2(RUNS_DIR / run_name / name, run_dir / name)
+    with contextlib.redirect_stdout(io.StringIO()):
+        return run_dir, plan_saved_run(run_dir)
+
+
+def no_decisions(run_dir):
+    """Return an empty set of decisions for a run, as a new review starts."""
+    return {"source_run": run_dir.name, "revision": 0, "decisions": {}}
+
+
+def without(result, *keys):
+    """Return a dict without the given keys."""
+    return {key: value for key, value in result.items() if key not in keys}
+
+
+def record(result, task_id):
+    """Return the decision record of one task in a review."""
+    return next(decision for decision in result["decisions"] if decision["task_id"] == task_id)
+
+
+def row(result, row_id):
+    """Return the summary row of one task or message in a review."""
+    return next(row for row in result["summary_rows"] if row["id"] == row_id)
+
+
+def answer(*decisions, then="review_again"):
+    """Return a dispatcher's answer with these decisions."""
+    return {"decisions": list(decisions), "then": then}
+
+
+class SameCodeAsNotebook(unittest.TestCase):
+    """The modules against notebook 06's cells, read as saved."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.reference = {}
+        for prefix in ("# Part 1", "# Part 4a", "# Part 8a", "# Part 8b"):
+            cls.reference.update(top_level_definitions(notebook_06_cell(prefix)))
+
+    def test_moved_code_has_the_notebook_logic(self):
+        for module_name, names in MOVED.items():
+            moved = module_definitions(importlib.import_module(module_name))
+            for name in names:
+                with self.subTest(module=module_name, name=name):
+                    self.assertEqual(logic(moved[name]), logic(self.reference[name]))
+
+    def test_changed_code_differs_from_the_notebook(self):
+        for module_name, names in CHANGED.items():
+            changed = module_definitions(importlib.import_module(module_name))
+            for name in names:
+                with self.subTest(module=module_name, name=name):
+                    self.assertNotEqual(logic(changed[name]), logic(self.reference[name]))
+
+    def test_every_definition_is_moved_changed_or_new(self):
+        for module_name in MOVED | CHANGED | NEW:
+            definitions = set(module_definitions(importlib.import_module(module_name)))
+            declared = (set(MOVED.get(module_name, [])) | set(CHANGED.get(module_name, []))
+                        | set(NEW.get(module_name, [])))
+            with self.subTest(module=module_name):
+                self.assertEqual(definitions, declared)
+
+    def test_per_row_approval_is_gone(self):
+        self.assertTrue(set(DROPPED) <= set(self.reference))
+        for module_name in MOVED | CHANGED | NEW:
+            definitions = module_definitions(importlib.import_module(module_name))
+            with self.subTest(module=module_name):
+                self.assertEqual(set(DROPPED) & set(definitions), set())
+
+
+class SameResultsAsNotebook(unittest.TestCase):
+    """The module review and notebook 06's review on copies of the saved runs, planned again with today's rules."""
+
+    @classmethod
+    def setUpClass(cls):
+        runs_dir = Path(cls.enterClassContext(tempfile.TemporaryDirectory()))
+        cls.runs = {}
+        with pinned_review_settings():
+            for folder in sorted(RUNS_DIR.iterdir()):
+                if (folder / "plan.json").exists():
+                    cls.runs[folder.name] = copy_and_plan(folder.name, runs_dir)
+
+    def test_review_without_decisions_equals_the_notebook_and_the_plan(self):
+        self.assertIn(DECISIONS_RUN, self.runs)
+        for run_name, (run_dir, plan) in self.runs.items():
+            with self.subTest(run=run_name), pinned_review_settings():
+                notebook = load_notebook_06_part_8(run_dir)
+                expected = notebook["build_dispatcher_plan"](run_dir, no_decisions(run_dir))
+                review = build_dispatcher_plan(run_dir, no_decisions(run_dir))
+                self.assertEqual(expected.pop("queues_after_approved"), expected["queues_before_plan"])
+                self.assertEqual(without(review, "created_at", "input_signature"), without(expected, "created_at"))
+                for key in ("processing_complete", "planning_order", "decisions", "duplicate_order_reviews",
+                            "needs_clarification", "reference_tasks", "intake_review", "task_review",
+                            "link_review", "non_task_messages", "not_processed", "review_warnings",
+                            "queues_before_plan", "queues_after_plan"):
+                    self.assertEqual(review[key], plan[key], key)
+                self.assertEqual([without(row, "final") for row in review["summary_rows"]], plan["summary_rows"])
+                self.assertEqual((review["final_ids"], review["status"]), ([], "draft"))
+
+    def test_same_decisions_give_the_notebook_review(self):
+        run_dir, _ = self.runs[DECISIONS_RUN]
+        with pinned_review_settings():
+            notebook = load_notebook_06_part_8(run_dir)
+            tasks = verified_tasks_by_id(run_dir)
+            decisions = no_decisions(run_dir)
+            notebook_review = notebook["build_dispatcher_plan"](run_dir, notebook["decisions"])
+            module_review = build_dispatcher_plan(run_dir, decisions)
+            steps = [
+                (lambda: notebook["correct"](T5, resolves=[0, 1], due_date="2026-04-20"),
+                 lambda: correct(decisions, tasks, T5, {"due_date": "2026-04-20"}, [0, 1])),
+                (lambda: notebook["accept_late"](notebook_review, T12),
+                 lambda: accept_late(decisions, tasks, module_review, T12)),
+                (lambda: notebook["warnings_checked"](T9, "L0019"),
+                 lambda: warnings_checked(decisions, tasks, T9, ["L0019"])),
+                (lambda: notebook["choose_workshop"](T8, "W1"),
+                 lambda: choose_workshop(decisions, tasks, T8, "W1")),
+                (lambda: notebook["clear"](T8), lambda: clear(decisions, T8)),
+            ]
+            for number, (notebook_step, module_step) in enumerate(steps, start=1):
+                notebook_step()
+                module_step()
+                notebook_review = notebook["build_dispatcher_plan"](run_dir, notebook["decisions"])
+                module_review = build_dispatcher_plan(run_dir, decisions)
+                with self.subTest(step=number):
+                    self.assertEqual(decisions, notebook["decisions"])
+                    if T8 in decisions["decisions"]:
+                        # The notebook plans T8 in deadline order; the modules plan the chosen workshop first.
+                        self.assertEqual(module_review["planning_order"][0], T8)
+                        self.assertNotEqual(notebook_review["planning_order"][0], T8)
+                    else:
+                        self.assertEqual(without(module_review, "created_at", "input_signature"),
+                                         without(notebook_review, "created_at", "queues_after_approved"))
+            self.assertEqual(record(module_review, T12)["status"], "accepted_late")
+
+
+class ControlledDecisions(unittest.TestCase):
+    """Notebook 06's controlled decision checks (check_notebook_06.py) without per-row approval, on a
+    copy of the 30-request run. The decisions are examples that nobody made.
+    """
+
+    def setUp(self):
+        self.enterContext(pinned_review_settings())
+        self.run_dir, _ = copy_and_plan(DECISIONS_RUN, Path(self.enterContext(tempfile.TemporaryDirectory())))
+        self.tasks = verified_tasks_by_id(self.run_dir)
+        self.decisions = no_decisions(self.run_dir)
+
+    def build(self):
+        return build_dispatcher_plan(self.run_dir, self.decisions)
+
+    def test_a_correction_resolves_only_the_named_blockers(self):
+        self.assertEqual(row(self.build(), T5)["outcome"], "needs_clarification")
+        correct(self.decisions, self.tasks, T5, {"due_date": "2026-04-20"}, [0])
+        self.assertEqual(row(self.build(), T5)["outcome"], "needs_clarification")  # blocker [1] is still open
+        correct(self.decisions, self.tasks, T5, {}, [1])
+        entry = copy.deepcopy(self.decisions["decisions"][T5])
+        correct(self.decisions, self.tasks, T5, {"due_date": "2026-04-20"}, [1])  # the same again changes nothing
+        self.assertEqual((self.decisions["decisions"][T5], entry["decision_version"]), (entry, 1))
+        first, second = self.build(), self.build()
+        self.assertEqual(without(first, "created_at"), without(second, "created_at"))
+        corrected = record(first, T5)
+        self.assertEqual((corrected["status"], corrected["version"]), ("recommendation", self.tasks[T5]["version"] + 1))
+        self.assertEqual(corrected["order_snapshot"]["due_date"], "2026-04-20")
+        self.assertEqual(corrected["task"]["dispatcher"], {
+            "facts": {"due_date": "2026-04-20"}, "resolved": blockers(self.tasks[T5]),
+            "recorded": {"due_date": self.tasks[T5]["due_date"]}, "recorded_deadline": "2026-04-26"})
+
+    def test_a_wrong_blocker_number_is_refused(self):
+        for number in (-1, len(blockers(self.tasks[T5]))):
+            with self.subTest(number=number):
+                with self.assertRaisesRegex(ValueError, rf"has no blocker \[{number}\]"):
+                    correct(self.decisions, self.tasks, T5, {}, [number])
+
+    def test_an_unknown_order_id_is_not_applied_and_shown(self):
+        correct(self.decisions, self.tasks, T10, {"order_id": "ORD-999"}, [])
+        result = self.build()
+        self.assertEqual(row(result, T10)["outcome"], "needs_clarification")
+        self.assertIn("Dispatcher decision not applied: ORD-999 is not in orders.csv.", row(result, T10)["reason"])
+
+    def test_a_past_deadline_returns_with_a_revised_date(self):
+        correct(self.decisions, self.tasks, T4, {"due_date": "2026-04-01"}, [])
+        self.assertEqual(record(self.build(), T4)["status"], "deadline_passed")
+        correct(self.decisions, self.tasks, T4, {"due_date": "2026-04-24"}, [])
+        revised = record(self.build(), T4)
+        self.assertEqual(revised["status"], "recommendation")
+        self.assertEqual(revised["task"]["dispatcher"]["recorded_deadline"], "2026-04-01")
+
+    def test_a_past_deadline_takes_the_dispatchers_choice_late(self):
+        correct(self.decisions, self.tasks, T4, {"due_date": "2026-04-01"}, [])
+        choose_workshop(self.decisions, self.tasks, T4, "W1")
+        review = self.build()
+        chosen = record(review, T4)
+        self.assertEqual((chosen["status"], chosen["selected_workshop"]), ("accepted_late", "W1"))
+        self.assertGreater(chosen["selected_metrics"]["tardiness_days"], 0)
+        self.assertIn("The deadline 2026-04-01 stays on record.", chosen["reason"])
+        self.assertEqual(review["reservation_order"][0], T4)
+
+    def test_a_manual_choice_is_always_used_and_a_broken_rule_is_written(self):
+        self.assertEqual(record(self.build(), T8)["option_without_request"]["workshop_id"], "W6")
+        choose_workshop(self.decisions, self.tasks, T8, "W1")
+        choose_workshop(self.decisions, self.tasks, T11, "W7")
+        choose_workshop(self.decisions, self.tasks, "T:L0024:J1", "W4")
+        result = self.build()
+        chosen = record(result, T8)
+        self.assertEqual((chosen["status"], chosen["selected_workshop"], chosen["task"]["requested_workshop"]),
+                         ("dispatcher_choice", "W1", "W8"))
+        self.assertIn("It overrides the requested W8.", chosen["reason"])
+        for task_id, workshop_id, rule in ((T11, "W7", "status=SUSPENDED"),
+                                           ("T:L0024:J1", "W4", "cannot_make_category=TOPS")):
+            with self.subTest(task=task_id):
+                self.assertEqual(record(result, task_id)["selected_workshop"], workshop_id)
+                self.assertIn(task_id, result["reservation_order"])
+                self.assertIn(f"It overrides the hard rule {rule}.", record(result, task_id)["reason"])
+        choose_workshop(self.decisions, self.tasks, T8, "W8")  # the latest choice replaces W1
+        over_cap = record(self.build(), T8)
+        self.assertEqual(over_cap["selected_workshop"], "W8")
+        self.assertIn("It overrides the hard rule exceeds_batch_cap=400>300.", over_cap["reason"])
+
+    def test_chosen_workshops_are_planned_first(self):
+        choose_workshop(self.decisions, self.tasks, T25, "W6")
+        review = self.build()
+        self.assertEqual(review["planning_order"][0], T25)
+        self.assertEqual(review["reservation_order"][0], T25)
+        # Nothing is ahead of the chosen task but the workshop's own starting queue.
+        self.assertEqual(record(review, T25)["selected_metrics"]["queue_days"], review["queues_before_plan"]["W6"])
+        self.assertEqual(review["planning_order"][1:], [task_id for task_id in self.build_without(T25)["planning_order"]
+                                                         if task_id != T25])
+
+    def build_without(self, task_id):
+        """Return the review with the decision entry of one task left out."""
+        decisions = copy.deepcopy(self.decisions)
+        decisions["decisions"].pop(task_id)
+        return build_dispatcher_plan(self.run_dir, decisions)
+
+    def test_lateness_is_used_only_as_accepted(self):
+        review = self.build()
+        late = record(review, T12)
+        self.assertEqual((late["status"], late["closest_option"]["workshop_id"]), ("review_required", "W5"))
+        accept_late(self.decisions, self.tasks, review, T12)
+        accepted = record(self.build(), T12)
+        self.assertEqual((accepted["status"], accepted["selected_workshop"]), ("accepted_late", "W5"))
+        self.assertEqual(accepted["selected_metrics"]["tardiness_days"], late["closest_option"]["tardiness_days"])
+        self.assertGreater(accepted["selected_metrics"]["tardiness_days"], 0)
+        self.assertEqual(accepted["order_snapshot"]["due_date"], "2026-04-10")
+        self.assertIn("stays on record", accepted["reason"])
+        accept_late(self.decisions, self.tasks, review, T12, max_days=0.01)
+        self.assertIn("does not cover it", record(self.build(), T12)["reason"])
+
+    def test_a_late_choice_is_used_at_once_and_worse_accepted_lateness_returns_to_review(self):
+        # T12's late W5 option is accepted. Then the dispatcher chooses W5, late too, for T11: the choice
+        # is used at once and planned first, so W5 is busier and T12's accepted lateness no longer covers it.
+        accept_late(self.decisions, self.tasks, self.build(), T12)
+        self.assertEqual(record(self.build(), T12)["status"], "accepted_late")
+        choose_workshop(self.decisions, self.tasks, T11, "W5")
+        worse = self.build()
+        chosen = record(worse, T11)
+        self.assertEqual((chosen["status"], chosen["selected_workshop"]), ("accepted_late", "W5"))
+        self.assertGreater(chosen["selected_metrics"]["tardiness_days"], 0)
+        self.assertIn("Lateness accepted by the dispatcher", chosen["reason"])
+        self.assertEqual(record(worse, T12)["status"], "review_required")
+        self.assertIn("does not cover it", record(worse, T12)["reason"])
+        self.assertNotIn(T12, worse["reservation_order"])
+
+    def test_finalize_changes_only_the_labels(self):
+        choose_workshop(self.decisions, self.tasks, T8, "W1")
+        accept_late(self.decisions, self.tasks, self.build(), T12)
+        with mock.patch.object(dispatcher_plan, "possibly_affected_tasks", lambda state: {T9: ["L0019"]}):
+            draft = self.build()
+            shown = copy.deepcopy(draft)
+            final = finalize_review(draft)
+            self.assertEqual(draft, shown)  # the review passed in is not changed
+            numbers = ("planning_order", "queues_before_plan", "queues_after_plan", "pieces_after_plan",
+                       "reservation_order", "review_warnings", "created_at", "input_signature")
+            self.assertTrue(all(final[key] == draft[key] for key in numbers))
+            self.assertEqual(final["status"], "final")
+            self.assertEqual(sorted(final["final_ids"]), sorted([T8, T12, T21, T25]))
+            for task_id in (T8, T12, T21, T25):
+                before, after = record(draft, task_id), record(final, task_id)
+                self.assertEqual(after["status"], "approved")
+                self.assertEqual(without(after, "status"), without(before, "status"))
+                self.assertEqual(without(row(final, task_id), "outcome", "final"),
+                                 without(row(draft, task_id), "outcome", "final"))
+            # T9's recommendation has an unchecked warning, so it stays provisional and unresolved.
+            self.assertEqual((row(final, T9)["outcome"], row(final, T9)["final"]), ("provisional_recommendation", False))
+            self.assertIn(T9, final["unresolved_ids"])
+            self.assertTrue(all(row(final, row_id)["outcome"] == row(draft, row_id)["outcome"]
+                                for row_id in final["unresolved_ids"]))
+            warnings_checked(self.decisions, self.tasks, T9, ["L0019"])
+            self.assertIn(T9, finalize_review(self.build())["final_ids"])
+
+    def test_saving_writes_the_two_files_and_their_history_copies(self):
+        source = {name: (self.run_dir / name).read_bytes() for name in ("manifest.json", "state.json", "plan.json")}
+        choose_workshop(self.decisions, self.tasks, T8, "W1")
+        final = finalize_review(self.build())
+        with contextlib.redirect_stdout(io.StringIO()):
+            save_dispatcher_files(self.run_dir, self.decisions, final)
+        saved = json.loads((self.run_dir / "dispatcher-plan.json").read_text(encoding="utf-8"))
+        self.assertEqual((saved["decisions_revision"], saved["final_ids"]), (1, final["final_ids"]))
+        self.assertEqual(json.loads((self.run_dir / "dispatcher-decisions.json").read_text(encoding="utf-8")),
+                         self.decisions)
+        self.assertEqual(len(list((self.run_dir / "plan-history").glob("*_dispatcher-*.json"))), 2)
+        self.assertTrue(all((self.run_dir / name).read_bytes() == data for name, data in source.items()))
+
+
+class ApplyAnswer(unittest.TestCase):
+    """The dispatcher's answers on a copy of the 30-request run."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.enterClassContext(pinned_review_settings())
+        cls.run_dir, _ = copy_and_plan(DECISIONS_RUN, Path(cls.enterClassContext(tempfile.TemporaryDirectory())))
+        cls.tasks = verified_tasks_by_id(cls.run_dir)
+        cls.review = build_dispatcher_plan(cls.run_dir, no_decisions(cls.run_dir))
+
+    def assert_refused(self, reply, message, decisions):
+        """An answer is refused: the same decisions and review come back, "review_again" and the reason."""
+        decisions_before = copy.deepcopy(decisions)
+        result = apply_answer(self.run_dir, decisions, self.review, reply)
+        self.assertIs(result[0], decisions)
+        self.assertIs(result[1], self.review)
+        self.assertEqual(result[2], "review_again")
+        self.assertIn(message, result[3])
+        self.assertEqual(decisions, decisions_before)
+
+    def test_each_decision_calls_its_helper(self):
+        cases = [
+            ({"decision": "correct", "task_id": T5, "facts": {"due_date": "2026-04-20"}, "resolves": [0, 1]},
+             lambda decisions: correct(decisions, self.tasks, T5, {"due_date": "2026-04-20"}, [0, 1])),
+            ({"decision": "choose_workshop", "task_id": T8, "workshop_id": "W1"},
+             lambda decisions: choose_workshop(decisions, self.tasks, T8, "W1")),
+            ({"decision": "accept_late", "task_id": T12},
+             lambda decisions: accept_late(decisions, self.tasks, self.review, T12)),
+            ({"decision": "accept_late", "task_id": T12, "max_days": 2},
+             lambda decisions: accept_late(decisions, self.tasks, self.review, T12, 2)),
+            ({"decision": "warnings_checked", "task_id": T9, "row_ids": ["L0019"]},
+             lambda decisions: warnings_checked(decisions, self.tasks, T9, ["L0019"])),
+        ]
+        for entry, helper in cases:
+            with self.subTest(decision=entry["decision"]):
+                decisions = no_decisions(self.run_dir)
+                applied, review, then, refusal = apply_answer(self.run_dir, decisions, self.review, answer(entry))
+                expected = no_decisions(self.run_dir)
+                helper(expected)
+                self.assertEqual((applied, then, refusal), (expected, "review_again", None))
+                self.assertEqual(decisions, no_decisions(self.run_dir))  # applied to a copy
+                self.assertEqual(without(review, "created_at"),
+                                 without(build_dispatcher_plan(self.run_dir, expected), "created_at"))
+        decisions = no_decisions(self.run_dir)
+        choose_workshop(decisions, self.tasks, T8, "W1")
+        applied, _, _, _ = apply_answer(self.run_dir, decisions, self.review,
+                                        answer({"decision": "clear", "task_id": T8}))
+        self.assertEqual(applied, no_decisions(self.run_dir))
+
+    def test_approve_all_keeps_the_shown_review(self):
+        decisions = no_decisions(self.run_dir)
+        with mock.patch.object(dispatcher_decisions, "build_dispatcher_plan") as build:
+            result = apply_answer(self.run_dir, decisions, self.review, answer(then="approve_all"))
+        build.assert_not_called()
+        self.assertIs(result[0], decisions)
+        self.assertIs(result[1], self.review)
+        self.assertEqual(result[2:], ("approve_all", None))
+
+    def test_invalid_answers_are_refused_with_nothing_changed(self):
+        choose = {"decision": "choose_workshop", "task_id": T8, "workshop_id": "W1"}
+        cases = [
+            ("not a dict", 'An answer must be {"decisions"'),
+            ({"decisions": []}, 'An answer must be {"decisions"'),
+            ({"decisions": [], "then": "review_again", "note": "x"}, 'An answer must be {"decisions"'),
+            (answer(then="save_draft"), "\"then\" must be \"review_again\" or \"approve_all\", not 'save_draft'"),
+            ({"decisions": "clear", "then": "review_again"}, '"decisions" must be a list'),
+            (answer(choose, then="approve_all"), "Approve all takes no decisions"),
+            (answer({"decision": "accept_late", "task_id": T12}, choose), "Send accept_late alone"),
+            (answer({"decision": "approve", "task_id": T9}), "Unknown decision 'approve'"),
+            (answer({"decision": "release", "task_id": T9}), "Unknown decision 'release'"),
+            (answer({"decision": ["clear"], "task_id": T9}), "Unknown decision ['clear']"),
+            (answer({"decision": "clear", "task_id": "T:L0999:J1"}), "'T:L0999:J1' is not a verified task"),
+            (answer({"decision": "clear", "task_id": ["T:L0009:J1"]}), "is not a verified task"),
+            (answer({"decision": "choose_workshop", "task_id": T8, "workshop": "W1"}), "unknown field workshop"),
+            (answer({"decision": "choose_workshop", "task_id": T8}), "workshop_id is missing"),
+            (answer({"decision": "warnings_checked", "task_id": T9}), "row_ids is missing"),
+            (answer({"decision": "choose_workshop", "task_id": T8, "workshop_id": 1}), "workshop_id must be"),
+            (answer({"decision": "correct", "task_id": T5, "facts": {"due_date": 20}}), "facts must be"),
+            (answer({"decision": "correct", "task_id": T5, "facts": ["due_date"]}), "facts must be"),
+            (answer({"decision": "correct", "task_id": T5, "resolves": [True]}), "resolves must be"),
+            (answer({"decision": "correct", "task_id": T5, "resolves": "0"}), "resolves must be"),
+            (answer({"decision": "accept_late", "task_id": T12, "max_days": -1}), "max_days must be"),
+            (answer({"decision": "accept_late", "task_id": T12, "max_days": float("inf")}), "max_days must be"),
+            (answer({"decision": "accept_late", "task_id": T12, "max_days": "2"}), "max_days must be"),
+            (answer({"decision": "warnings_checked", "task_id": T9, "row_ids": "L0019"}), "row_ids must be"),
+            (answer({"decision": "correct", "task_id": T5, "resolves": [-1]}), f"{T5} has no blocker [-1]"),
+            (answer({"decision": "correct", "task_id": T5, "resolves": [2]}), f"{T5} has no blocker [2]"),
+            (answer({"decision": "accept_late", "task_id": T5}), f"{T5} has no allocation record in this review"),
+            (answer({"decision": "accept_late", "task_id": T21}), f"{T21} has no late option in this review"),
+            (answer({"decision": "choose_workshop", "task_id": T8, "workshop_id": "W99"}),
+             f"Not applied: {T8}: W99 is not a workshop."),
+            (answer({"decision": "correct", "task_id": T10, "facts": {"order_id": "ORD-999"}}),
+             f"Not applied: {T10}: ORD-999 is not in orders.csv."),
+            (answer({"decision": "correct", "task_id": T5, "facts": {"due_date": "20 April"}}),
+             "'20 April' is not a date written YYYY-MM-DD"),
+            (answer({"decision": "correct", "task_id": T5, "facts": {"pieces": "100"}}),
+             "pieces cannot be corrected here"),
+            (answer({"decision": "correct", "task_id": T5, "facts": {"preference": "soon"}}),
+             "'soon' is not a valid preference"),
+            # A valid decision followed by an invalid one: the whole answer is refused.
+            (answer(choose, {"decision": "correct", "task_id": T5, "resolves": [5]}), f"{T5} has no blocker [5]"),
+        ]
+        for reply, message in cases:
+            with self.subTest(reply=reply):
+                self.assert_refused(reply, message, no_decisions(self.run_dir))
+
+    def test_an_answer_is_refused_when_the_inputs_changed(self):
+        with mock.patch.object(dispatcher_plan, "DISPATCH_DATE", date(2026, 4, 2)):
+            self.assert_refused(answer(then="approve_all"), CHANGED_INPUTS, no_decisions(self.run_dir))
+        with tempfile.TemporaryDirectory() as temp:
+            data_dir = Path(temp)
+            for name in ("orders.csv", "workshops.csv"):
+                shutil.copy2(dispatcher_plan.DATA_DIR / name, data_dir / name)
+            with mock.patch.object(dispatcher_plan, "DATA_DIR", data_dir):
+                self.assertEqual(dispatcher_plan.input_signature(), self.review["input_signature"])
+                with (data_dir / "workshops.csv").open("a", encoding="utf-8") as file:
+                    file.write("\n")
+                self.assert_refused(answer({"decision": "clear", "task_id": T8}), CHANGED_INPUTS,
+                                    no_decisions(self.run_dir))
+
+
+class EveryNameIsDefined(unittest.TestCase):
+
+    def test_no_module_uses_an_undefined_name(self):
+        for module_name in MOVED | CHANGED | NEW:
+            with self.subTest(module=module_name):
+                self.assertEqual(undefined_names(importlib.import_module(module_name)), set())
+
+
+if __name__ == "__main__":
+    unittest.main()

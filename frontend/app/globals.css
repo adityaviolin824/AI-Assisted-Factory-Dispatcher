@@ -1,0 +1,700 @@
+/* Palette and type from DESIGN.md: indigo denim, undyed ecru cotton, gold topstitching thread
+   and the red selvedge edge. Gold thread marks state: dashed is provisional, solid is final. */
+:root {
+  --page: #121a30;
+  --surface: #1b2542;
+  --raised: #25315a;
+  --seam: #34426a;
+  --control: #6e7ba1;
+  --text: #ede6d3;
+  --muted: #a9b2ca;
+  --gold: #e3a73e;
+  --red: #ee7564;
+  --sans: var(--font-archivo), "Helvetica Neue", Arial, sans-serif;
+  --serif: var(--font-literata), Georgia, serif;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  color: var(--text);
+  background: var(--page);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+main {
+  padding: 24px 32px 64px;
+}
+
+a {
+  color: var(--text);
+  text-decoration-color: var(--gold);
+  text-underline-offset: 3px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* Headings use Archivo's expanded width, like the markings stencilled on cartons. */
+h1,
+h2 {
+  font-stretch: 125%;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+h1 {
+  font-size: 28px;
+  margin: 0;
+}
+
+h2 {
+  font-size: 21px;
+  margin: 32px 0 10px;
+}
+
+h3 {
+  font-size: 16px;
+  font-weight: 650;
+  margin: 24px 0 8px;
+}
+
+p {
+  margin: 10px 0;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+/* Words a person wrote: chat messages and quoted source messages. */
+.spoken {
+  font-family: var(--serif);
+  line-height: 1.6;
+}
+
+/* App bar with the Chat/Dispatcher mode switch, on every page. */
+.app-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 28px;
+  padding: 10px 32px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--seam);
+}
+
+.brand {
+  font-stretch: 125%;
+  font-weight: 700;
+}
+
+.mode-switch {
+  display: flex;
+  padding: 3px;
+  border: 1px solid var(--control);
+  border-radius: 7px;
+}
+
+.mode-switch a {
+  padding: 6px 20px;
+  border-radius: 4px;
+  color: var(--muted);
+  font-stretch: 125%;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.mode-switch a:hover {
+  color: var(--text);
+}
+
+.mode-switch a[aria-current="page"] {
+  background: var(--text);
+  color: var(--page);
+}
+
+.about-link {
+  margin-left: auto;
+  color: var(--muted);
+}
+
+/* Page title with its controls on one line, wrapping on narrow screens. */
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 32px;
+}
+
+/* A flex item never shrinks below its content by default; the run select needs it to. */
+.page-head .toolbar {
+  min-width: 0;
+}
+
+.lede {
+  max-width: 72ch;
+}
+
+/* A state still open: a partial plan, missing warnings, a provisional suggestion. */
+.notice {
+  padding: 10px 14px;
+  background: var(--surface);
+  border-left: 3px dashed var(--gold);
+  max-width: 96ch;
+}
+
+.error {
+  padding: 10px 14px;
+  background: var(--surface);
+  border-left: 3px solid var(--red);
+  max-width: 96ch;
+}
+
+/* Which plan is shown: dashed before the dispatcher's review, solid once approved and saved. */
+.run-state {
+  padding-left: 12px;
+  border-left: 3px dashed var(--gold);
+}
+
+.run-state.final {
+  border-left-style: solid;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+th,
+td {
+  border-bottom: 1px solid var(--seam);
+  padding: 8px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  background: var(--surface);
+  color: var(--muted);
+  font-weight: 600;
+}
+
+td.number,
+th.number {
+  text-align: right;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+tbody tr:hover td {
+  background: var(--surface);
+}
+
+tr.selected td,
+tr.selected:hover td {
+  background: var(--raised);
+}
+
+td.reason {
+  min-width: 260px;
+}
+
+td.nowrap {
+  white-space: nowrap;
+}
+
+/* Worklist thread marks, repeated in words in the Outcome column. */
+tr[data-group] td:first-child {
+  border-left: 3px solid transparent;
+}
+
+tr[data-group="attention"] td:first-child {
+  border-left-color: var(--red);
+}
+
+tr[data-group="suggested"] td:first-child {
+  border-left: 3px dashed var(--gold);
+}
+
+tr[data-group="approved"] td:first-child {
+  border-left-color: var(--gold);
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.legend span {
+  padding-left: 8px;
+  border-left: 3px solid var(--red);
+}
+
+.legend .mark-suggested {
+  border-left: 3px dashed var(--gold);
+}
+
+.legend .mark-approved {
+  border-left-color: var(--gold);
+}
+
+button,
+select,
+input,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  padding: 7px 14px;
+  background: transparent;
+  border: 1px solid var(--control);
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: var(--text);
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.primary {
+  background: var(--text);
+  border-color: var(--text);
+  color: var(--page);
+}
+
+select,
+input,
+textarea {
+  padding: 7px 10px;
+  background: var(--page);
+  border: 1px solid var(--control);
+  border-radius: 6px;
+}
+
+label {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  max-width: 100%;
+  color: var(--muted);
+}
+
+/* A select is as wide as its longest option; on a phone it must shrink to the screen. */
+select {
+  min-width: 0;
+  max-width: 100%;
+  color: var(--text);
+}
+
+.toolbar,
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.filters {
+  margin: 16px 0 10px;
+}
+
+.filters button[aria-pressed="true"] {
+  border-color: var(--gold);
+  box-shadow: inset 0 0 0 1px var(--gold);
+}
+
+.link-button {
+  border: none;
+  background: none;
+  padding: 0;
+  margin-right: 8px;
+  text-decoration: underline;
+  text-decoration-color: var(--gold);
+  text-underline-offset: 3px;
+}
+
+/* Worklist beside the detail panel on wide screens, one above the other on narrow ones. */
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 28px;
+  align-items: start;
+}
+
+.details {
+  position: sticky;
+  top: 16px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  padding: 4px 20px 20px;
+  background: var(--surface);
+  border-radius: 4px;
+}
+
+.details h2 {
+  margin-top: 16px;
+}
+
+.details th {
+  background: var(--raised);
+}
+
+.empty-details {
+  padding: 20px;
+  border: 1px dashed var(--seam);
+  border-radius: 4px;
+}
+
+.quotes {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.quotes li {
+  margin: 12px 0;
+  padding-left: 14px;
+  border-left: 2px solid var(--seam);
+}
+
+.quotes .message-id {
+  display: block;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 16px;
+  font-size: 14px;
+}
+
+.facts dt {
+  color: var(--muted);
+}
+
+.facts dd {
+  margin: 0;
+}
+
+/* Chat: the conversation with its composer beside the processing panel. */
+.chat-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 28px;
+  align-items: start;
+  margin-top: 16px;
+}
+
+.conversation {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 150px);
+  min-height: 520px;
+  border: 1px solid var(--seam);
+  border-radius: 4px;
+}
+
+/* column-reverse starts the scroll at the bottom and keeps the newest message in view. */
+.timeline {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column-reverse;
+}
+
+.timeline ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.timeline li {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--seam);
+}
+
+.timeline-empty {
+  flex: 1;
+  margin: 0;
+  padding: 20px;
+}
+
+.message-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 0;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.message-meta time {
+  color: var(--muted);
+}
+
+.message-text {
+  margin: 2px 0 0;
+  max-width: 68ch;
+  font-size: 18px;
+  white-space: pre-wrap;
+}
+
+.composer {
+  display: grid;
+  gap: 10px;
+  padding: 14px 20px 16px;
+  background: var(--surface);
+  border-top: 1px solid var(--seam);
+}
+
+.composer-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  align-items: center;
+}
+
+.message-field {
+  display: grid;
+  gap: 6px;
+}
+
+.composer textarea {
+  width: 100%;
+  resize: vertical;
+  font-family: var(--serif);
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.composer .error {
+  margin: 0;
+}
+
+.hint {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.process-panel {
+  position: sticky;
+  top: 16px;
+  padding: 4px 20px 20px;
+  background: var(--surface);
+  border-radius: 4px;
+}
+
+.process-panel h2 {
+  margin-top: 16px;
+}
+
+/* A snapshot is dashed until it has been processed into a run. */
+.snapshot {
+  margin-top: 20px;
+  padding-left: 14px;
+  border-left: 3px dashed var(--gold);
+}
+
+.snapshot.final {
+  border-left-style: solid;
+}
+
+summary {
+  cursor: pointer;
+}
+
+pre {
+  max-height: 240px;
+  overflow: auto;
+  padding: 10px 12px;
+  background: var(--page);
+  border-radius: 4px;
+  font-family: var(--serif);
+  font-size: 14px;
+  white-space: pre-wrap;
+}
+
+.open-run {
+  font-weight: 650;
+}
+
+.run-list {
+  list-style: none;
+  padding: 0;
+  font-size: 14px;
+}
+
+.run-list li {
+  margin: 6px 0;
+}
+
+/* Introduction: a worked example, the three-step flow and what works today. */
+.intro {
+  max-width: 1080px;
+}
+
+.intro h1 {
+  font-size: 40px;
+  margin-top: 24px;
+}
+
+.intro .lede {
+  font-size: 18px;
+}
+
+.example {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  gap: 40px;
+  margin: 32px 0;
+  padding: 8px 28px 24px;
+  background: var(--surface);
+  border-radius: 4px;
+}
+
+.example h2 {
+  font-size: 18px;
+  margin-top: 20px;
+}
+
+.example blockquote {
+  margin: 0;
+  padding-left: 16px;
+  border-left: 2px solid var(--seam);
+  font-size: 21px;
+}
+
+.questions dt {
+  font-weight: 650;
+  margin-top: 14px;
+}
+
+.questions dd {
+  margin: 4px 0 0;
+  color: var(--muted);
+  max-width: 64ch;
+}
+
+.example .run-state {
+  margin-top: 24px;
+}
+
+.steps {
+  padding-left: 0;
+  list-style: none;
+  counter-reset: step;
+  max-width: 72ch;
+}
+
+.steps li {
+  counter-increment: step;
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  margin: 14px 0;
+}
+
+.steps li::before {
+  content: counter(step);
+  color: var(--gold);
+  font-size: 21px;
+  font-stretch: 125%;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.intro .toolbar {
+  gap: 24px;
+  font-weight: 650;
+}
+
+.status-list {
+  padding-left: 20px;
+  max-width: 72ch;
+}
+
+.status-list li {
+  margin: 6px 0;
+}
+
+@media (max-width: 1100px) {
+  .workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .details {
+    position: static;
+    max-height: none;
+  }
+
+  .chat-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .conversation {
+    height: 75vh;
+    min-height: 440px;
+  }
+
+  .process-panel {
+    position: static;
+  }
+}
+
+@media (max-width: 800px) {
+  .example {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    padding: 4px 18px 20px;
+  }
+
+  .intro h1 {
+    font-size: 30px;
+  }
+}
+
+@media (max-width: 640px) {
+  main {
+    padding: 16px 16px 48px;
+  }
+
+  .app-bar {
+    padding: 10px 16px;
+  }
+
+  .mode-switch a {
+    padding: 6px 14px;
+  }
+
+  h1 {
+    font-size: 24px;
+  }
+}

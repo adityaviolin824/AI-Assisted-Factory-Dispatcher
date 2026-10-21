@@ -1,0 +1,28 @@
+[project]
+name = "sweaterco-project-env"
+version = "0.1.0"
+description = "Env for testing our subcontractor"
+requires-python = "==3.13.14"
+dependencies = [
+    "fastapi[standard-no-fastapi-cloud-cli]>=0.147.0",
+    "langchain",
+    "langchain-openai",
+    "langgraph",
+    "langgraph-checkpoint-sqlite>=3.1.2",
+    "langsmith",
+    "pandas",
+    "pydantic",
+    "python-dotenv",
+    "streamlit>=1.65.0",
+]
+
+[dependency-groups]
+dev = [
+    "gradio>=6.30.0",
+    "ipykernel",
+    "jupyterlab",
+]
+
+[tool.uv]
+package = false
+python-downloads = "never"

@@ -1,0 +1,26 @@
+R01 [08:02] Chen: ORD-017 — 800 cardigans for TrendCart, due Apr 10. Cheapest shop that can still make Apr 10.
+R02 [08:06] Priya: Please place ORD-095: 800 hoodies for Bright Basics, due Apr 26. Fastest turnaround.
+R03 [08:11] Boss: Allocate ORD-040, fastest possible. Also allocate ORD-036, cheapest shop that makes its due date.
+R04 [08:15] Ravi: Finance asks: what price did we quote TrendCart on ORD-017?
+R05 [08:19] Mei: ORD-010 — 1000 cardigans for Cotton Club, due Apr 25. Same instruction as 040: fastest possible.
+R06 [08:24] Chen: FreshStart says they have some spare capacity Thursday.
+R07 [08:28] Boss: ORD-108, 2000 scarves, Harbor Knits, Apr 03. Move it now.
+R08 [08:30] Ravi: Speed priority?
+R09 [08:31] Boss: Yes.
+R10 [08:36] Ravi: ORD-096 — 1000 beanies, TrendCart, due Apr 17.
+R11 [08:38] Boss: Normal priority. Cheapest feasible.
+R12 [08:42] Priya: Can someone place ORD-062? 2000 scarves, Bright Basics, due Apr 08.
+R13 [08:44] Mei: Wait on that one — the customer might push the date. I'll confirm after the call.
+R14 [08:49] Mei: ORD-024, 300 vests, Loom & Leaf, Apr 15. Quick turnaround needed.
+R15 [08:51] Chen: Fastest workshop excluding QuickStitch.
+R16 [08:55] Chen: Don't allocate based on memory. Use actual metrics.
+R17 [08:59] Ravi: ORD-036 is paused. Customer hasn't approved the colour.
+R18 [09:01] Priya: So no allocation for 036 yet.
+R19 [09:04] Mei: ORD-005 — 500 scarves, TrendCart, Apr 20. Normal priority.
+R20 [09:07] Chen: Put 005 somewhere sensible. Cost matters more than shaving off a day.
+R21 [09:11] Priya: ORD-095 has been cancelled by the customer. Do not allocate.
+R22 [09:14] Ravi: ORD-035 isn't ready. Waiting for fabric confirmation.
+R23 [09:18] Ravi: ORD-082 — 600 beanies for TrendCart, due May 01. Cheapest shop that makes the date.
+R24 [09:21] Chen: Please allocate ORD-035: 300 beanies for Loom & Leaf, due Apr 29.
+R25 [09:24] Priya: Can split if no one shop has enough capacity.
+R26 [09:28] Mei: Please allocate ORD-041: 600 beanies for Harbor Knits, due Apr 21. Normal priority.

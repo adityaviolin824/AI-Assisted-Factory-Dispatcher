@@ -1,0 +1,3915 @@
+{
+  "dataset": "Synthetic extended dispatch: conversation and edge cases, 100 tasks",
+  "version": 1,
+  "created_date": "2026-10-19",
+  "message_date": "2026-04-01",
+  "dispatch_date": "2026-04-01",
+  "target": {
+    "task_cases": 100,
+    "feasible_recommendations": 85,
+    "exception_cases": 15
+  },
+  "source": "New synthetic order rows; supplied workshop profiles reused unchanged.",
+  "evaluation_boundary": "Authored expected interpretations and offline feasibility; no model accuracy or paid processing result.",
+  "cases": [
+    {
+      "case_id": "CASE-001",
+      "order_row_id": "ORD-201",
+      "scenario": "Complete request with varied wording",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0002",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-201",
+        "due_date": "2026-04-14",
+        "preference": "none",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-002",
+      "order_row_id": "ORD-202",
+      "scenario": "Complete request with varied wording",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0003",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-202",
+        "due_date": "2026-04-15",
+        "preference": "fastest",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-003",
+      "order_row_id": "ORD-203",
+      "scenario": "Complete request with varied wording",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0004",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-203",
+        "due_date": "2026-04-13",
+        "preference": "cheapest",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-004",
+      "order_row_id": "ORD-204",
+      "scenario": "Complete request with varied wording",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0005",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-204",
+        "due_date": "2026-04-14",
+        "preference": "quality",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-005",
+      "order_row_id": "ORD-205",
+      "scenario": "Complete request with varied wording",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0006",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-205",
+        "due_date": "2026-04-15",
+        "preference": "none",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-006",
+      "order_row_id": "ORD-206",
+      "scenario": "Complete request with varied wording",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0007",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-206",
+        "due_date": "2026-04-13",
+        "preference": "fastest",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-007",
+      "order_row_id": "ORD-207",
+      "scenario": "Complete request with varied wording",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0008",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-207",
+        "due_date": "2026-04-14",
+        "preference": "cheapest",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-008",
+      "order_row_id": "ORD-208",
+      "scenario": "Complete request with varied wording",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0009",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-208",
+        "due_date": "2026-04-15",
+        "preference": "quality",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-009",
+      "order_row_id": "ORD-209",
+      "scenario": "Complete request with varied wording",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0010",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-209",
+        "due_date": "2026-04-13",
+        "preference": "none",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-010",
+      "order_row_id": "ORD-210",
+      "scenario": "Complete request with varied wording",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0011",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-210",
+        "due_date": "2026-04-14",
+        "preference": "fastest",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-011",
+      "order_row_id": "ORD-211",
+      "scenario": "Complete request with varied wording",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0012",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-211",
+        "due_date": "2026-04-17",
+        "preference": "cheapest",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-012",
+      "order_row_id": "ORD-212",
+      "scenario": "Complete request with varied wording",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0013",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-212",
+        "due_date": "2026-04-15",
+        "preference": "quality",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-013",
+      "order_row_id": "ORD-213",
+      "scenario": "Complete request with varied wording",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0014",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-213",
+        "due_date": "2026-04-16",
+        "preference": "none",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-014",
+      "order_row_id": "ORD-214",
+      "scenario": "Complete request with varied wording",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0015",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-214",
+        "due_date": "2026-04-17",
+        "preference": "fastest",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-015",
+      "order_row_id": "ORD-215",
+      "scenario": "Complete request with varied wording",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0016",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-215",
+        "due_date": "2026-04-15",
+        "preference": "cheapest",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-016",
+      "order_row_id": "ORD-216",
+      "scenario": "Request completed by a clear follow-up",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0017",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0018",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-216",
+        "due_date": "2026-04-16",
+        "preference": "quality",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-017",
+      "order_row_id": "ORD-217",
+      "scenario": "Request completed by a clear follow-up",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0019",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0020",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-217",
+        "due_date": "2026-04-17",
+        "preference": "none",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-018",
+      "order_row_id": "ORD-218",
+      "scenario": "Request completed by a clear follow-up",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0021",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0022",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-218",
+        "due_date": "2026-04-15",
+        "preference": "fastest",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-019",
+      "order_row_id": "ORD-219",
+      "scenario": "Request completed by a clear follow-up",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0023",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0024",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-219",
+        "due_date": "2026-04-16",
+        "preference": "cheapest",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-020",
+      "order_row_id": "ORD-220",
+      "scenario": "Request completed by a clear follow-up",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0025",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0026",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-220",
+        "due_date": "2026-04-17",
+        "preference": "quality",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-021",
+      "order_row_id": "ORD-221",
+      "scenario": "Request completed by a clear follow-up",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0028",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0029",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-221",
+        "due_date": "2026-04-17",
+        "preference": "none",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-022",
+      "order_row_id": "ORD-222",
+      "scenario": "Request completed by a clear follow-up",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0030",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0031",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-222",
+        "due_date": "2026-04-18",
+        "preference": "fastest",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-023",
+      "order_row_id": "ORD-223",
+      "scenario": "Request completed by a clear follow-up",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0032",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0033",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-223",
+        "due_date": "2026-04-19",
+        "preference": "cheapest",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-024",
+      "order_row_id": "ORD-224",
+      "scenario": "Request completed by a clear follow-up",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0034",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0035",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-224",
+        "due_date": "2026-04-17",
+        "preference": "quality",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-025",
+      "order_row_id": "ORD-225",
+      "scenario": "Request completed by a clear follow-up",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0036",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0037",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-225",
+        "due_date": "2026-04-18",
+        "preference": "none",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-026",
+      "order_row_id": "ORD-226",
+      "scenario": "Request completed by a clear follow-up",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0039",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0040",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-226",
+        "due_date": "2026-04-19",
+        "preference": "fastest",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-027",
+      "order_row_id": "ORD-227",
+      "scenario": "Request completed by a clear follow-up",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0041",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0042",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-227",
+        "due_date": "2026-04-17",
+        "preference": "cheapest",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-028",
+      "order_row_id": "ORD-228",
+      "scenario": "Request completed by a clear follow-up",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0043",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0044",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-228",
+        "due_date": "2026-04-18",
+        "preference": "quality",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-029",
+      "order_row_id": "ORD-229",
+      "scenario": "Request completed by a clear follow-up",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0045",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0046",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-229",
+        "due_date": "2026-04-19",
+        "preference": "none",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-030",
+      "order_row_id": "ORD-230",
+      "scenario": "Request completed by a clear follow-up",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0047",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0048",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-230",
+        "due_date": "2026-04-17",
+        "preference": "fastest",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-031",
+      "order_row_id": "ORD-231",
+      "scenario": "Confirmed preference, exclusion or delivery-date correction",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0050",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0051",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-231",
+        "due_date": "2026-04-20",
+        "preference": "quality",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-032",
+      "order_row_id": "ORD-232",
+      "scenario": "Confirmed preference, exclusion or delivery-date correction",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0052",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0053",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-232",
+        "due_date": "2026-04-21",
+        "preference": "quality",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-033",
+      "order_row_id": "ORD-233",
+      "scenario": "Confirmed preference, exclusion or delivery-date correction",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0054",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0055",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-233",
+        "due_date": "2026-04-19",
+        "preference": "none",
+        "requested_workshop": null,
+        "excluded_workshops": [
+          "W3"
+        ],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-034",
+      "order_row_id": "ORD-234",
+      "scenario": "Confirmed preference, exclusion or delivery-date correction",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0056",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0057",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-234",
+        "due_date": "2026-04-20",
+        "preference": "quality",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-035",
+      "order_row_id": "ORD-235",
+      "scenario": "Confirmed preference, exclusion or delivery-date correction",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0058",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0059",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-235",
+        "due_date": "2026-04-21",
+        "preference": "cheapest",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-036",
+      "order_row_id": "ORD-236",
+      "scenario": "Confirmed preference, exclusion or delivery-date correction",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0060",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0061",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-236",
+        "due_date": "2026-04-19",
+        "preference": "quality",
+        "requested_workshop": null,
+        "excluded_workshops": [
+          "W4"
+        ],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-037",
+      "order_row_id": "ORD-237",
+      "scenario": "Confirmed preference, exclusion or delivery-date correction",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0062",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0063",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-237",
+        "due_date": "2026-04-20",
+        "preference": "quality",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-038",
+      "order_row_id": "ORD-238",
+      "scenario": "Confirmed preference, exclusion or delivery-date correction",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0064",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0065",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-238",
+        "due_date": "2026-04-21",
+        "preference": "fastest",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-039",
+      "order_row_id": "ORD-239",
+      "scenario": "Confirmed preference, exclusion or delivery-date correction",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0066",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0067",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-239",
+        "due_date": "2026-04-19",
+        "preference": "cheapest",
+        "requested_workshop": null,
+        "excluded_workshops": [
+          "W3"
+        ],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-040",
+      "order_row_id": "ORD-240",
+      "scenario": "Confirmed preference, exclusion or delivery-date correction",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0068",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0069",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-240",
+        "due_date": "2026-04-20",
+        "preference": "quality",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-041",
+      "order_row_id": "ORD-241",
+      "scenario": "Confirmed preference, exclusion or delivery-date correction",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0070",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0071",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-241",
+        "due_date": "2026-04-23",
+        "preference": "none",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-042",
+      "order_row_id": "ORD-242",
+      "scenario": "Confirmed preference, exclusion or delivery-date correction",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0072",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0073",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-242",
+        "due_date": "2026-04-21",
+        "preference": "fastest",
+        "requested_workshop": null,
+        "excluded_workshops": [
+          "W3"
+        ],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-043",
+      "order_row_id": "ORD-243",
+      "scenario": "Confirmed preference, exclusion or delivery-date correction",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0074",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0075",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-243",
+        "due_date": "2026-04-22",
+        "preference": "quality",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-044",
+      "order_row_id": "ORD-244",
+      "scenario": "Confirmed preference, exclusion or delivery-date correction",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0076",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0077",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-244",
+        "due_date": "2026-04-23",
+        "preference": "quality",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-045",
+      "order_row_id": "ORD-245",
+      "scenario": "Confirmed preference, exclusion or delivery-date correction",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0078",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0079",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-245",
+        "due_date": "2026-04-21",
+        "preference": "none",
+        "requested_workshop": null,
+        "excluded_workshops": [
+          "W3"
+        ],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-046",
+      "order_row_id": "ORD-246",
+      "scenario": "Interleaved requests with separate follow-ups",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0080",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0082",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-246",
+        "due_date": "2026-04-22",
+        "preference": "fastest",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-047",
+      "order_row_id": "ORD-247",
+      "scenario": "Interleaved requests with separate follow-ups",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0081",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0083",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-247",
+        "due_date": "2026-04-23",
+        "preference": "cheapest",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-048",
+      "order_row_id": "ORD-248",
+      "scenario": "Interleaved requests with separate follow-ups",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0084",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0086",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-248",
+        "due_date": "2026-04-21",
+        "preference": "quality",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-049",
+      "order_row_id": "ORD-249",
+      "scenario": "Interleaved requests with separate follow-ups",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0085",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0087",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-249",
+        "due_date": "2026-04-22",
+        "preference": "none",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-050",
+      "order_row_id": "ORD-250",
+      "scenario": "Interleaved requests with separate follow-ups",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0088",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0090",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-250",
+        "due_date": "2026-04-23",
+        "preference": "fastest",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-051",
+      "order_row_id": "ORD-251",
+      "scenario": "Interleaved requests with separate follow-ups",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0089",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0091",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-251",
+        "due_date": "2026-04-23",
+        "preference": "cheapest",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-052",
+      "order_row_id": "ORD-252",
+      "scenario": "Interleaved requests with separate follow-ups",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0092",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0094",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-252",
+        "due_date": "2026-04-24",
+        "preference": "quality",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-053",
+      "order_row_id": "ORD-253",
+      "scenario": "Interleaved requests with separate follow-ups",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0093",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0095",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-253",
+        "due_date": "2026-04-25",
+        "preference": "none",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-054",
+      "order_row_id": "ORD-254",
+      "scenario": "Interleaved requests with separate follow-ups",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0096",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0098",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-254",
+        "due_date": "2026-04-23",
+        "preference": "fastest",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-055",
+      "order_row_id": "ORD-255",
+      "scenario": "Interleaved requests with separate follow-ups",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0097",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0099",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-255",
+        "due_date": "2026-04-24",
+        "preference": "cheapest",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-056",
+      "order_row_id": "ORD-256",
+      "scenario": "Interleaved requests with separate follow-ups",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0100",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0102",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-256",
+        "due_date": "2026-04-25",
+        "preference": "quality",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-057",
+      "order_row_id": "ORD-257",
+      "scenario": "Interleaved requests with separate follow-ups",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0101",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0103",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-257",
+        "due_date": "2026-04-23",
+        "preference": "none",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-058",
+      "order_row_id": "ORD-258",
+      "scenario": "Interleaved requests with separate follow-ups",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0104",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0106",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-258",
+        "due_date": "2026-04-24",
+        "preference": "fastest",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-059",
+      "order_row_id": "ORD-259",
+      "scenario": "Interleaved requests with separate follow-ups",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0105",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0107",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-259",
+        "due_date": "2026-04-25",
+        "preference": "cheapest",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-060",
+      "order_row_id": "ORD-260",
+      "scenario": "Order reference retained across a short acknowledgement",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0108",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-260",
+        "due_date": "2026-04-23",
+        "preference": "quality",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-061",
+      "order_row_id": "ORD-261",
+      "scenario": "Relative delivery deadline resolved from 1 April 2026",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0110",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-261",
+        "due_date": "2026-04-10",
+        "preference": "fastest",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-062",
+      "order_row_id": "ORD-262",
+      "scenario": "Relative delivery deadline resolved from 1 April 2026",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0111",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-262",
+        "due_date": "2026-04-10",
+        "preference": "fastest",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-063",
+      "order_row_id": "ORD-263",
+      "scenario": "Relative delivery deadline resolved from 1 April 2026",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0112",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-263",
+        "due_date": "2026-04-10",
+        "preference": "fastest",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-064",
+      "order_row_id": "ORD-264",
+      "scenario": "Relative delivery deadline resolved from 1 April 2026",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0113",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-264",
+        "due_date": "2026-04-10",
+        "preference": "fastest",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-065",
+      "order_row_id": "ORD-265",
+      "scenario": "Relative delivery deadline resolved from 1 April 2026",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0114",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-265",
+        "due_date": "2026-04-03",
+        "preference": "fastest",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-066",
+      "order_row_id": "ORD-266",
+      "scenario": "Relative delivery deadline resolved from 1 April 2026",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0115",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-266",
+        "due_date": "2026-04-30",
+        "preference": "fastest",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-067",
+      "order_row_id": "ORD-267",
+      "scenario": "Relative delivery deadline resolved from 1 April 2026",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0116",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-267",
+        "due_date": "2026-04-30",
+        "preference": "cheapest",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-068",
+      "order_row_id": "ORD-268",
+      "scenario": "Relative delivery deadline resolved from 1 April 2026",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0117",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-268",
+        "due_date": "2026-04-30",
+        "preference": "quality",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-069",
+      "order_row_id": "ORD-269",
+      "scenario": "Relative delivery deadline resolved from 1 April 2026",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0118",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-269",
+        "due_date": "2026-05-31",
+        "preference": "none",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-070",
+      "order_row_id": "ORD-270",
+      "scenario": "Dispatch timing leaves the CSV delivery deadline intact",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0119",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-270",
+        "due_date": null,
+        "preference": "fastest",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-071",
+      "order_row_id": "ORD-271",
+      "scenario": "Explicit eligible destination or exclusion",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0120",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-271",
+        "due_date": "2026-04-29",
+        "preference": "cheapest",
+        "requested_workshop": "W8",
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-072",
+      "order_row_id": "ORD-272",
+      "scenario": "Explicit eligible destination or exclusion",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0121",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-272",
+        "due_date": "2026-04-27",
+        "preference": "quality",
+        "requested_workshop": "W4",
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-073",
+      "order_row_id": "ORD-273",
+      "scenario": "Explicit eligible destination or exclusion",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0122",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-273",
+        "due_date": "2026-04-28",
+        "preference": "none",
+        "requested_workshop": null,
+        "excluded_workshops": [
+          "W1",
+          "W3"
+        ],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-074",
+      "order_row_id": "ORD-274",
+      "scenario": "Explicit eligible destination or exclusion",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0123",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-274",
+        "due_date": "2026-04-29",
+        "preference": "fastest",
+        "requested_workshop": "W2",
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-075",
+      "order_row_id": "ORD-275",
+      "scenario": "Explicit eligible destination or exclusion",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0124",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-275",
+        "due_date": "2026-04-27",
+        "preference": "cheapest",
+        "requested_workshop": "W8",
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-076",
+      "order_row_id": "ORD-276",
+      "scenario": "Explicit eligible destination or exclusion",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0125",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-276",
+        "due_date": "2026-04-28",
+        "preference": "quality",
+        "requested_workshop": null,
+        "excluded_workshops": [
+          "W4"
+        ],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-077",
+      "order_row_id": "ORD-277",
+      "scenario": "Explicit eligible destination or exclusion",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0126",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-277",
+        "due_date": "2026-04-29",
+        "preference": "none",
+        "requested_workshop": "W5",
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-078",
+      "order_row_id": "ORD-278",
+      "scenario": "Explicit eligible destination or exclusion",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0127",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-278",
+        "due_date": "2026-04-27",
+        "preference": "fastest",
+        "requested_workshop": null,
+        "excluded_workshops": [
+          "W1"
+        ],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-079",
+      "order_row_id": "ORD-279",
+      "scenario": "Exactly at FreshStart batch cap",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0128",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-279",
+        "due_date": "2026-04-28",
+        "preference": "cheapest",
+        "requested_workshop": "W8",
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-080",
+      "order_row_id": "ORD-280",
+      "scenario": "Explicit eligible destination or exclusion",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0129",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-280",
+        "due_date": "2026-04-29",
+        "preference": "quality",
+        "requested_workshop": "W6",
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-081",
+      "order_row_id": "ORD-281",
+      "scenario": "Two independent jobs in one source message",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0130",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-281",
+        "due_date": "2026-04-29",
+        "preference": "none",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-082",
+      "order_row_id": "ORD-282",
+      "scenario": "Two independent jobs in one source message",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0130",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-282",
+        "due_date": "2026-04-30",
+        "preference": "fastest",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-083",
+      "order_row_id": "ORD-283",
+      "scenario": "Two independent jobs in one source message",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0131",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-283",
+        "due_date": "2026-05-01",
+        "preference": "cheapest",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-084",
+      "order_row_id": "ORD-284",
+      "scenario": "Two independent jobs in one source message",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0131",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-284",
+        "due_date": "2026-04-29",
+        "preference": "quality",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-085",
+      "order_row_id": "ORD-285",
+      "scenario": "Short confirmation after a targeted preference question",
+      "expected_outcome": "recommendation",
+      "messages": [
+        {
+          "message_id": "L0132",
+          "kind": "request"
+        },
+        {
+          "message_id": "L0133",
+          "kind": "follow_up"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-285",
+        "due_date": "2026-04-30",
+        "preference": "quality",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-086",
+      "order_row_id": "ORD-286",
+      "scenario": "Delivery deadline already passed",
+      "expected_outcome": "deadline_passed",
+      "messages": [
+        {
+          "message_id": "L0134",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-286",
+        "due_date": "2026-03-31",
+        "preference": "fastest",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-087",
+      "order_row_id": "ORD-287",
+      "scenario": "Delivery due on the dispatch date",
+      "expected_outcome": "deadline_passed",
+      "messages": [
+        {
+          "message_id": "L0135",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-287",
+        "due_date": "2026-04-01",
+        "preference": "cheapest",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-088",
+      "order_row_id": "ORD-288",
+      "scenario": "Future deadline cannot be met even before new allocations",
+      "expected_outcome": "review_required",
+      "messages": [
+        {
+          "message_id": "L0136",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-288",
+        "due_date": "2026-04-02",
+        "preference": "quality",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-089",
+      "order_row_id": "ORD-289",
+      "scenario": "Requested workshop is suspended",
+      "expected_outcome": "review_required",
+      "messages": [
+        {
+          "message_id": "L0137",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-289",
+        "due_date": "2026-05-01",
+        "preference": "none",
+        "requested_workshop": "W7",
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-090",
+      "order_row_id": "ORD-290",
+      "scenario": "Requested workshop cannot make TOPS",
+      "expected_outcome": "review_required",
+      "messages": [
+        {
+          "message_id": "L0138",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-290",
+        "due_date": "2026-04-29",
+        "preference": "fastest",
+        "requested_workshop": "W4",
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-091",
+      "order_row_id": "ORD-291",
+      "scenario": "Requested workshop batch cap exceeded",
+      "expected_outcome": "review_required",
+      "messages": [
+        {
+          "message_id": "L0139",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-291",
+        "due_date": "2026-05-02",
+        "preference": "cheapest",
+        "requested_workshop": "W8",
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-092",
+      "order_row_id": "ORD-292",
+      "scenario": "Splitting a full order across workshops is unsupported",
+      "expected_outcome": "review_required",
+      "messages": [
+        {
+          "message_id": "L0140",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-292",
+        "due_date": "2026-05-03",
+        "preference": "quality",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": true,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": true
+      }
+    },
+    {
+      "case_id": "CASE-093",
+      "order_row_id": "ORD-293",
+      "scenario": "Numeric budget is not a supported allocation field",
+      "expected_outcome": "needs_clarification",
+      "messages": [
+        {
+          "message_id": "L0141",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-293",
+        "due_date": "2026-05-01",
+        "preference": "none",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [
+          "Total production budget must not exceed 100."
+        ],
+        "missing_details": [
+          "Resolve the numeric budget constraint before allocation."
+        ],
+        "doubts_to_clarify": [],
+        "information_sufficient": false
+      }
+    },
+    {
+      "case_id": "CASE-094",
+      "order_row_id": "ORD-294",
+      "scenario": "Explicit piece count contradicts the order CSV",
+      "expected_outcome": "needs_clarification",
+      "messages": [
+        {
+          "message_id": "L0142",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-294",
+        "due_date": "2026-05-02",
+        "preference": "fastest",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [
+          "Chat requests 1250 pieces but the order CSV records 250."
+        ],
+        "missing_details": [
+          "The stated quantity conflicts with orders.csv."
+        ],
+        "doubts_to_clarify": [],
+        "information_sufficient": false
+      }
+    },
+    {
+      "case_id": "CASE-095",
+      "order_row_id": "ORD-295",
+      "scenario": "Proposed delivery-date change is not confirmed",
+      "expected_outcome": "needs_clarification",
+      "messages": [
+        {
+          "message_id": "L0143",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-295",
+        "due_date": null,
+        "preference": "cheapest",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [
+          "Confirm whether the proposed delivery date has been approved."
+        ],
+        "information_sufficient": false
+      }
+    },
+    {
+      "case_id": "CASE-096",
+      "order_row_id": "ORD-296",
+      "scenario": "Written order ID does not exist in this fixture",
+      "expected_outcome": "needs_clarification",
+      "messages": [
+        {
+          "message_id": "L0144",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": "ORD-9999",
+        "due_date": "2026-04-20",
+        "preference": "quality",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [
+          "valid order ID"
+        ],
+        "doubts_to_clarify": [],
+        "information_sufficient": false
+      }
+    },
+    {
+      "case_id": "CASE-097",
+      "order_row_id": "ORD-297",
+      "scenario": "Confirmed cancellation must not become an allocation",
+      "expected_outcome": "needs_clarification",
+      "messages": [
+        {
+          "message_id": "L0145",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "unclear",
+        "order_id": "ORD-297",
+        "due_date": null,
+        "preference": "none",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [
+          "Record the cancellation; do not allocate."
+        ],
+        "doubts_to_clarify": [],
+        "information_sufficient": false
+      }
+    },
+    {
+      "case_id": "CASE-098",
+      "order_row_id": "ORD-298",
+      "scenario": "Production approval is paused",
+      "expected_outcome": "needs_clarification",
+      "messages": [
+        {
+          "message_id": "L0146",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "unclear",
+        "order_id": "ORD-298",
+        "due_date": null,
+        "preference": "fastest",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [
+          "Release approval is missing; do not allocate."
+        ],
+        "doubts_to_clarify": [],
+        "information_sufficient": false
+      }
+    },
+    {
+      "case_id": "CASE-099",
+      "order_row_id": "ORD-299",
+      "scenario": "Vague request has no order identity",
+      "expected_outcome": "needs_clarification",
+      "messages": [
+        {
+          "message_id": "L0147",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "allocation",
+        "order_id": null,
+        "due_date": null,
+        "preference": "cheapest",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [
+          "order ID"
+        ],
+        "doubts_to_clarify": [],
+        "information_sufficient": false
+      }
+    },
+    {
+      "case_id": "CASE-100",
+      "order_row_id": "ORD-300",
+      "scenario": "Historical workshop assignment is not supplied",
+      "expected_outcome": "reference",
+      "messages": [
+        {
+          "message_id": "L0148",
+          "kind": "request"
+        }
+      ],
+      "expected": {
+        "intent": "question",
+        "order_id": "ORD-300",
+        "due_date": null,
+        "preference": "quality",
+        "requested_workshop": null,
+        "excluded_workshops": [],
+        "wants_split": false,
+        "unhandled_constraints": [],
+        "missing_details": [],
+        "doubts_to_clarify": [],
+        "information_sufficient": false
+      }
+    }
+  ],
+  "messages": [
+    {
+      "message_id": "L0001",
+      "raw_text": "R001 [08:01] Chen: Morning team. Please keep each batch tied to its order number.",
+      "expected_kind": "non_task",
+      "case_ids": []
+    },
+    {
+      "message_id": "L0002",
+      "raw_text": "R002 [08:02] Ravi: Please allocate ORD-201, 120 crewneck sweater pieces for Maple & Co. Delivery due Apr 14. Normal priority. Use the recorded delivery deadline.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-001"
+      ]
+    },
+    {
+      "message_id": "L0003",
+      "raw_text": "R003 [08:03] Mei: Find an outside workshop for ORD-202, 180 hoodie pieces for Bright Basics; back by Apr 15. Choose the fastest eligible workshop that meets delivery.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-002"
+      ]
+    },
+    {
+      "message_id": "L0004",
+      "raw_text": "R004 [08:04] Anika: ORD-203, 240 polo shirt pieces for Harbor Knits needs an outside workshop. Deliver by Apr 13. Choose the cheapest eligible workshop that meets delivery.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-003"
+      ]
+    },
+    {
+      "message_id": "L0005",
+      "raw_text": "R005 [08:05] Luis: Can you place ORD-204, 90 scarf pieces for Loom & Leaf with an eligible workshop? Delivery due Apr 14. Prioritize the lowest defect rate among eligible on-time workshops.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-004"
+      ]
+    },
+    {
+      "message_id": "L0006",
+      "raw_text": "R006 [08:06] Chen: Farm out the complete ORD-205 batch: 360 pieces, Vest, TrendCart. Must be back by Apr 15. Normal priority. Use the recorded delivery deadline.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-005"
+      ]
+    },
+    {
+      "message_id": "L0007",
+      "raw_text": "R007 [08:07] Ravi: Please allocate ORD-206, 120 crewneck sweater pieces for Cotton Club. Delivery due Apr 13. Choose the fastest eligible workshop that meets delivery.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-006"
+      ]
+    },
+    {
+      "message_id": "L0008",
+      "raw_text": "R008 [08:08] Mei: Find an outside workshop for ORD-207, 180 hoodie pieces for Northwind Apparel; back by Apr 14. Choose the cheapest eligible workshop that meets delivery.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-007"
+      ]
+    },
+    {
+      "message_id": "L0009",
+      "raw_text": "R009 [08:09] Anika: ORD-208, 120 beanie pieces for UrbanThread needs an outside workshop. Deliver by Apr 15. Prioritize the lowest defect rate among eligible on-time workshops.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-008"
+      ]
+    },
+    {
+      "message_id": "L0010",
+      "raw_text": "R010 [08:10] Luis: Can you place ORD-209, 300 cardigan pieces for Maple & Co with an eligible workshop? Delivery due Apr 13. Normal priority. Use the recorded delivery deadline.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-009"
+      ]
+    },
+    {
+      "message_id": "L0011",
+      "raw_text": "R011 [08:11] Chen: Farm out the complete ORD-210 batch: 360 pieces, Vest, Bright Basics. Must be back by Apr 14. Choose the fastest eligible workshop that meets delivery.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-010"
+      ]
+    },
+    {
+      "message_id": "L0012",
+      "raw_text": "R012 [08:12] Ravi: Please allocate ORD-211, 120 crewneck sweater pieces for Harbor Knits. Delivery due Apr 17. Choose the cheapest eligible workshop that meets delivery.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-011"
+      ]
+    },
+    {
+      "message_id": "L0013",
+      "raw_text": "R013 [08:13] Mei: Find an outside workshop for ORD-212, 150 scarf pieces for Loom & Leaf; back by Apr 15. Prioritize the lowest defect rate among eligible on-time workshops.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-012"
+      ]
+    },
+    {
+      "message_id": "L0014",
+      "raw_text": "R014 [08:14] Anika: ORD-213, 240 polo shirt pieces for TrendCart needs an outside workshop. Deliver by Apr 16. Normal priority. Use the recorded delivery deadline.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-013"
+      ]
+    },
+    {
+      "message_id": "L0015",
+      "raw_text": "R015 [08:15] Luis: Can you place ORD-214, 300 cardigan pieces for Cotton Club with an eligible workshop? Delivery due Apr 17. Choose the fastest eligible workshop that meets delivery.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-014"
+      ]
+    },
+    {
+      "message_id": "L0016",
+      "raw_text": "R016 [08:16] Chen: Farm out the complete ORD-215 batch: 360 pieces, Vest, Northwind Apparel. Must be back by Apr 15. Choose the cheapest eligible workshop that meets delivery.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-015"
+      ]
+    },
+    {
+      "message_id": "L0017",
+      "raw_text": "R017 [08:17] Ravi: Please allocate ORD-216, 60 beanie pieces for UrbanThread. Delivery due Apr 16. I will confirm the workshop preference next.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-016"
+      ]
+    },
+    {
+      "message_id": "L0018",
+      "raw_text": "R018 [08:18] Mei: ORD-216: Prioritize the lowest defect rate among eligible on-time workshops.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-016"
+      ]
+    },
+    {
+      "message_id": "L0019",
+      "raw_text": "R019 [08:19] Anika: Please allocate ORD-217, 180 hoodie pieces for Maple & Co. Delivery due Apr 17. I will confirm the workshop preference next.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-017"
+      ]
+    },
+    {
+      "message_id": "L0020",
+      "raw_text": "R020 [08:20] Luis: For that batch, Normal priority. Use the recorded delivery deadline.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-017"
+      ]
+    },
+    {
+      "message_id": "L0021",
+      "raw_text": "R021 [08:21] Chen: Please allocate ORD-218, 240 polo shirt pieces for Bright Basics. Delivery due Apr 15. I will confirm the workshop preference next.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-018"
+      ]
+    },
+    {
+      "message_id": "L0022",
+      "raw_text": "R022 [08:22] Ravi: ORD-218: Choose the fastest eligible workshop that meets delivery.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-018"
+      ]
+    },
+    {
+      "message_id": "L0023",
+      "raw_text": "R023 [08:23] Mei: Please allocate ORD-219, 300 cardigan pieces for Harbor Knits. Delivery due Apr 16. I will confirm the workshop preference next.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-019"
+      ]
+    },
+    {
+      "message_id": "L0024",
+      "raw_text": "R024 [08:24] Anika: For that batch, Choose the cheapest eligible workshop that meets delivery.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-019"
+      ]
+    },
+    {
+      "message_id": "L0025",
+      "raw_text": "R025 [08:25] Luis: Please allocate ORD-220, 90 scarf pieces for Loom & Leaf. Delivery due Apr 17. I will confirm the workshop preference next.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-020"
+      ]
+    },
+    {
+      "message_id": "L0026",
+      "raw_text": "R026 [08:26] Chen: ORD-220: Prioritize the lowest defect rate among eligible on-time workshops.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-020"
+      ]
+    },
+    {
+      "message_id": "L0027",
+      "raw_text": "R027 [08:27] Ravi: Thanks, noted.",
+      "expected_kind": "non_task",
+      "case_ids": []
+    },
+    {
+      "message_id": "L0028",
+      "raw_text": "R028 [08:28] Mei: Please allocate ORD-221, 120 crewneck sweater pieces for TrendCart. Delivery due Apr 17. I will confirm the workshop preference next.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-021"
+      ]
+    },
+    {
+      "message_id": "L0029",
+      "raw_text": "R029 [08:29] Anika: For that batch, Normal priority. Use the recorded delivery deadline.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-021"
+      ]
+    },
+    {
+      "message_id": "L0030",
+      "raw_text": "R030 [08:30] Luis: Please allocate ORD-222, 180 hoodie pieces for Cotton Club. Delivery due Apr 18. I will confirm the workshop preference next.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-022"
+      ]
+    },
+    {
+      "message_id": "L0031",
+      "raw_text": "R031 [08:31] Chen: ORD-222: Choose the fastest eligible workshop that meets delivery.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-022"
+      ]
+    },
+    {
+      "message_id": "L0032",
+      "raw_text": "R032 [08:32] Ravi: Please allocate ORD-223, 240 polo shirt pieces for Northwind Apparel. Delivery due Apr 19. I will confirm the workshop preference next.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-023"
+      ]
+    },
+    {
+      "message_id": "L0033",
+      "raw_text": "R033 [08:33] Mei: For that batch, Choose the cheapest eligible workshop that meets delivery.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-023"
+      ]
+    },
+    {
+      "message_id": "L0034",
+      "raw_text": "R034 [08:34] Anika: Please allocate ORD-224, 120 beanie pieces for UrbanThread. Delivery due Apr 17. I will confirm the workshop preference next.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-024"
+      ]
+    },
+    {
+      "message_id": "L0035",
+      "raw_text": "R035 [08:35] Luis: ORD-224: Prioritize the lowest defect rate among eligible on-time workshops.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-024"
+      ]
+    },
+    {
+      "message_id": "L0036",
+      "raw_text": "R036 [08:36] Chen: Please allocate ORD-225, 360 vest pieces for Maple & Co. Delivery due Apr 18. I will confirm the workshop preference next.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-025"
+      ]
+    },
+    {
+      "message_id": "L0037",
+      "raw_text": "R037 [08:37] Ravi: For that batch, Normal priority. Use the recorded delivery deadline.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-025"
+      ]
+    },
+    {
+      "message_id": "L0038",
+      "raw_text": "R038 [08:38] Mei: Thanks, noted.",
+      "expected_kind": "non_task",
+      "case_ids": []
+    },
+    {
+      "message_id": "L0039",
+      "raw_text": "R039 [08:39] Anika: Please allocate ORD-226, 120 crewneck sweater pieces for Bright Basics. Delivery due Apr 19. I will confirm the workshop preference next.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-026"
+      ]
+    },
+    {
+      "message_id": "L0040",
+      "raw_text": "R040 [08:40] Luis: ORD-226: Choose the fastest eligible workshop that meets delivery.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-026"
+      ]
+    },
+    {
+      "message_id": "L0041",
+      "raw_text": "R041 [08:41] Chen: Please allocate ORD-227, 180 hoodie pieces for Harbor Knits. Delivery due Apr 17. I will confirm the workshop preference next.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-027"
+      ]
+    },
+    {
+      "message_id": "L0042",
+      "raw_text": "R042 [08:42] Ravi: For that batch, Choose the cheapest eligible workshop that meets delivery.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-027"
+      ]
+    },
+    {
+      "message_id": "L0043",
+      "raw_text": "R043 [08:43] Mei: Please allocate ORD-228, 150 scarf pieces for Loom & Leaf. Delivery due Apr 18. I will confirm the workshop preference next.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-028"
+      ]
+    },
+    {
+      "message_id": "L0044",
+      "raw_text": "R044 [08:44] Anika: ORD-228: Prioritize the lowest defect rate among eligible on-time workshops.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-028"
+      ]
+    },
+    {
+      "message_id": "L0045",
+      "raw_text": "R045 [08:45] Luis: Please allocate ORD-229, 300 cardigan pieces for TrendCart. Delivery due Apr 19. I will confirm the workshop preference next.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-029"
+      ]
+    },
+    {
+      "message_id": "L0046",
+      "raw_text": "R046 [08:46] Chen: For that batch, Normal priority. Use the recorded delivery deadline.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-029"
+      ]
+    },
+    {
+      "message_id": "L0047",
+      "raw_text": "R047 [08:47] Ravi: Please allocate ORD-230, 360 vest pieces for Cotton Club. Delivery due Apr 17. I will confirm the workshop preference next.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-030"
+      ]
+    },
+    {
+      "message_id": "L0048",
+      "raw_text": "R048 [08:48] Mei: ORD-230: Choose the fastest eligible workshop that meets delivery.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-030"
+      ]
+    },
+    {
+      "message_id": "L0049",
+      "raw_text": "R049 [08:49] Anika: Thanks, noted.",
+      "expected_kind": "non_task",
+      "case_ids": []
+    },
+    {
+      "message_id": "L0050",
+      "raw_text": "R050 [08:50] Luis: Allocate ORD-231, 120 crewneck sweater pieces for Northwind Apparel. Delivery due Apr 20. Cheapest feasible for now.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-031"
+      ]
+    },
+    {
+      "message_id": "L0051",
+      "raw_text": "R051 [08:51] Chen: Correction for ORD-231: replace cheapest with quality first. Lowest defect rate matters; keep the same deadline.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-031"
+      ]
+    },
+    {
+      "message_id": "L0052",
+      "raw_text": "R052 [08:52] Ravi: Allocate ORD-232, 60 beanie pieces for UrbanThread. The old delivery date was May 4. A confirmed update will follow. Prioritize the lowest defect rate among eligible on-time workshops.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-032"
+      ]
+    },
+    {
+      "message_id": "L0053",
+      "raw_text": "R053 [08:53] Mei: Confirmed update for ORD-232: delivery is Apr 21, replacing May 4. Please use this new deadline.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-032"
+      ]
+    },
+    {
+      "message_id": "L0054",
+      "raw_text": "R054 [08:54] Anika: Please allocate ORD-233, 240 polo shirt pieces for Maple & Co. Deliver by Apr 19. Normal priority. Use the recorded delivery deadline.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-033"
+      ]
+    },
+    {
+      "message_id": "L0055",
+      "raw_text": "R055 [08:55] Luis: One restriction for ORD-233: do not use W3. The rest stays the same.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-033"
+      ]
+    },
+    {
+      "message_id": "L0056",
+      "raw_text": "R056 [08:56] Chen: Allocate ORD-234, 300 cardigan pieces for Bright Basics. Delivery due Apr 20. Cheapest feasible for now.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-034"
+      ]
+    },
+    {
+      "message_id": "L0057",
+      "raw_text": "R057 [08:57] Ravi: Correction for ORD-234: replace cheapest with quality first. Lowest defect rate matters; keep the same deadline.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-034"
+      ]
+    },
+    {
+      "message_id": "L0058",
+      "raw_text": "R058 [08:58] Mei: Allocate ORD-235, 360 vest pieces for Harbor Knits. The old delivery date was May 4. A confirmed update will follow. Choose the cheapest eligible workshop that meets delivery.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-035"
+      ]
+    },
+    {
+      "message_id": "L0059",
+      "raw_text": "R059 [08:59] Anika: Confirmed update for ORD-235: delivery is Apr 21, replacing May 4. Please use this new deadline.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-035"
+      ]
+    },
+    {
+      "message_id": "L0060",
+      "raw_text": "R060 [09:00] Luis: Please allocate ORD-236, 90 scarf pieces for Loom & Leaf. Deliver by Apr 19. Prioritize the lowest defect rate among eligible on-time workshops.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-036"
+      ]
+    },
+    {
+      "message_id": "L0061",
+      "raw_text": "R061 [09:01] Chen: One restriction for ORD-236: do not use W4. The rest stays the same.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-036"
+      ]
+    },
+    {
+      "message_id": "L0062",
+      "raw_text": "R062 [09:02] Ravi: Allocate ORD-237, 180 hoodie pieces for TrendCart. Delivery due Apr 20. Cheapest feasible for now.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-037"
+      ]
+    },
+    {
+      "message_id": "L0063",
+      "raw_text": "R063 [09:03] Mei: Correction for ORD-237: replace cheapest with quality first. Lowest defect rate matters; keep the same deadline.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-037"
+      ]
+    },
+    {
+      "message_id": "L0064",
+      "raw_text": "R064 [09:04] Anika: Allocate ORD-238, 240 polo shirt pieces for Cotton Club. The old delivery date was May 4. A confirmed update will follow. Choose the fastest eligible workshop that meets delivery.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-038"
+      ]
+    },
+    {
+      "message_id": "L0065",
+      "raw_text": "R065 [09:05] Luis: Confirmed update for ORD-238: delivery is Apr 21, replacing May 4. Please use this new deadline.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-038"
+      ]
+    },
+    {
+      "message_id": "L0066",
+      "raw_text": "R066 [09:06] Chen: Please allocate ORD-239, 300 cardigan pieces for Northwind Apparel. Deliver by Apr 19. Choose the cheapest eligible workshop that meets delivery.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-039"
+      ]
+    },
+    {
+      "message_id": "L0067",
+      "raw_text": "R067 [09:07] Ravi: One restriction for ORD-239: do not use W3. The rest stays the same.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-039"
+      ]
+    },
+    {
+      "message_id": "L0068",
+      "raw_text": "R068 [09:08] Mei: Allocate ORD-240, 120 beanie pieces for UrbanThread. Delivery due Apr 20. Cheapest feasible for now.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-040"
+      ]
+    },
+    {
+      "message_id": "L0069",
+      "raw_text": "R069 [09:09] Anika: Correction for ORD-240: replace cheapest with quality first. Lowest defect rate matters; keep the same deadline.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-040"
+      ]
+    },
+    {
+      "message_id": "L0070",
+      "raw_text": "R070 [09:10] Luis: Allocate ORD-241, 120 crewneck sweater pieces for Maple & Co. The old delivery date was May 4. A confirmed update will follow. Normal priority. Use the recorded delivery deadline.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-041"
+      ]
+    },
+    {
+      "message_id": "L0071",
+      "raw_text": "R071 [09:11] Chen: Confirmed update for ORD-241: delivery is Apr 23, replacing May 4. Please use this new deadline.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-041"
+      ]
+    },
+    {
+      "message_id": "L0072",
+      "raw_text": "R072 [09:12] Ravi: Please allocate ORD-242, 180 hoodie pieces for Bright Basics. Deliver by Apr 21. Choose the fastest eligible workshop that meets delivery.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-042"
+      ]
+    },
+    {
+      "message_id": "L0073",
+      "raw_text": "R073 [09:13] Mei: One restriction for ORD-242: do not use W3. The rest stays the same.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-042"
+      ]
+    },
+    {
+      "message_id": "L0074",
+      "raw_text": "R074 [09:14] Anika: Allocate ORD-243, 240 polo shirt pieces for Harbor Knits. Delivery due Apr 22. Cheapest feasible for now.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-043"
+      ]
+    },
+    {
+      "message_id": "L0075",
+      "raw_text": "R075 [09:15] Luis: Correction for ORD-243: replace cheapest with quality first. Lowest defect rate matters; keep the same deadline.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-043"
+      ]
+    },
+    {
+      "message_id": "L0076",
+      "raw_text": "R076 [09:16] Chen: Allocate ORD-244, 150 scarf pieces for Loom & Leaf. The old delivery date was May 4. A confirmed update will follow. Prioritize the lowest defect rate among eligible on-time workshops.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-044"
+      ]
+    },
+    {
+      "message_id": "L0077",
+      "raw_text": "R077 [09:17] Ravi: Confirmed update for ORD-244: delivery is Apr 23, replacing May 4. Please use this new deadline.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-044"
+      ]
+    },
+    {
+      "message_id": "L0078",
+      "raw_text": "R078 [09:18] Mei: Please allocate ORD-245, 360 vest pieces for TrendCart. Deliver by Apr 21. Normal priority. Use the recorded delivery deadline.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-045"
+      ]
+    },
+    {
+      "message_id": "L0079",
+      "raw_text": "R079 [09:19] Anika: One restriction for ORD-245: do not use W3. The rest stays the same.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-045"
+      ]
+    },
+    {
+      "message_id": "L0080",
+      "raw_text": "R080 [09:20] Luis: Allocate ORD-246, 120 crewneck sweater pieces for Cotton Club. Back by Apr 22. Preference to follow.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-046"
+      ]
+    },
+    {
+      "message_id": "L0081",
+      "raw_text": "R081 [09:21] Chen: Also allocate ORD-247, 180 hoodie pieces for Northwind Apparel. Due Apr 23. This is a different order.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-047"
+      ]
+    },
+    {
+      "message_id": "L0082",
+      "raw_text": "R082 [09:22] Ravi: ORD-246: Choose the fastest eligible workshop that meets delivery.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-046"
+      ]
+    },
+    {
+      "message_id": "L0083",
+      "raw_text": "R083 [09:23] Mei: ORD-247: Choose the cheapest eligible workshop that meets delivery.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-047"
+      ]
+    },
+    {
+      "message_id": "L0084",
+      "raw_text": "R084 [09:24] Anika: Allocate ORD-248, 60 beanie pieces for UrbanThread. Back by Apr 21. Preference to follow.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-048"
+      ]
+    },
+    {
+      "message_id": "L0085",
+      "raw_text": "R085 [09:25] Luis: Also allocate ORD-249, 300 cardigan pieces for Maple & Co. Due Apr 22. This is a different order.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-049"
+      ]
+    },
+    {
+      "message_id": "L0086",
+      "raw_text": "R086 [09:26] Chen: ORD-248: Prioritize the lowest defect rate among eligible on-time workshops.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-048"
+      ]
+    },
+    {
+      "message_id": "L0087",
+      "raw_text": "R087 [09:27] Ravi: ORD-249: Normal priority. Use the recorded delivery deadline.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-049"
+      ]
+    },
+    {
+      "message_id": "L0088",
+      "raw_text": "R088 [09:28] Mei: Allocate ORD-250, 360 vest pieces for Bright Basics. Back by Apr 23. Preference to follow.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-050"
+      ]
+    },
+    {
+      "message_id": "L0089",
+      "raw_text": "R089 [09:29] Anika: Also allocate ORD-251, 120 crewneck sweater pieces for Harbor Knits. Due Apr 23. This is a different order.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-051"
+      ]
+    },
+    {
+      "message_id": "L0090",
+      "raw_text": "R090 [09:30] Luis: ORD-250: Choose the fastest eligible workshop that meets delivery.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-050"
+      ]
+    },
+    {
+      "message_id": "L0091",
+      "raw_text": "R091 [09:31] Chen: ORD-251: Choose the cheapest eligible workshop that meets delivery.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-051"
+      ]
+    },
+    {
+      "message_id": "L0092",
+      "raw_text": "R092 [09:32] Ravi: Allocate ORD-252, 90 scarf pieces for Loom & Leaf. Back by Apr 24. Preference to follow.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-052"
+      ]
+    },
+    {
+      "message_id": "L0093",
+      "raw_text": "R093 [09:33] Mei: Also allocate ORD-253, 240 polo shirt pieces for TrendCart. Due Apr 25. This is a different order.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-053"
+      ]
+    },
+    {
+      "message_id": "L0094",
+      "raw_text": "R094 [09:34] Anika: ORD-252: Prioritize the lowest defect rate among eligible on-time workshops.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-052"
+      ]
+    },
+    {
+      "message_id": "L0095",
+      "raw_text": "R095 [09:35] Luis: ORD-253: Normal priority. Use the recorded delivery deadline.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-053"
+      ]
+    },
+    {
+      "message_id": "L0096",
+      "raw_text": "R096 [09:36] Chen: Allocate ORD-254, 300 cardigan pieces for Cotton Club. Back by Apr 23. Preference to follow.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-054"
+      ]
+    },
+    {
+      "message_id": "L0097",
+      "raw_text": "R097 [09:37] Ravi: Also allocate ORD-255, 360 vest pieces for Northwind Apparel. Due Apr 24. This is a different order.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-055"
+      ]
+    },
+    {
+      "message_id": "L0098",
+      "raw_text": "R098 [09:38] Mei: ORD-254: Choose the fastest eligible workshop that meets delivery.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-054"
+      ]
+    },
+    {
+      "message_id": "L0099",
+      "raw_text": "R099 [09:39] Anika: ORD-255: Choose the cheapest eligible workshop that meets delivery.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-055"
+      ]
+    },
+    {
+      "message_id": "L0100",
+      "raw_text": "R100 [09:40] Luis: Allocate ORD-256, 120 beanie pieces for UrbanThread. Back by Apr 25. Preference to follow.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-056"
+      ]
+    },
+    {
+      "message_id": "L0101",
+      "raw_text": "R101 [09:41] Chen: Also allocate ORD-257, 180 hoodie pieces for Maple & Co. Due Apr 23. This is a different order.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-057"
+      ]
+    },
+    {
+      "message_id": "L0102",
+      "raw_text": "R102 [09:42] Ravi: ORD-256: Prioritize the lowest defect rate among eligible on-time workshops.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-056"
+      ]
+    },
+    {
+      "message_id": "L0103",
+      "raw_text": "R103 [09:43] Mei: ORD-257: Normal priority. Use the recorded delivery deadline.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-057"
+      ]
+    },
+    {
+      "message_id": "L0104",
+      "raw_text": "R104 [09:44] Anika: Allocate ORD-258, 240 polo shirt pieces for Bright Basics. Back by Apr 24. Preference to follow.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-058"
+      ]
+    },
+    {
+      "message_id": "L0105",
+      "raw_text": "R105 [09:45] Luis: Also allocate ORD-259, 300 cardigan pieces for Harbor Knits. Due Apr 25. This is a different order.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-059"
+      ]
+    },
+    {
+      "message_id": "L0106",
+      "raw_text": "R106 [09:46] Chen: ORD-258: Choose the fastest eligible workshop that meets delivery.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-058"
+      ]
+    },
+    {
+      "message_id": "L0107",
+      "raw_text": "R107 [09:47] Ravi: ORD-259: Choose the cheapest eligible workshop that meets delivery.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-059"
+      ]
+    },
+    {
+      "message_id": "L0108",
+      "raw_text": "R108 [09:48] Mei: Allocate ORD-260, 150 scarf pieces for Loom & Leaf. Delivery due Apr 23. Prioritize the lowest defect rate among eligible on-time workshops.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-060"
+      ]
+    },
+    {
+      "message_id": "L0109",
+      "raw_text": "R109 [09:49] Anika: Thanks. That instruction is confirmed.",
+      "expected_kind": "non_task",
+      "case_ids": []
+    },
+    {
+      "message_id": "L0110",
+      "raw_text": "R110 [09:50] Luis: Allocate ORD-261, 120 crewneck sweater pieces for TrendCart. The customer needs delivery by the end of next week. Choose the fastest eligible workshop that meets delivery.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-061"
+      ]
+    },
+    {
+      "message_id": "L0111",
+      "raw_text": "R111 [09:51] Chen: Allocate ORD-262, 180 hoodie pieces for Cotton Club. The customer needs delivery by the end of next week. Choose the fastest eligible workshop that meets delivery.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-062"
+      ]
+    },
+    {
+      "message_id": "L0112",
+      "raw_text": "R112 [09:52] Ravi: Allocate ORD-263, 240 polo shirt pieces for Northwind Apparel. The customer needs delivery by the end of next week. Choose the fastest eligible workshop that meets delivery.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-063"
+      ]
+    },
+    {
+      "message_id": "L0113",
+      "raw_text": "R113 [09:53] Mei: Allocate ORD-264, 60 beanie pieces for UrbanThread. The customer needs delivery by the end of next week. Choose the fastest eligible workshop that meets delivery.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-064"
+      ]
+    },
+    {
+      "message_id": "L0114",
+      "raw_text": "R114 [09:54] Anika: Allocate ORD-265, 30 scarf pieces for Maple & Co. The customer needs delivery by the end of this week. Choose the fastest eligible workshop that meets delivery.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-065"
+      ]
+    },
+    {
+      "message_id": "L0115",
+      "raw_text": "R115 [09:55] Luis: Allocate ORD-266, 120 crewneck sweater pieces for Bright Basics. The customer needs delivery by the end of this month. Choose the fastest eligible workshop that meets delivery.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-066"
+      ]
+    },
+    {
+      "message_id": "L0116",
+      "raw_text": "R116 [09:56] Chen: Allocate ORD-267, 180 hoodie pieces for Harbor Knits. The customer needs delivery by the end of this month. Choose the cheapest eligible workshop that meets delivery.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-067"
+      ]
+    },
+    {
+      "message_id": "L0117",
+      "raw_text": "R117 [09:57] Ravi: Allocate ORD-268, 90 scarf pieces for Loom & Leaf. The customer needs delivery by the end of this month. Prioritize the lowest defect rate among eligible on-time workshops.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-068"
+      ]
+    },
+    {
+      "message_id": "L0118",
+      "raw_text": "R118 [09:58] Mei: Allocate ORD-269, 300 cardigan pieces for TrendCart. The customer needs delivery by the end of next month. Normal priority. Use the recorded delivery deadline.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-069"
+      ]
+    },
+    {
+      "message_id": "L0119",
+      "raw_text": "R119 [09:59] Anika: Send out ORD-270, 360 vest pieces for Cotton Club today. Keep the delivery due date in the order record. Choose the fastest eligible workshop that meets delivery.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-070"
+      ]
+    },
+    {
+      "message_id": "L0120",
+      "raw_text": "R120 [10:00] Luis: Allocate ORD-271, 120 crewneck sweater pieces for Northwind Apparel. Delivery due Apr 29. Send the whole batch to W8. Choose the cheapest eligible workshop that meets delivery.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-071"
+      ]
+    },
+    {
+      "message_id": "L0121",
+      "raw_text": "R121 [10:01] Chen: Allocate ORD-272, 120 beanie pieces for UrbanThread. Delivery due Apr 27. Send the whole batch to W4. Prioritize the lowest defect rate among eligible on-time workshops.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-072"
+      ]
+    },
+    {
+      "message_id": "L0122",
+      "raw_text": "R122 [10:02] Ravi: Allocate ORD-273, 240 polo shirt pieces for Maple & Co. Delivery due Apr 28. Exclude W1 and W3. Normal priority. Use the recorded delivery deadline.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-073"
+      ]
+    },
+    {
+      "message_id": "L0123",
+      "raw_text": "R123 [10:03] Mei: Allocate ORD-274, 300 cardigan pieces for Bright Basics. Delivery due Apr 29. Send the whole batch to W2. Choose the fastest eligible workshop that meets delivery.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-074"
+      ]
+    },
+    {
+      "message_id": "L0124",
+      "raw_text": "R124 [10:04] Anika: Allocate ORD-275, 180 vest pieces for Harbor Knits. Delivery due Apr 27. Send the whole batch to W8. Choose the cheapest eligible workshop that meets delivery.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-075"
+      ]
+    },
+    {
+      "message_id": "L0125",
+      "raw_text": "R125 [10:05] Luis: Allocate ORD-276, 150 scarf pieces for Loom & Leaf. Delivery due Apr 28. Exclude W4. Prioritize the lowest defect rate among eligible on-time workshops.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-076"
+      ]
+    },
+    {
+      "message_id": "L0126",
+      "raw_text": "R126 [10:06] Chen: Allocate ORD-277, 180 hoodie pieces for TrendCart. Delivery due Apr 29. Send the whole batch to W5. Normal priority. Use the recorded delivery deadline.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-077"
+      ]
+    },
+    {
+      "message_id": "L0127",
+      "raw_text": "R127 [10:07] Ravi: Allocate ORD-278, 240 polo shirt pieces for Cotton Club. Delivery due Apr 27. Exclude W1. Choose the fastest eligible workshop that meets delivery.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-078"
+      ]
+    },
+    {
+      "message_id": "L0128",
+      "raw_text": "R128 [10:08] Mei: Allocate ORD-279, 300 cardigan pieces for Northwind Apparel. Delivery due Apr 28. Send the whole batch to W8. Choose the cheapest eligible workshop that meets delivery.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-079"
+      ]
+    },
+    {
+      "message_id": "L0129",
+      "raw_text": "R129 [10:09] Anika: Allocate ORD-280, 60 beanie pieces for UrbanThread. Delivery due Apr 29. Send the whole batch to W6. Prioritize the lowest defect rate among eligible on-time workshops.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-080"
+      ]
+    },
+    {
+      "message_id": "L0130",
+      "raw_text": "R130 [10:10] Luis: Allocate ORD-281, 120 crewneck sweater pieces for Maple & Co, delivery due Apr 29. Normal priority. Use the recorded delivery deadline. Also allocate ORD-282, 180 hoodie pieces for Bright Basics, delivery due Apr 30. Choose the fastest eligible workshop that meets delivery.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-081",
+        "CASE-082"
+      ]
+    },
+    {
+      "message_id": "L0131",
+      "raw_text": "R131 [10:11] Chen: Allocate ORD-283, 240 polo shirt pieces for Harbor Knits, delivery due May 1. Choose the cheapest eligible workshop that meets delivery. Also allocate ORD-284, 90 scarf pieces for Loom & Leaf, delivery due Apr 29. Prioritize the lowest defect rate among eligible on-time workshops.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-083",
+        "CASE-084"
+      ]
+    },
+    {
+      "message_id": "L0132",
+      "raw_text": "R132 [10:12] Ravi: Please allocate ORD-285, 360 vest pieces for TrendCart, due Apr 30. Should quality take priority for this batch?",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-085"
+      ]
+    },
+    {
+      "message_id": "L0133",
+      "raw_text": "R133 [10:13] Mei: Yes, lowest defect rate first for that batch. Keep the delivery deadline.",
+      "expected_kind": "follow_up",
+      "case_ids": [
+        "CASE-085"
+      ]
+    },
+    {
+      "message_id": "L0134",
+      "raw_text": "R134 [10:14] Anika: Allocate ORD-286, 120 crewneck sweater pieces for Cotton Club. Delivery was due Mar 31. No revised deadline has been approved.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-086"
+      ]
+    },
+    {
+      "message_id": "L0135",
+      "raw_text": "R135 [10:15] Luis: Please allocate ORD-287, 180 hoodie pieces for Northwind Apparel. Delivery is due today, Apr 1.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-087"
+      ]
+    },
+    {
+      "message_id": "L0136",
+      "raw_text": "R136 [10:16] Chen: Allocate ORD-288, 120 beanie pieces for UrbanThread. Deliver tomorrow, Apr 2. No late delivery has been authorized.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-088"
+      ]
+    },
+    {
+      "message_id": "L0137",
+      "raw_text": "R137 [10:17] Ravi: Allocate ORD-289, 300 cardigan pieces for Maple & Co to OldMill (W7). Delivery due May 1. Do not substitute another workshop without approval.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-089"
+      ]
+    },
+    {
+      "message_id": "L0138",
+      "raw_text": "R138 [10:18] Mei: Allocate ORD-290, 360 hoodie pieces for Bright Basics to Little Loom (W4). Delivery due Apr 29.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-090"
+      ]
+    },
+    {
+      "message_id": "L0139",
+      "raw_text": "R139 [10:19] Anika: Place the whole ORD-291 batch of 500 vests with FreshStart (W8). Deliver by May 2.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-091"
+      ]
+    },
+    {
+      "message_id": "L0140",
+      "raw_text": "R140 [10:20] Luis: Allocate ORD-292, 150 scarf pieces for Loom & Leaf. Split the batch equally between two workshops. Delivery due May 3.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-092"
+      ]
+    },
+    {
+      "message_id": "L0141",
+      "raw_text": "R141 [10:21] Chen: Allocate ORD-293, 240 polo shirt pieces for TrendCart. Total production cost must not exceed 100. Delivery due May 1.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-093"
+      ]
+    },
+    {
+      "message_id": "L0142",
+      "raw_text": "R142 [10:22] Ravi: Allocate ORD-294: 1250 cardigan pieces for Cotton Club. Delivery due May 2. This is the stated quantity, not a confirmed change to the order record.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-094"
+      ]
+    },
+    {
+      "message_id": "L0143",
+      "raw_text": "R143 [10:23] Mei: Please allocate ORD-295, 360 vest pieces for Northwind Apparel. The customer might move delivery to Apr 10, but has not approved that change. Which deadline applies needs confirmation.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-095"
+      ]
+    },
+    {
+      "message_id": "L0144",
+      "raw_text": "R144 [10:24] Anika: Please allocate ORD-9999, 180 hoodies, delivery due Apr 20. Check the order record first.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-096"
+      ]
+    },
+    {
+      "message_id": "L0145",
+      "raw_text": "R145 [10:25] Luis: The customer has cancelled ORD-297. Do not allocate or reserve workshop capacity for this order.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-097"
+      ]
+    },
+    {
+      "message_id": "L0146",
+      "raw_text": "R146 [10:26] Chen: Pause ORD-298. Fabric is not approved; do not allocate until release is confirmed.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-098"
+      ]
+    },
+    {
+      "message_id": "L0147",
+      "raw_text": "R147 [10:27] Ravi: Please farm out the blue sweaters for the usual customer. I do not have the order number yet.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-099"
+      ]
+    },
+    {
+      "message_id": "L0148",
+      "raw_text": "R148 [10:28] Mei: Which workshop handled ORD-300 last year? I am asking about history, not requesting a new allocation.",
+      "expected_kind": "request",
+      "case_ids": [
+        "CASE-100"
+      ]
+    },
+    {
+      "message_id": "L0149",
+      "raw_text": "R149 [10:29] Mei: End of this dispatch review. Thanks everyone.",
+      "expected_kind": "non_task",
+      "case_ids": []
+    }
+  ]
+}

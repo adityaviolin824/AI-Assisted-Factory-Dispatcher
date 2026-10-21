@@ -1,0 +1,79 @@
+flowchart TB
+    INPUT["Original messages<br/>One message may contain several jobs<br/>Several messages may describe one changing request"]
+    subgraph GRAPH["LANGGRAPH INTAKE - current batch stages; planned live clarification loop"]
+        START["start_run - CURRENT<br/>Create a fresh traceable run<br/>Exact requests may reuse cached answers"]
+        EXTRACT["extract_batch - CURRENT<br/>Read new messages with earlier context<br/>Context is not extracted again"]
+        LLM1["Interpretation LLM<br/>Propose jobs, intent and exact source quotes<br/>Identify non-task messages"]
+        CHECK{"Python source checks pass?<br/>Target coverage, exact quotes,<br/>duplicate items and written order references"}
+        INREVIEW["Intake review - CURRENT<br/>Retain original messages and reason<br/>Related uncertainty becomes allocation warnings"]
+        LINK["link_items - CURRENT<br/>Give each accepted job a task identity"]
+        KIND{"New request or follow-up?"}
+        NEW["Python creates a new task<br/>Message, item, task and order IDs stay separate"]
+        LLM2["Follow-up linking LLM<br/>Choose from code-collected candidates<br/>Return source evidence for the relationship"]
+        LINKCHECK{"Python validates link?<br/>Candidate identity and source evidence"}
+        CORRECT["Attach correction to existing task<br/>Keep original evidence; increase version<br/>Clear old verification before making a new plan"]
+        LINKREVIEW["Link review - CURRENT<br/>Keep unattached follow-up and possible target tasks<br/>Record uncertainty without holding original tasks"]
+        MORE{"after_link<br/>Unread messages remain?"}
+        VERIFY["verify_tasks - CURRENT<br/>After all batch messages are read and linked<br/>Assess each task's current version"]
+        LLM3["Verification LLM<br/>Propose intent, facts, constraints, preferences,<br/>workshop roles and missing-information questions"]
+        FACTCHECK["Python verifies proposed facts<br/>Written order identity and trusted lookup<br/>Source-supported dates and workshop instructions<br/>Current task/version and complete evidence"]
+        RESULT{"Task verification outcome?"}
+        READY["Ready for allocation checks<br/>Enough checked information<br/>Readiness does not mean assigned"]
+        CLARIFY["Missing facts or unresolved doubts<br/>Record specific questions and block readiness"]
+        TASKREVIEW["Rejected interpretation<br/>Save task/version, evidence and reason<br/>Unrelated valid tasks may continue"]
+        SAVE["save_outputs - CURRENT<br/>Every message, item and task needs an outcome"]
+        CHECKED["Pass same-run state to allocation<br/>Verified tasks and separate review records<br/>Incomplete processing is labelled in the plan"]
+        START --> EXTRACT --> LLM1 --> CHECK
+        CHECK -->|Yes| LINK --> KIND
+        CHECK -->|No| INREVIEW --> MORE
+        KIND -->|Request| NEW --> MORE
+        KIND -->|Follow-up| LLM2 --> LINKCHECK
+        LINKCHECK -->|Yes| CORRECT --> MORE
+        LINKCHECK -->|No| LINKREVIEW --> MORE
+        MORE -->|Yes| EXTRACT
+        MORE -->|No| VERIFY --> LLM3 --> FACTCHECK --> RESULT
+        RESULT -->|Accepted and sufficient| READY --> SAVE
+        RESULT -->|Accepted but incomplete| CLARIFY --> SAVE
+        RESULT -->|Untrusted assessment| TASKREVIEW --> SAVE
+        SAVE --> CHECKED
+    end
+    INPUT --> START
+    SOURCE[("Trusted order and workshop data<br/>Exact lookup; no invented identity or facts")]
+    SOURCE -.->|Provide order rows and known workshops| LLM3
+    SOURCE -.-> FACTCHECK
+    STATE[("CURRENT run files<br/>Input/settings manifest, tasks/versions,<br/>source evidence, reviews and model-call records")]
+    START -.-> STATE
+    CORRECT -.-> STATE
+    SAVE --> STATE
+    CHECKED --> ALLOC["Deterministic allocation detail<br/>Questions and review items are routed out first<br/>Related warnings can make a recommendation provisional"]
+
+    ASK["PLANNED: ask in originating channel<br/>or show dispatcher review question"]
+    PAUSE["PLANNED: LangGraph persistent wait<br/>Durable checkpoint and request workflow identity"]
+    REPLY["PLANNED: validate reply and link to same task<br/>Increase version; reverify current evidence"]
+    CLARIFY -.-> ASK
+    INREVIEW -.-> ASK
+    LINKREVIEW -.-> ASK
+    TASKREVIEW -.-> ASK
+    ASK --> PAUSE --> REPLY --> VERIFY
+
+    ERROR["Execution failure - CURRENT<br/>API, file or programming error stops the graph<br/>Saved progress can be inspected or previewed separately<br/>Manual rerun may reuse exact cached requests"]
+    EXTRACT -.->|Execution error| ERROR
+    LINK -.->|Execution error| ERROR
+    VERIFY -.->|Execution error| ERROR
+    ERROR -.-> STATE
+
+    classDef frontend fill:#e6f0ff,stroke:#3773b9,color:#142e51;
+    classDef langgraph fill:#eee7fb,stroke:#7750ad,color:#382454;
+    classDef llm fill:#f5eafa,stroke:#9867ac,color:#492752;
+    classDef code fill:#e1f3ed,stroke:#27806a,color:#163f35;
+    classDef human fill:#fff0d5,stroke:#b27a22,color:#563b15;
+    classDef store fill:#edf0f4,stroke:#718096,color:#293444;
+    classDef planned stroke-dasharray:5 4;
+    class INPUT,ASK,REPLY frontend;
+    class START,EXTRACT,LINK,MORE,VERIFY,SAVE,PAUSE langgraph;
+    class LLM1,LLM2,LLM3 llm;
+    class CHECK,KIND,NEW,LINKCHECK,CORRECT,FACTCHECK,RESULT,READY,ALLOC,ERROR code;
+    class INREVIEW,LINKREVIEW,CLARIFY,TASKREVIEW human;
+    class SOURCE,STATE,CHECKED store;
+    class ASK,PAUSE,REPLY planned;
+    style GRAPH fill:#f7f2ff,stroke:#7750ad,stroke-width:2px

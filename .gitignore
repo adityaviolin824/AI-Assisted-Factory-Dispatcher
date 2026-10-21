@@ -1,0 +1,149 @@
+# Local secrets. Keep example files with empty or fake values available to commit.
+.env
+.env.*
+*.env
+*.env.*
+.envrc
+!.env.example
+!.env.sample
+!.env.template
+.npmrc
+.npmrc.*
+.pypirc
+.netrc
+.pgpass
+.ssh/
+.gnupg/
+.aws/
+.azure/
+**/.config/gcloud/
+secrets/
+.secrets/
+secrets.json
+secrets.*.json
+credentials
+credentials.json
+credentials.*.json
+client_secret*.json
+service-account*.json
+service_account*.json
+**/.streamlit/secrets.toml
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.kdbx
+id_rsa*
+id_ed25519*
+id_ecdsa*
+id_dsa*
+
+# Nested repository metadata. Keep .gitignore and other shared Git configuration.
+# This does not convert an embedded repository into an ordinary source folder.
+**/.git
+*.git/
+.git-backup/
+.git.backup/
+*.bundle
+
+# Local backup copies can contain credentials and old repository history.
+backups/
+*.bak
+*.backup
+*.orig
+*.rej
+*~
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.7z
+*.rar
+
+# Python environments, compiled files and tool caches.
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.uv-cache/
+.cache/
+.tox/
+.nox/
+*.egg-info/
+
+# Installed JavaScript dependencies. Commit package manifests and lockfiles.
+node_modules/
+.npm/
+.next/
+out/
+dist/
+build/
+.turbo/
+.vercel/
+*.tsbuildinfo
+
+# Local run outputs, model response caches and generated documents.
+output/
+response-cache/
+plan-history/
+storage/
+exports/
+.ipynb_checkpoints/
+
+# Preserve the backend's own exclusions, including its old embedded repository.
+**/full_evaluation_suite/rag-eval-deepeval/
+demo_fastapi_backend/
+
+# Local application databases, including SQLite journal files.
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+
+# Test reports and logs.
+coverage/
+htmlcov/
+.coverage
+.coverage.*
+playwright-report/
+test-results/
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Local operating-system and editor files.
+.DS_Store
+._*
+Thumbs.db
+.idea/
+*.swp
+*.swo
+**/.claude/settings.local.json
+**/.claude/projects/
+**/.claude/history.jsonl
+**/.codex/config.toml
+
+# Preserve the existing local-only document and notebook exclusions.
+Interview-Preparation.md
+reference-documents/
+experimentation_notebooks/
+docs/public-repository-check.md
+docs/codebase-review-2026-10-19.md
+docs/deduplication-audit-2026-10-06.md
+docs/follow-up-linking-diagnosis-2026-10-14.md
+docs/archive
+
+
+# Source code, documentation, shared Git configuration, dependency lockfiles,
+# Dockerfiles, .dockerignore and Compose files remain available to commit.

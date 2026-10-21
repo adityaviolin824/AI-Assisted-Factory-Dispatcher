@@ -43,9 +43,9 @@ The agreed frontend direction is Next.js, React and TypeScript, with a readable 
 | Routing and allocation | Route tasks, check workshop rules, calculate comparisons and build a tentative shared plan. | A preview does not commit workshop workload or change the source CSVs. |
 | LangGraph | Run processing and allocation, then pause for dispatcher decisions; resume the same review. | A saved plan is different from an editable paused thread. |
 | Dispatcher review, existing code | Correct facts, choose workshops and recalculate a review after submitted edits; accepted edits are checkpointed. | This existing per-edit persistence is superseded as a product requirement. Do not wire frontend selections to it. |
-| Final approval, existing code | An empty `approve_all` labels and saves the previously calculated review. | The desired batch-approval behavior is not implemented: the current validator refuses edits combined with approval. No operational assignment database or live dispatch exists. |
-| FastAPI | Four endpoints read saved runs and show/answer paused reviews. | No chat-submission or processing-start endpoint yet. |
-| Verification | The latest recorded backend suite passed 123 offline tests on 20 October 2026. | Historical evidence, not a newly rerun test result or a model-accuracy score. |
+| Final approval | An empty `approve_all` labels and saves the previously calculated review. Since 21 October 2026, `"then": "finalize"` applies a whole batch of choices with one calculation, then approves and saves it with `changes` (rows that differ from the review shown). | A refused batch saves nothing. No operational assignment database or live dispatch exists. |
+| FastAPI | Five endpoints read saved runs and show, answer or finalize paused reviews; review reads create no checkpoint file (21 October 2026). | No chat-submission or processing-start endpoint yet. |
+| Verification | The latest recorded backend suite passed 127 offline tests on 21 October 2026. | Historical evidence, not a newly rerun test result or a model-accuracy score. |
 | Frontend | The Next.js app and read-only dispatcher are present. [BUILD_STEPS.md](frontend/BUILD_STEPS.md) records their earlier checks. | Operations and Introduction are currently placeholder source pages. This planning update implements neither interface nor a new API; chat remains required work. |
 | Existing mock chat | A Streamlit prototype already stores named participants' messages, shows shared history and exports stable snapshots. | It is the behavioral reference for the core chat frontend; its manual notebook handoff is not the completed connected journey. |
 
@@ -66,7 +66,8 @@ Read the [mock README](backend/experimentation_notebooks/mock_frontend/README.md
 | `GET /runs` | List saved runs, their labels and message counts. |
 | `GET /runs/{run_id}` | Read the original plan and the final dispatcher plan when one exists. `plan.workshop_profiles` already supplies the workshop dropdown data. |
 | `GET /reviews/{thread_id}` | Read a review waiting for dispatcher input. |
-| `POST /reviews/{thread_id}/answer` | Currently applies/checkpoints edits, or accepts an empty final approval. Returns the current review and any refusal. The latest target requires accepting the complete decision set and finalizing it in one submission; that is not supported yet. |
+| `POST /reviews/{thread_id}/answer` | Applies/checkpoints edits, or accepts an empty final approval. Returns the current review and any refusal. The frontend sends only the empty approval here. |
+| `POST /reviews/{thread_id}/finalize` | Accepts the complete decision set `{"decisions": [...]}` and finalizes it in one submission (21 October 2026), or refuses it with the reason and saves nothing. |
 
 Run IDs and thread IDs are different. A finished or unknown thread has no paused review and returns 404. On the last filesystem check, the API's configured output folder had saved plans but no paused review; editing tests therefore need a disposable paused fixture rather than a paid processing run.
 

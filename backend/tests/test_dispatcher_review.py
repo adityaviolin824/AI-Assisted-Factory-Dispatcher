@@ -17,6 +17,8 @@ What they prove:
 - finalize_review approves the shown allocations without planning again;
 - apply_answer applies a valid answer and refuses an invalid one with nothing changed, including when
   the order or workshop data or the dispatch date changed;
+- "finalize" applies a whole batch with one calculation, lists what changed and goes on to approval,
+  and refuses the batch when a decision is not applied or an accepted lateness grew;
 - every name the modules use is defined or imported.
 No model is called, and every network connection is refused.
 """
@@ -72,8 +74,8 @@ CHANGED = {
 NEW = {
     "dispatcher_review.dispatcher_plan": ["input_signature", "finalize_review"],
     "dispatcher_review.dispatcher_decisions": [
-        "DECISION_FIELDS", "REQUIRED_FIELDS", "FIELD_FORMS", "CHANGED_INPUTS", "verified_tasks_by_id",
-        "valid_field", "answer_problem", "apply_decision", "apply_answer"],
+        "DECISION_FIELDS", "REQUIRED_FIELDS", "FIELD_FORMS", "CHANGED_INPUTS", "CHANGE_MARKERS", "verified_tasks_by_id",
+        "valid_field", "answer_problem", "apply_decision", "apply_answer", "changed_rows"],
 }
 # Notebook 06's per-row approval code, which the modules leave out.
 DROPPED = ["approved_decision", "approve", "release"]
@@ -476,13 +478,50 @@ class ApplyAnswer(unittest.TestCase):
         self.assertIs(result[1], self.review)
         self.assertEqual(result[2:], ("approve_all", None))
 
+    def test_finalize_applies_every_decision_at_once_and_approves(self):
+        # One batch, calculated once: a workshop choice, a checked warning and accepted lateness together.
+        entries = [{"decision": "choose_workshop", "task_id": T8, "workshop_id": "W1"},
+                   {"decision": "warnings_checked", "task_id": T9, "row_ids": ["L0019"]},
+                   {"decision": "accept_late", "task_id": T12}]
+        decisions = no_decisions(self.run_dir)
+        with mock.patch.object(dispatcher_decisions, "build_dispatcher_plan", wraps=build_dispatcher_plan) as build:
+            applied, review, then, refusal = apply_answer(self.run_dir, decisions, self.review,
+                                                          answer(*entries, then="finalize"))
+        self.assertEqual(build.call_count, 1)
+        expected = no_decisions(self.run_dir)
+        choose_workshop(expected, self.tasks, T8, "W1")
+        warnings_checked(expected, self.tasks, T9, ["L0019"])
+        accept_late(expected, self.tasks, self.review, T12)
+        self.assertEqual((applied, then, refusal), (expected, "approve_all", None))
+        self.assertEqual(decisions, no_decisions(self.run_dir))  # applied to a copy
+        self.assertEqual(without(review, "created_at", "changes"),
+                         without(build_dispatcher_plan(self.run_dir, expected), "created_at"))
+        # changes lists every row whose outcome, workshop or delivery estimate differs from the shown review.
+        def summary(row):
+            return row["outcome"], row["workshop"], row["delivery_days"]
+        shown = {row["id"]: row for row in self.review["summary_rows"]}
+        self.assertEqual([change["id"] for change in review["changes"]],
+                         [row["id"] for row in review["summary_rows"] if summary(row) != summary(shown[row["id"]])])
+        changes = {change["id"]: change for change in review["changes"]}
+        self.assertEqual(changes[T8]["after"]["workshop"], "W1")
+        self.assertEqual((changes[T12]["before"]["outcome"], changes[T12]["after"]["outcome"]),
+                         ("review_required", "accepted_late"))
+        self.assertEqual(changes[T12]["after"]["reason"], next(row for row in review["summary_rows"] if row["id"] == T12)["reason"])
+
+    def test_finalize_refuses_lateness_that_grew(self):
+        # T12's late W5 option is accepted, but choosing W5 for T11 in the same batch makes T12 later.
+        entries = [{"decision": "accept_late", "task_id": T12},
+                   {"decision": "choose_workshop", "task_id": T11, "workshop_id": "W5"}]
+        self.assert_refused(answer(*entries, then="finalize"), f"Not applied: {T12}: Late: ", no_decisions(self.run_dir))
+
     def test_invalid_answers_are_refused_with_nothing_changed(self):
         choose = {"decision": "choose_workshop", "task_id": T8, "workshop_id": "W1"}
         cases = [
             ("not a dict", 'An answer must be {"decisions"'),
             ({"decisions": []}, 'An answer must be {"decisions"'),
             ({"decisions": [], "then": "review_again", "note": "x"}, 'An answer must be {"decisions"'),
-            (answer(then="save_draft"), "\"then\" must be \"review_again\" or \"approve_all\", not 'save_draft'"),
+            (answer(then="save_draft"),
+             "\"then\" must be \"review_again\", \"approve_all\" or \"finalize\", not 'save_draft'"),
             ({"decisions": "clear", "then": "review_again"}, '"decisions" must be a list'),
             (answer(choose, then="approve_all"), "Approve all takes no decisions"),
             (answer({"decision": "accept_late", "task_id": T12}, choose), "Send accept_late alone"),
@@ -508,6 +547,8 @@ class ApplyAnswer(unittest.TestCase):
             (answer({"decision": "accept_late", "task_id": T5}), f"{T5} has no allocation record in this review"),
             (answer({"decision": "accept_late", "task_id": T21}), f"{T21} has no late option in this review"),
             (answer({"decision": "choose_workshop", "task_id": T8, "workshop_id": "W99"}),
+             f"Not applied: {T8}: W99 is not a workshop."),
+            (answer({"decision": "choose_workshop", "task_id": T8, "workshop_id": "W99"}, then="finalize"),
              f"Not applied: {T8}: W99 is not a workshop."),
             (answer({"decision": "correct", "task_id": T10, "facts": {"order_id": "ORD-999"}}),
              f"Not applied: {T10}: ORD-999 is not in orders.csv."),

@@ -7,8 +7,8 @@
 # Came from:   notebook 06, Part 8b (show: Part 4a; PRINT_WIDTH: Part 1). The helpers take the
 #              decisions and the run's tasks as arguments instead of the notebook's globals, and every
 #              refusal is a ValueError. approve and release are gone: the dispatcher approves the whole
-#              shown review once. verified_tasks_by_id, answer_problem, valid_field, apply_decision and
-#              apply_answer are new.
+#              shown review once. verified_tasks_by_id, answer_problem, valid_field, apply_decision,
+#              apply_answer and changed_rows are new.
 # Reads:       the run folder's state.json (verified_tasks_by_id).
 # Writes:      only save_dispatcher_files: dispatcher-decisions.json and dispatcher-plan.json in the run
 #              folder, each with a copy in plan-history/.
@@ -43,6 +43,8 @@ FIELD_FORMS = {"facts": 'an object of text values, such as {"due_date": "2026-04
 # The refusal when the order or workshop data, or the dispatch date, changed while the review was paused.
 CHANGED_INPUTS = ("orders.csv, workshops.csv or the dispatch date changed after this review was calculated, "
                   "so its numbers no longer hold. Restore them, or process the chat again as a new run.")
+# The fields that mark a summary row as changed between two reviews (print_review's rule).
+CHANGE_MARKERS = ("outcome", "workshop", "delivery_days")
 
 
 def verified_tasks_by_id(run_dir):
@@ -131,20 +133,22 @@ def valid_field(field, value):
 def answer_problem(answer, tasks):
     """Return why an answer is refused before anything is applied, or None when its form is valid.
 
-    An answer is {"decisions": [...], "then": "review_again" or "approve_all"}. Approve all takes no
-    decisions, and accepted lateness comes alone, because any other decision can change the estimate
-    it accepts. The values themselves (facts, workshop IDs) are checked when the review is calculated.
+    An answer is {"decisions": [...], "then": "review_again", "approve_all" or "finalize"}. Approve all
+    takes no decisions. With review_again, accepted lateness comes alone, because any other decision can
+    change the estimate it accepts; finalize checks that estimate after the whole batch instead. The
+    values themselves (facts, workshop IDs) are checked when the review is calculated.
     """
     if not isinstance(answer, dict) or set(answer) != {"decisions", "then"}:
-        return 'An answer must be {"decisions": [...], "then": "review_again" or "approve_all"}.'
-    if answer["then"] not in ("review_again", "approve_all"):
-        return f'"then" must be "review_again" or "approve_all", not {answer["then"]!r}.'
+        return 'An answer must be {"decisions": [...], "then": "review_again", "approve_all" or "finalize"}.'
+    if answer["then"] not in ("review_again", "approve_all", "finalize"):
+        return f'"then" must be "review_again", "approve_all" or "finalize", not {answer["then"]!r}.'
     entries = answer["decisions"]
     if not isinstance(entries, list) or not all(isinstance(entry, dict) for entry in entries):
         return '"decisions" must be a list of decisions, each written as {"decision": ..., "task_id": ...}.'
     if answer["then"] == "approve_all" and entries:
         return "Approve all takes no decisions: send them with review_again, check the new review, then approve."
-    if len(entries) > 1 and any(entry.get("decision") == "accept_late" for entry in entries):
+    if (answer["then"] == "review_again" and len(entries) > 1
+            and any(entry.get("decision") == "accept_late" for entry in entries)):
         return "Send accept_late alone: other decisions can change the lateness it accepts."
     for entry in entries:
         name, task_id = entry.get("decision"), entry.get("task_id")
@@ -187,8 +191,12 @@ def apply_answer(run_dir, decisions, review, answer):
     3. "approve_all" approves the shown review as it is: nothing is calculated again.
     4. Otherwise apply every decision to a copy of the decisions and calculate the review again. A
        decision the review cannot apply (decision_problems) refuses the whole answer.
+    5. "finalize" then goes on to approval with the new review, whose "changes" lists the rows that
+       differ from the shown one (changed_rows). Accepted lateness that the rest of the batch made
+       longer than accepted refuses the whole answer, so no accepted task silently stays in review.
     A refused answer returns the decisions and review unchanged, "review_again" and the reason; an
-    accepted one returns the new decisions and review, its "then" and None.
+    accepted one returns the new decisions and review, its next step ("approve_all" after finalize)
+    and None.
     """
     if review["input_signature"] != input_signature():
         return decisions, review, "review_again", CHANGED_INPUTS
@@ -209,7 +217,32 @@ def apply_answer(run_dir, decisions, review, answer):
         problems = "; ".join(f"{task_id}: {', '.join(issues)}"
                              for task_id, issues in new_review["decision_problems"].items())
         return decisions, review, "review_again", f"Not applied: {problems}."
-    return proposed, new_review, "review_again", None
+    if answer["then"] == "review_again":
+        return proposed, new_review, "review_again", None
+    late_ids = {entry["task_id"] for entry in answer["decisions"] if entry["decision"] == "accept_late"}
+    uncovered = [record for record in new_review["decisions"]
+                 if record["task_id"] in late_ids and record["status"] == "review_required"]
+    if uncovered:
+        reasons = "; ".join(f"{record['task_id']}: {record['reason']}" for record in uncovered)
+        return decisions, review, "review_again", f"Not applied: {reasons}"
+    new_review["changes"] = changed_rows(review, new_review)
+    return proposed, new_review, "approve_all", None
+
+
+def changed_rows(before, after):
+    """Return the rows of review after whose outcome, workshop or delivery estimate differ from review
+    before, in after's order, each with both versions and their reasons.
+    """
+    fields = (*CHANGE_MARKERS, "reason")
+    earlier = {row["id"]: row for row in before["summary_rows"]}
+    changes = []
+    for row in after["summary_rows"]:
+        old = earlier[row["id"]]
+        if any(old[field] != row[field] for field in CHANGE_MARKERS):
+            changes.append({"id": row["id"], "order_id": row["order_id"],
+                            "before": {field: old[field] for field in fields},
+                            "after": {field: row[field] for field in fields}})
+    return changes
 
 
 def open_blockers(tasks, result, row_id):

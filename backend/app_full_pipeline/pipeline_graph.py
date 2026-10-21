@@ -291,7 +291,7 @@ def paused_review(thread_id, checkpointer):
 def resume_graph(thread_id, answer, checkpointer):
     """Continue a paused run with the dispatcher's answer, until the next pause or the end.
 
-    answer is {"decisions": [...], "then": "review_again" or "approve_all"} (see
+    answer is {"decisions": [...], "then": "review_again", "approve_all" or "finalize"} (see
     dispatcher_decisions.apply_answer). Returns (graph_state, steps, thread_id, paused) as run_graph.
     A thread that is not paused raises ValueError: LangGraph would otherwise do nothing for a finished
     run and fail with a recursion error for an unknown thread ID.

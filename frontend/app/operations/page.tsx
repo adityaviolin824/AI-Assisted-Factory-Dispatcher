@@ -58,7 +58,8 @@ export default function ChatPage() {
       )}
       <div className="chat-layout">
         <section className="conversation" aria-label="Conversation">
-          {messages ? <ChatTimeline messages={messages} /> : <p className="timeline-empty muted">Loading messages...</p>}
+          {messages && <ChatTimeline messages={messages} />}
+          {!messages && <p className="timeline-empty muted">{error ? "No messages to show." : "Loading messages..."}</p>}
           <Composer onSent={addSent} />
         </section>
         <ProcessPanel messageCount={messages?.length ?? 0} />

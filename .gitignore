@@ -144,6 +144,11 @@ docs/deduplication-audit-2026-10-06.md
 docs/follow-up-linking-diagnosis-2026-10-14.md
 docs/archive
 
+# Local architecture working copies; the public diagrams live in README.md.
+/docs/product-workflow-architecture.md
+/docs/backend-architecture.md
+/docs/architecture-preview.html
+
 
 # Source code, documentation, shared Git configuration, dependency lockfiles,
 # Dockerfiles, .dockerignore and Compose files remain available to commit.

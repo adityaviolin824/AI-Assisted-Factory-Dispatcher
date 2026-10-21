@@ -26,7 +26,7 @@ export function outcomeLabel(outcome: string) {
 
 // The outcomes in which Python selected a workshop and reserved its queue time
 // (RESERVING in backend/dispatcher_review/dispatcher_plan.py).
-const SELECTED_OUTCOMES = ["recommendation", "dispatcher_choice", "accepted_late"];
+export const SELECTED_OUTCOMES = ["recommendation", "dispatcher_choice", "accepted_late"];
 
 export type Group = "attention" | "suggested" | "approved" | "info";
 

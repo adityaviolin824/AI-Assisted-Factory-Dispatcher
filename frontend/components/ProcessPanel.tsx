@@ -63,6 +63,7 @@ export default function ProcessPanel({ messageCount }: Props) {
     }
   }
 
+  // One primary button at a time: "Start processing" takes over while a snapshot waits for it.
   const waitingToStart = current?.processing === "not_started";
 
   return (

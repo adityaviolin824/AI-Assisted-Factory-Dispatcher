@@ -150,7 +150,14 @@ export type DispatcherEntry = {
   warnings_checked?: string[];
 };
 
+// One side of a changed row (dispatcher_decisions.changed_rows).
+export type RowState = { outcome: string; workshop: string | null; delivery_days: number | null; reason: string };
+
+// A row whose outcome, workshop or delivery estimate the dispatcher's batch changed.
+export type RowChange = { id: string; order_id: string | null; before: RowState; after: RowState };
+
 // A dispatcher review: a draft while the thread waits, or the final approved plan.
+// changes is only in a final plan approved together with the dispatcher's choices.
 export type Review = Plan & {
   source_run: string;
   status: string;
@@ -158,6 +165,7 @@ export type Review = Plan & {
   decision_problems: Record<string, string[]>;
   final_ids: string[];
   unresolved_ids: string[];
+  changes?: RowChange[];
 };
 
 export type RunDetails = { run_id: string; plan: Plan | null; dispatcher_plan: Review | null };

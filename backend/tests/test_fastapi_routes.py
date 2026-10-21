@@ -8,6 +8,9 @@ What they prove, on a run of the supplied chat file paused for the dispatcher in
 - GET /reviews/{thread_id} returns the paused review; POST /reviews/{thread_id}/answer applies an edit,
   returns apply_answer's own refusal message with nothing changed, and after approve_all returns the
   final review that was saved; a finished or unknown thread gets 404;
+- POST /reviews/{thread_id}/finalize refuses a batch with nothing changed, or applies every choice with
+  one calculation, saves the final review with what changed, and leaves no paused review;
+- before any run has paused, the review endpoints answer 404 and create no checkpoint file;
 - an answer that is not a JSON object is refused by FastAPI (422) and changes nothing;
 - every name the API modules use is defined or imported.
 No API client is ever created, every network connection is refused, and nothing is sent to LangSmith.
@@ -80,7 +83,7 @@ class Endpoints(unittest.TestCase):
         # A refused answer returns apply_answer's own message, and the review is unchanged.
         refused = self.answer([], "save_draft").json()
         self.assertEqual(refused, {"status": "waiting", "review": edited["review"],
-                                   "refused": "\"then\" must be \"review_again\" or \"approve_all\", not 'save_draft'."})
+                                   "refused": "\"then\" must be \"review_again\", \"approve_all\" or \"finalize\", not 'save_draft'."})
         # Approve all saves the review last shown; then the run has a dispatcher plan and no paused review.
         finished = self.answer([], "approve_all").json()
         self.assertEqual((finished["status"], finished["review"]["status"], finished["refused"]), ("finished", "final", None))
@@ -92,10 +95,41 @@ class Endpoints(unittest.TestCase):
         self.assert_no_paused_review(self.answer([], "approve_all"), self.thread_id)
         self.assert_no_paused_review(self.client.get("/reviews/no-such-thread"), "no-such-thread")
 
+    def test_finalize_applies_every_choice_once_and_saves(self):
+        finalize = f"/reviews/{self.thread_id}/finalize"
+        # A refused batch keeps the review waiting, unchanged, with apply_answer's reason.
+        refused = self.client.post(finalize, json={"decisions": [choose(T8, "W99")]}).json()
+        self.assertEqual(refused, {**self.first_review, "refused": f"Not applied: {T8}: W99 is not a workshop."})
+        # An accepted batch is calculated, approved and saved at once, with what changed in the review.
+        finished = self.client.post(finalize, json={"decisions": [choose(T8, "W6")]}).json()
+        self.assertEqual((finished["status"], finished["review"]["status"], finished["refused"]), ("finished", "final", None))
+        self.assertEqual(record(finished["review"], T8)["selected_workshop"], "W6")
+        self.assertEqual(finished["review"], read_json(self.run_dir / "dispatcher-plan.json"))
+        change = next(change for change in finished["review"]["changes"] if change["id"] == T8)
+        self.assertEqual((change["before"]["outcome"], change["after"]["outcome"], change["after"]["workshop"]),
+                         ("review_required", "dispatcher_choice", "W6"))
+        self.assert_no_paused_review(self.client.post(finalize, json={"decisions": []}), self.thread_id)
+
     def test_an_answer_must_be_a_json_object(self):
         response = self.client.post(f"/reviews/{self.thread_id}/answer", json=[])
         self.assertEqual(response.status_code, 422)
         self.assertEqual(self.client.get(f"/reviews/{self.thread_id}").json(), self.first_review)
+
+
+class NoCheckpointFile(unittest.TestCase):
+    """Before any run has paused, reading or answering a review creates no checkpoint file."""
+
+    def test_reviews_get_404_and_no_file_is_created(self):
+        checkpoint_file = Path(self.enterContext(tempfile.TemporaryDirectory())) / "dispatcher-review-checkpoints.sqlite"
+        self.enterContext(mock.patch.object(dispatcher, "CHECKPOINT_FILE", checkpoint_file))
+        client = TestClient(main.app)
+        expected = (404, {"detail": "No paused dispatcher reviews exist yet."})
+        read = client.get("/reviews/some-thread")
+        answered = client.post("/reviews/some-thread/answer", json={"decisions": [], "then": "approve_all"})
+        finalized = client.post("/reviews/some-thread/finalize", json={"decisions": []})
+        for response in (read, answered, finalized):
+            self.assertEqual((response.status_code, response.json()), expected)
+        self.assertFalse(checkpoint_file.exists())
 
 
 class EveryNameIsDefined(unittest.TestCase):

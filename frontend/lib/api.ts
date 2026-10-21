@@ -1,7 +1,16 @@
 // The FastAPI endpoints, reached through the Next.js rewrite /api/backend (next.config.ts).
 // Each function returns the backend's JSON unchanged. A response that is not 2xx is thrown as an
 // Error carrying the backend's own "detail" message when it has one.
-import type { Answer, ChatMessage, NewMessage, ReviewEnvelope, RunDetails, RunSummary, Snapshot } from "./types";
+import type {
+  Answer,
+  ChatMessage,
+  Decision,
+  NewMessage,
+  ReviewEnvelope,
+  RunDetails,
+  RunSummary,
+  Snapshot,
+} from "./types";
 
 const BASE = "/api/backend";
 
@@ -45,6 +54,16 @@ export function sendAnswer(threadId: string, answer: Answer) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(answer),
+  });
+}
+
+// Approves the review with all the dispatcher's choices: the backend applies them together, plans once
+// and saves at once, or refuses the whole batch and saves nothing.
+export function finalize(threadId: string, decisions: Decision[]) {
+  return request<ReviewEnvelope>(`/reviews/${encodeURIComponent(threadId)}/finalize`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ decisions }),
   });
 }
 

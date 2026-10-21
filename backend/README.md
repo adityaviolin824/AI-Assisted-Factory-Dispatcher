@@ -115,9 +115,16 @@ An answer is one JSON object. Decisions are named after their helpers, and use t
 {"decisions": [], "then": "approve_all"}
 ```
 
+```json
+{"decisions": [{"decision": "choose_workshop", "task_id": "T:L0009:J1", "workshop_id": "W1"},
+               {"decision": "accept_late", "task_id": "T:L0012:J1"}],
+ "then": "finalize"}
+```
+
 - `correct` takes `facts` (`order_id`, `due_date`, `preference` or `intent`, as text) and `resolves` (blocker numbers shown in the review, from 0). `choose_workshop` takes `workshop_id`; a later choice for the same task replaces the earlier one. The chosen workshop is always used, even when it is late or the deadline has passed (shown as accepted lateness, with the original deadline kept) or it breaks a hard rule (status, category, batch cap or a request exclusion; the reason says "It overrides the hard rule ..."). It is not used for a task with missing facts, in a duplicate-order review or with a request the plan does not support (a split or an unsupported condition). `accept_late` accepts the allocator's late option shown for a task, up to that lateness or an optional `max_days` (0 or more), and must be sent alone. `warnings_checked` takes `row_ids` such as `["L0019"]`. `clear` removes a task's whole decision entry.
 - `review_again` applies the decisions and returns a new review. The answer is all or nothing: an unknown task, decision or field, a wrong form, a blocker number outside the list, or a recalculated review with `decision_problems` refuses the whole answer, says why and changes nothing.
 - `approve_all` takes no decisions. It approves the review last shown without planning again: every recommendation, dispatcher's choice or accepted lateness without an unchecked warning becomes `approved` with `final: true`; every other row stays unresolved. Approving a review with no edits is allowed and saves it.
+- `finalize` applies the whole batch with one calculation and then approves it as `approve_all` does, so the page can send every choice at once. `accept_late` may come with other decisions here; if they make that task later than the review shown, the batch is refused with the reason. The saved final review also lists `changes`: each row whose outcome, workshop or delivery estimate differs from the review shown, with both versions and their reasons.
 - Approval writes `dispatcher-decisions.json` and `dispatcher-plan.json` into the run folder, each with a copy in `plan-history/`. `plan.json`, `manifest.json` and `state.json` are not changed. A final review is saved JSON that may keep unresolved rows; it commits no workshop assignment and changes no live queue.
 
 ## Full pipeline (LangGraph)

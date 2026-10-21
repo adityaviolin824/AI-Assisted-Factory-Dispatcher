@@ -2,11 +2,12 @@ import { amount, days, listText, percent } from "@/lib/format";
 import { decisionFor, outcomeLabel, rowEvidence, taskFor } from "@/lib/plan";
 import type { DecisionRecord, Metrics, Plan, SummaryRow, Task } from "@/lib/types";
 
-type Props = { plan: Plan; row: SummaryRow; onSelect: (rowId: string) => void };
+type Props = { plan: Plan; row: SummaryRow; onSelect: (rowId: string) => void; children?: React.ReactNode };
 
 // Everything the plan records about one row: its outcome and reason, the original messages,
-// the request facts, open questions, warnings and the workshop comparison.
-export default function TaskDetails({ plan, row, onSelect }: Props) {
+// the request facts, open questions, warnings and the workshop comparison. During a review,
+// children holds the dispatcher's choices for the row, shown after its reason and warnings.
+export default function TaskDetails({ plan, row, onSelect, children }: Props) {
   const record = decisionFor(plan, row.id);
   const task = taskFor(plan, row.id);
   const evidence = rowEvidence(plan, row.id);
@@ -35,6 +36,7 @@ export default function TaskDetails({ plan, row, onSelect }: Props) {
           ))}
         </div>
       )}
+      {children}
 
       <h3>Source messages</h3>
       <p className="muted">Messages: {listText(row.messages)}</p>

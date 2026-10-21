@@ -1,6 +1,6 @@
 # Backend contract proposal
 
-**Status: proposed, not agreed, not implemented (21 October 2026).** The frontend's Chat page and its tests use the chat endpoints below through `lib/api.ts`, answered by test fixtures. No backend code exists for them yet. Aditya agrees or changes this contract before any backend code is written, and every real processing run needs Aditya's permission because it calls paid models.
+**Status: agreed 21 October 2026 ("Agree all three"), built in the order 3, 2, 1.** Sections 3 and 2 are implemented and tested offline; section 1 (chat bridge) is not built yet, so the Chat page and its tests still use test fixtures through `lib/api.ts`. Every real processing run needs Aditya's permission because it calls paid models. Where the built code differs from this proposal, the section says so under **As built**.
 
 Three changes are proposed. Each says why it is needed, what it does, the alternatives considered and its effect on correctness, latency and evaluation.
 
@@ -45,6 +45,11 @@ Steps, all in Python: check the inputs have not changed (`input_signature`); che
 
 **Effect.** Correctness: one calculation over the full set of choices, no intermediate state, and a refusal changes nothing. Latency: one request and one plan calculation (no model call). Evaluation: the saved `dispatcher-plan.json` keeps its current shape.
 
+**As built (21 October 2026).** A new answer value, `"then": "finalize"`, in `apply_answer` (`backend/dispatcher_review/dispatcher_decisions.py`); the route `POST /reviews/{thread_id}/finalize` sends `{"decisions": body["decisions"], "then": "finalize"}` through the existing answer route. The graph is unchanged: an accepted batch returns `then: "approve_all"`, so `save_review` approves and saves it as before. Three deviations:
+- **A refusal is 200 with `refused` set, not 409.** It keeps the API's rule that a refused answer is a normal response (`FASTAPI_BUILD.md`, D5) and gives the page one refusal path for both routes. Nothing is saved, and the review shown stays unchanged.
+- **`changes` is a field of the final review, not of the response.** It is then saved inside `dispatcher-plan.json`, so the run folder records what the dispatcher changed. It compares against the review shown before approval, so the "approved" labels of `finalize_review` do not count as changes. Each entry is `{id, order_id, before, after}`, where `before` and `after` hold `outcome`, `workshop`, `delivery_days` and `reason`.
+- **No `max_days` is needed for the limit.** `accept_late` already takes the lateness of the review the dispatcher was shown. If the rest of the batch makes that task later, the plan leaves it in review with "... does not cover it", and finalize refuses the batch with that reason instead of saving the task as unresolved.
+
 ## 3. Reading a review must not create storage
 
 **Evidence.** `GET /reviews/{thread_id}` created `backend/output/dispatcher-review-checkpoints.sqlite` (20 KB, 21 October 2026, 18:40) when no checkpoint file existed, because `fastapi_routes/dispatcher.py` opens a `SqliteSaver` for every read. The handoff rule is that reading creates nothing.
@@ -52,3 +57,5 @@ Steps, all in Python: check the inputs have not changed (`input_signature`); che
 **Proposal.** Before opening the saver, answer 404 "No paused dispatcher reviews exist yet." when `CHECKPOINT_FILE` does not exist. Alternative: open SQLite read-only by URI, which also works but is harder to read.
 
 **Effect.** Correctness: reads become side-effect free. Latency and evaluation: unchanged.
+
+**As built (21 October 2026).** `require_checkpoint_file()` in `backend/fastapi_routes/dispatcher.py` runs first in every review route and answers the 404 above; a test checks that no file is created.

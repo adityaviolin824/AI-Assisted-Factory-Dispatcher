@@ -5,6 +5,7 @@ import type {
   DecisionRecord,
   Metrics,
   Plan,
+  Review,
   RunDetails,
   RunSummary,
   Snapshot,
@@ -143,6 +144,20 @@ export function makePlan(): Plan {
     review_warnings: {},
     queues_before_plan: { W1: 4, W2: 2.5, W6: 1 },
     queues_after_plan: { W1: 4, W2: 2.5, W6: 2.18 },
+  };
+}
+
+// A paused review of RUN: the same rows as makePlan, as the dispatcher review returns them.
+export function makeReview(changes: Partial<Review> = {}): Review {
+  return {
+    ...makePlan(),
+    source_run: RUN.run_id,
+    status: "draft",
+    dispatcher_entries: {},
+    decision_problems: {},
+    final_ids: [],
+    unresolved_ids: [],
+    ...changes,
   };
 }
 

@@ -11,6 +11,12 @@ from app_full_pipeline.pipeline_graph import CHECKPOINT_FILE, paused_review, res
 router = APIRouter(tags=["dispatcher review"])
 
 
+def require_checkpoint_file():
+    """Refuse with 404 before any run has paused: opening SqliteSaver would create an empty file."""
+    if not CHECKPOINT_FILE.exists():
+        raise HTTPException(status_code=404, detail="No paused dispatcher reviews exist yet.")
+
+
 @router.get("/reviews/{thread_id}")
 def read_review(thread_id: str):
     """Return the paused review of a thread.
@@ -18,6 +24,7 @@ def read_review(thread_id: str):
     The answer is {"status": "waiting", "review": ..., "refused": ...}, where refused is why the
     dispatcher's last answer was refused, or None.
     """
+    require_checkpoint_file()
     with SqliteSaver.from_conn_string(str(CHECKPOINT_FILE)) as checkpointer:
         _, paused = paused_review(thread_id, checkpointer)
     if paused is None:
@@ -35,6 +42,7 @@ def answer_review(thread_id: str, answer: dict):
       "refused": None}.
     The answer is checked by apply_answer, so its refusal messages reach the dispatcher unchanged.
     """
+    require_checkpoint_file()
     with SqliteSaver.from_conn_string(str(CHECKPOINT_FILE)) as checkpointer:
         _, paused = paused_review(thread_id, checkpointer)
         if paused is None:
@@ -43,3 +51,14 @@ def answer_review(thread_id: str, answer: dict):
     if paused_again is None:
         return {"status": "finished", "review": graph_state["review"], "refused": None}
     return {"status": "waiting", "review": paused_again["review"], "refused": paused_again["refused"]}
+
+
+@router.post("/reviews/{thread_id}/finalize")
+def finalize(thread_id: str, body: dict):
+    """Apply all the dispatcher's choices, {"decisions": [...]}, with one calculation and approve the result.
+
+    It is the answer {"decisions": ..., "then": "finalize"}, so it returns what answer_review returns:
+    the saved final review, whose "changes" lists the rows that differ from the shown review, or the
+    unchanged review with the reason the whole batch was refused.
+    """
+    return answer_review(thread_id, {"decisions": body.get("decisions"), "then": "finalize"})

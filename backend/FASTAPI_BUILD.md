@@ -2,6 +2,8 @@
 
 **Status:** built on 20 October 2026, following [the FastAPI structure guide](FASTAPI_STRUCTURE_GUIDE.md). Four endpoints serve saved runs and a paused dispatcher review over HTTP. All 123 offline tests pass (4 of them new for the API). No model was called while building or testing it.
 
+**Update, 21 October 2026:** a fifth endpoint, `POST /reviews/{thread_id}/finalize`, applies the dispatcher's whole batch of choices with one calculation and saves the approved review (D15). Before any run has paused, the review endpoints answer 404 without creating the checkpoint file (D14). All 127 offline tests pass.
+
 **In short:** the API adds no rules. Each endpoint calls code that already existed and was already tested:
 - the run endpoints read the files in `output/runs/`;
 - the review endpoints call `paused_review()` and `resume_graph()`, the same functions `resume_dispatcher_review.py` calls.
@@ -41,7 +43,7 @@ This document records:
 | `uv.lock` | 261 lines added | the lock entries `uv add` wrote (section 3) |
 | `main.py` | filled in (was an empty, tracked file) | creates the FastAPI app and includes the two routers |
 | `fastapi_routes/runs.py` | new | `GET /runs` and `GET /runs/{run_id}`: read saved run files |
-| `fastapi_routes/dispatcher.py` | new | `GET /reviews/{thread_id}` and `POST /reviews/{thread_id}/answer`: show or answer a paused review |
+| `fastapi_routes/dispatcher.py` | new | `GET /reviews/{thread_id}`, `POST /reviews/{thread_id}/answer` and `POST /reviews/{thread_id}/finalize`: show, answer or finalize a paused review |
 | `tests/test_fastapi_routes.py` | new | 4 offline tests of the endpoints (section 7) |
 | `FASTAPI_BUILD.md` | new | this record |
 
@@ -117,11 +119,16 @@ frontend (later) --HTTP--> main.py (FastAPI app)
 | `GET /runs/{run_id}` | `{"run_id", "plan", "dispatcher_plan"}`: the run's `plan.json`, and its `dispatcher-plan.json` once the dispatcher approved (`null` before) | 404 `{"detail": "No saved run <run_id>."}` |
 | `GET /reviews/{thread_id}` | `{"status": "waiting", "review", "refused"}`: the paused review, and why the last answer was refused (`null` if it was not) | 404 `{"detail": "Thread <thread_id> has no paused dispatcher review."}` for a finished or unknown thread |
 | `POST /reviews/{thread_id}/answer` | the answer's result, see below | the same 404; 422 if the body is not a JSON object |
+| `POST /reviews/{thread_id}/finalize` | body `{"decisions": [...]}`: the answer `{"decisions": ..., "then": "finalize"}`, see below | the same 404 and 422 |
+
+Before any run has paused (no checkpoint file), every review endpoint answers 404 `{"detail": "No paused dispatcher reviews exist yet."}`.
 
 **What the answer endpoint returns:**
 - **After an edit:** `{"status": "waiting", "review": <the new review>, "refused": null}`.
 - **After a refused answer:** `{"status": "waiting", "review": <the same review>, "refused": "<apply_answer's reason>"}`. Nothing changed.
 - **After `approve_all`:** `{"status": "finished", "review": <the final review>, "refused": null}`. The final review is the one saved in the run folder as `dispatcher-plan.json`.
+- **After an accepted `finalize`:** the same `finished` response. The final review also has `changes`: each row whose outcome, workshop or delivery estimate differs from the review shown, with both versions and their reasons.
+- **After a refused `finalize`:** the refused-answer response above. Nothing is saved.
 
 **The answer body** is the same JSON as an answer file for `resume_dispatcher_review.py` (see the [backend README](README.md#dispatcher-review-modules)):
 
@@ -175,7 +182,7 @@ Each decision gives its reason, the alternatives considered, the assumptions it 
 - **Assumption:** one dispatcher, as in the graph plan.
 
 **D4. The answer body is a plain JSON object (`answer: dict`), not a detailed Pydantic model.**
-- **Reason:** `apply_answer` (through `answer_problem`) already checks the whole answer and explains every refusal in the dispatcher's terms, for example `"then" must be "review_again" or "approve_all", not 'save_draft'.`. A detailed model would refuse the same answers first with FastAPI's generic 422 messages, so the dispatcher would see different words from the API than from the terminal.
+- **Reason:** `apply_answer` (through `answer_problem`) already checks the whole answer and explains every refusal in the dispatcher's terms, for example `"then" must be "review_again", "approve_all" or "finalize", not 'save_draft'.`. A detailed model would refuse the same answers first with FastAPI's generic 422 messages, so the dispatcher would see different words from the API than from the terminal.
 - **Alternative:** a full Pydantic model for each decision type. It gives a richer `/docs` page, but it duplicates rules that must stay in one place.
 - **Effect:**
   - FastAPI checks only that the body is a JSON object (anything else gets 422). Everything else is refused by `apply_answer` with its own message, and nothing changes.
@@ -231,6 +238,18 @@ Each decision gives its reason, the alternatives considered, the assumptions it 
 - **Reason:** the guide's first boundary. A new processing run can make paid model calls and must never start because a page was opened. The thread ID is the one `run_full_pipeline.py` prints.
 - **Effect:** the frontend has to be given the thread ID. See open decision 1 in section 9.
 
+**D14. Before any run has paused, the review endpoints answer 404 and create no file (21 October 2026).**
+- **Evidence:** `GET /reviews/{thread_id}` created `output/dispatcher-review-checkpoints.sqlite` (20 KB) when no checkpoint file existed, because opening a `SqliteSaver` creates the file.
+- **Reason:** reading must create nothing ([frontend/BACKEND_PROPOSAL.md](../frontend/BACKEND_PROPOSAL.md), section 3).
+- **Alternative:** opening SQLite read-only by URI. It works too, but is harder to read.
+- **Effect:** reads have no side effect. Latency and evaluation are unchanged.
+
+**D15. One batch of choices is finalized with `"then": "finalize"` (21 October 2026).**
+- **Reason:** the dispatcher keeps every choice in the page and submits them once with Approve all. `answer` refuses that ("Approve all takes no decisions", "Send accept_late alone"), and sending hidden `review_again` answers first would break the rule of no requests before approval.
+- **How:** `apply_answer` applies the whole batch to a copy and calls `build_dispatcher_plan` once. It refuses the batch on `decision_problems`, or when accepted lateness no longer covers its task after the other choices. Otherwise it adds `changes` and returns `then: "approve_all"`, so the graph's existing `save_review` saves it. The route only forwards the body.
+- **Alternatives:** a new graph node (more code, the same result); a 409 for a refusal, as first proposed (rejected for D5's single response shape).
+- **Effect:** one request and one plan calculation, no model call. `dispatcher-plan.json` gains `changes` when it was finalized this way.
+
 ## 7. Tests (`tests/test_fastapi_routes.py`, offline)
 
 **Setup:** each test runs the graph on the supplied chat file from saved answers. It uses the existing `paused_run` helper and a temporary SQLite file, so the run is paused for the dispatcher exactly as `run_full_pipeline.py` leaves it. The runs folder and the checkpoint file used by the API are patched to that temporary folder. The real `output/` folder is never touched.
@@ -251,7 +270,15 @@ Each decision gives its reason, the alternatives considered, the assumptions it 
 5. `GET /runs/{run_id}` now returns that plan.
 6. The finished thread, a second approval and an unknown thread each get the 404 message.
 
+**`test_finalize_applies_every_choice_once_and_saves`:**
+1. W99 for T8 is refused with `apply_answer`'s message, and the review is unchanged.
+2. W6 for T8 returns `finished`, with the final review equal to the saved `dispatcher-plan.json`.
+3. Its `changes` show T8 moving from `review_required` to `dispatcher_choice` at W6.
+4. A second finalize gets the 404 message.
+
 **`test_an_answer_must_be_a_json_object`:** a JSON list gets 422 from FastAPI, and the review is unchanged.
+
+**`test_reviews_get_404_and_no_file_is_created`:** with no checkpoint file, reading, answering and finalizing each get the 404 of D14, and no file appears.
 
 **`test_no_module_uses_an_undefined_name`:** `main`, `runs` and `dispatcher` use only names they define or import.
 
@@ -309,7 +336,7 @@ They need the `discover` form, which puts `tests/` on the import path for the sh
 **Known limits of this first step:**
 - **One dispatcher.** There is no login, no permissions and no guard against two answers sent to the same thread at the same moment.
 - **Local use only.** Nothing here is set up for deployment.
-- **Checkpoint file creation:** the first review request creates `output/dispatcher-review-checkpoints.sqlite` if it does not exist (the resume script does the same). It is in `output/`, so git ignores it.
+- **Checkpoint file creation:** only `run_full_pipeline.py` and the resume script create `output/dispatcher-review-checkpoints.sqlite`; the API answers 404 until it exists (D14). It is in `output/`, so git ignores it.
 - **Large responses:** a review is returned whole, with every decision record, which may be large for long chats.
 - **Server log noise:** the graph's progress lines (`[Graph] ...`) print to the server log.
 - **What approval means:** the final approval saves JSON in the run folder. It commits no operational assignment and changes no live queue.

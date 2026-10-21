@@ -155,3 +155,9 @@ test("the chat fits a phone screen", async ({ page }) => {
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   expect(overflow).toBe(0);
 });
+
+test("an unreachable backend is reported without a loading message", async ({ page }) => {
+  await page.goto("/operations");
+  await expect(page.getByText("Could not read the conversation")).toBeVisible();
+  await expect(page.getByText("Loading messages...")).toHaveCount(0);
+});

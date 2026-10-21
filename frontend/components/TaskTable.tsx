@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { Choices } from "@/lib/choices";
 import { days } from "@/lib/format";
 import { decisionFor, type Group, outcomeLabel, rowGroup } from "@/lib/plan";
 import type { Plan, SummaryRow } from "@/lib/types";
@@ -13,10 +14,10 @@ const FILTERS: { filter: Filter; label: string }[] = [
   { filter: "info", label: "No request" },
 ];
 
-type Props = { plan: Plan; selectedId: string | null; onSelect: (rowId: string) => void };
+type Props = { plan: Plan; selectedId: string | null; onSelect: (rowId: string) => void; choices?: Choices };
 
 // The worklist: one row per task, item or message, filtered by the group rowGroup gives it.
-export default function TaskTable({ plan, selectedId, onSelect }: Props) {
+export default function TaskTable({ plan, selectedId, onSelect, choices = {} }: Props) {
   const [filter, setFilter] = useState<Filter>("all");
   const inFilter = (row: SummaryRow, chosen: Filter) => chosen === "all" || rowGroup(row, plan) === chosen;
   const rows = plan.summary_rows.filter((row) => inFilter(row, filter));
@@ -62,7 +63,12 @@ export default function TaskTable({ plan, selectedId, onSelect }: Props) {
                 </td>
                 <td className="nowrap">{row.order_id ?? "-"}</td>
                 <td>{outcomeLabel(row.outcome)}</td>
-                <td>{workshopText(plan, row)}</td>
+                <td>
+                  {workshopText(plan, row)}
+                  {choices[row.id]?.workshop_id && (
+                    <span className="unsaved block">Unsaved: {choices[row.id].workshop_id}</span>
+                  )}
+                </td>
                 <td className="number">{days(row.delivery_days)}</td>
                 <td className="number">{row.days_available ?? "-"}</td>
                 <td className="reason">{row.reason}</td>
@@ -77,6 +83,7 @@ export default function TaskTable({ plan, selectedId, onSelect }: Props) {
 }
 
 // A review row's workshop is only an informational option; a selection comes from its decision record.
+// It stays shown under a dispatcher's unsaved choice, because the row's figures are still for it.
 function workshopText(plan: Plan, row: SummaryRow) {
   const selected = decisionFor(plan, row.id)?.selected_workshop;
   if (selected) {

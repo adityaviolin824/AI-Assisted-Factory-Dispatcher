@@ -147,6 +147,17 @@ test("a long run name fits a phone screen", async ({ page }) => {
   expect(overflow).toBe(0);
 });
 
+test("on a phone, choosing a row brings its details into view", async ({ page }) => {
+  // Real runs have up to 181 rows; on a narrow screen the details come after all of them.
+  const plan = makePlan();
+  const message = plan.summary_rows[2];
+  plan.summary_rows.push(...Array.from({ length: 60 }, (_, index) => ({ ...message, id: `L09${index}` })));
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openRun(page, plan);
+  await page.getByRole("button", { name: "T:L0001:J1" }).click();
+  await expect(details(page, "T:L0001:J1").getByRole("heading", { name: "T:L0001:J1" })).toBeInViewport();
+});
+
 test("a run named in the address opens directly", async ({ page }) => {
   await serve(page, "/runs", [RUN, OTHER_RUN]);
   await serve(page, "/runs/R2", runDetails({ ...makePlan(), dispatch_date: "2026-04-02" }, "R2"));

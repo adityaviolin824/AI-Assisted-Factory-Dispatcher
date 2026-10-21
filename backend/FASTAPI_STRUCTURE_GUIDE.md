@@ -52,6 +52,7 @@ The router validates the incoming JSON, calls the existing function and returns 
 | `GET /runs/{run_id}` | Read one saved run's results. | `runs.py` |
 | `GET /reviews/{thread_id}` | Read a paused dispatcher review. | `dispatcher.py` |
 | `POST /reviews/{thread_id}/answer` | Apply a dispatcher answer and return the resulting review. | `dispatcher.py` |
+| `POST /reviews/{thread_id}/finalize` | Apply all the dispatcher's choices at once and save the approved review (added 21 October 2026, see [FASTAPI_BUILD.md](FASTAPI_BUILD.md) D15). | `dispatcher.py` |
 
 `run_id` identifies a saved run folder. `thread_id` identifies a LangGraph conversation kept in the checkpoint database. They are different IDs. A saved run folder alone does not create a paused review; initially use the thread ID printed by the existing pipeline runner.
 

@@ -21,6 +21,14 @@ Our total project spending so far is **70 cents** (22 October 2026, reported by 
 
 Staff time savings have not yet been measured against a manual dispatcher. Workshop production costs are a separate trade-off: the historical test below achieved faster delivery with higher production cost.
 
+## Core capabilities
+
+The system combines three core capabilities:
+
+1. **LLM-based request interpretation.** Language models read informal chat messages and extract structured tasks, order references and instructions. They also identify follow-ups and propose which request an update belongs to.
+2. **Deterministic verification and capacity-aware planning.** Python checks order facts, workshop capabilities and restrictions, then calculates delivery, cost and queue effects. It recommends workshops based on those checks, deadlines and the request's stated preferences.
+3. **Human-in-the-loop decision making.** The dispatcher reviews recommendations and exceptions, corrects facts, chooses workshops and approves the final table. Source messages, decisions and reasons are retained so the choices can be traced. Cases that cannot be resolved with the supported actions remain visible.
+
 ## How it works
 
 The backend already processes saved conversations and supports final approval. The Chat screen still needs its live API connection.

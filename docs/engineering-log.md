@@ -2,6 +2,12 @@
 
 Entries describe the code and evidence available at the time of each investigation. Older notebook names, settings, output paths and test files may have changed or been removed. For current behavior, read the [backend README](../backend/README.md); for remaining work, read the [project plan](project-plan.md). Do not treat a historical passing test count as a newly rerun result.
 
+## 2026-10-22: Summarize the three core capabilities in the README
+
+- **Request and change:** added a short Core capabilities section between Why this is useful and How it works, using the owner's proposed structure: language-model request interpretation, deterministic verification/planning, and dispatcher decisions.
+- **Scope:** described model interpretations as proposals checked by Python and retained the limit that unsupported cases remain visible. Kept reallocation and its later review/approval flow pending. No new runtime capability is claimed.
+- **Verification:** checked section order and Markdown formatting and compared both inline Mermaid bodies and the protected files with the pre-edit snapshot. Only `README.md` and this log changed. No Git command, model call, installation or runtime test was needed for these text edits.
+
 ## 2026-10-22: Very dark default theme and a blue-and-white light theme
 
 - **Request and decisions:** Aditya asked for a very dark main theme (from a reference image of a near-black dashboard), chose a teammate's (Sanny's) blue-and-white card experiment as the light theme, kept dark as the default and chose green for approved. Colour details within those limits were left to Claude Code, with no major changes. This is a user decision against `frontend/AGENTS.md`'s "distinctive dark interfaces, no generic SaaS templates" rule for the light theme only.

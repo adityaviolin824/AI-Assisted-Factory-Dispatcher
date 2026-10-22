@@ -27,6 +27,7 @@ Run commands from `backend/`, using the project-local `uv` environment.
 | `uv run python run_allocation.py output/runs/<start time>` | Replan one explicitly named saved processing run. Without a folder, list available runs. | None. |
 | `uv run python -m eval_harness.run_harness_evaluation` | Historical scheduler comparison beside the unchanged course simulator. | None. |
 | `uv run python make_run_report.py output/runs/<start time>` | Write `run_report.md` into a saved run folder; add `--key <key.json> --data <data folder>` to score it against an answer key. | None. |
+| `uv run python score_dispatcher_review.py output/runs/<start time> --key <key.json> --data <data folder>` | Score the table after the dispatcher's review against an answer key; writes `dispatcher_review_score.md` into the run folder. | None. |
 
 Obtain approval before any run that could make paid model calls. A previously free run does not establish that the current flow is fully cached.
 
@@ -191,6 +192,8 @@ With `--key <key.json> --data <data folder>`, the report adds a score against a 
 - the allocator fields of verified matched tasks, the message labels and the follow-up links.
 
 The data folder is named on the command line because a run's manifest does not record it and `config.toml` is restored after each test run. A run needs its `plan.json`; for a plan made before 15 October 2026 the review-warning count is reported as not recorded. The script refuses a key whose messages differ from the run's chat, a data folder that lacks the key's orders, and workshops that differ from those the run was planned with. The report gives the key's hash and, when present, its recorded human-review provenance. For the 100-case golden key this credits the comprehensive manual, line-by-line review by three team members and preserves the AI-authored draft origin. The script reproduces the recorded provenance; it does not perform or certify that human review.
+
+`score_dispatcher_review.py <run folder> --key <key.json> --data <data folder>` scores the table after the dispatcher's review: by default the run's `dispatcher-plan.json`, or another table given with `--plan`, such as a copy in `plan-history/`. A table that has not been approved yet is scored as Approve all with no choices would approve it. Only approved rows count as allocated, and each counts for the case of its order, so a batch the dispatcher added also counts. The rules are in `eval_run_report/final_plan_score.py` and were written before Test 11. It makes no model call and writes only the score file (by default `dispatcher_review_score.md` in the run folder). `eval_run_report/key_informed_choices.py` is a simulated dispatcher that knows the key. It is for tests only; Test 11 used it to measure the app's ceiling ([end-to-end test](docs/evaluation/END_TO_END_TEST_2026-10-22.md)).
 
 ## Verification
 

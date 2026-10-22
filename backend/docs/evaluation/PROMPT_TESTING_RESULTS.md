@@ -58,6 +58,13 @@ Tests are listed newest first, and each scoring key was written before the runs 
 - 6 failing cases repeat in both runs and 7 failed in run 1 only, so run-to-run variation alone moved the score by 7 cases.
 - Full report: [golden-set run report](GOLDEN_100_RUN_REPORT.md).
 
+**End-to-end with the dispatcher's review (Test 11):** one fresh run on the 100-case set with Test 10's settings, then a simulated dispatcher who knows the key reviewed it through the HTTP API.
+- Before the review: 81/85 correct allocations (the best so far), 14 of 15 exceptions not allocated, and CASE-097 unsafe again. It cost $0.0757 for 128 calls.
+- After one Approve all with 23 choices, and again after Review again: **85/85 and 15/15, nothing extra**, with every field matching the key and every allocation on time.
+- That is the app's ceiling with a dispatcher who knows the answers, not model accuracy.
+- The only way to stop the cancelled order was to correct its intent to "question": the app has no "do not allocate" decision.
+- Full report: [end-to-end test](END_TO_END_TEST_2026-10-22.md).
+
 | Run (`output/runs/`) | Intake | Link and verify | Intake prompt | Labels | Readiness | Field errors | Wrong merges | Cost of a fresh run | Model time |
 |---|---|---|---|---|---|---|---|---|---|
 | `2026-10-13_19-32-08` | `gpt-4.1-mini` | `gpt-4.1-mini` | current | 29/30 | 27/30 | 2 (1 judgment call) | 0 | $0.020 | 70 s |
@@ -402,6 +409,70 @@ A `deadline_passed` row reserves nothing, so R07 or R22 becoming ready changes n
 - no execution failure.
 
 This set's wording is templated and every chat deadline equals its CSV date, so the score is a best case for clean chat; see "What this set does and does not test" in the test-set plan.
+
+### End-to-end test with the dispatcher's review (written 22 Oct 2026, before Test 11)
+
+**Question (Aditya):** one fresh run of the whole application on the 100-case set: processing and allocation, then the dispatcher's review through the API, with Approve all and Review again. Record the performance before and after the review. After the review it should be perfect: every case the key allocates is allocated, and no exception is. One paid run; a second only if Claude Code judges it very important; never a third.
+
+**Run:**
+- One `uv run python run_full_pipeline.py` from `backend/`, with Test 10's settings and inputs.
+- `config.toml` is set as for Test 10, except `[output] folder = "output/end_to_end_test_2026-10-22"`. The folder is new, so its cache is empty and every call is paid.
+- The backup of `config.toml` (SHA-256 `920d4f7f...`) is restored afterwards.
+
+**Before the review:**
+- `make_run_report.py --key --data` scores the run by Test 10's rules, unchanged.
+- The new score below is also applied to the first review as Approve all with no choices would approve it. A provisional row is not approved until its warnings are checked.
+
+**The dispatcher is simulated and knows the key.**
+- `eval_run_report/key_informed_choices.py` (rules in its docstring) writes the choices. It was written before this run and rehearsed with no model call on a scratch copy of Test 10's run 2, where one Approve all with 24 choices gave 85 of 85 and 15 of 15.
+- The choices go through the app's HTTP API (`uv run fastapi run main.py` on this computer only):
+  1. `GET /reviews/{thread_id}`: the first review, saved as JSON.
+  2. Approve all: level 0 choices, sent to `POST /reviews/{thread_id}/preview` (Check workshop options) and then `/finalize`.
+  3. Review again: level 1 choices for the saved table, sent to `POST /runs/{run_id}/preview` and then `/finalize`. This step runs even with no choices, to check that planning again from the original queues keeps the table.
+  4. Only if a case is still wrong: a second Review again, at level 2.
+- A refused answer is fixed only in the choice builder, never in the app, and is recorded.
+
+**After the review:** `score_dispatcher_review.py` (rules in `eval_run_report/final_plan_score.py`), new.
+- Only approved rows are allocated.
+- Each case has its own order, so an approved row belongs to the case of its order, whether it is the case's own task, another task or an added batch. The case's own task also counts when it is approved.
+- **Correct allocation:** the key allocates the case, at least one row is approved, every approved row obeys the key's requested and excluded workshops, and the approved pieces equal the order's pieces.
+- **Wrong allocation:** approved, but one of those checks fails. **Missed:** no approved row.
+- **Correct non-allocation:** an exception with no approved row. **Unsafe:** an exception with an approved row.
+- **Extra:** an approved row that belongs to no case.
+- **Perfect:** 85 correct allocations, 15 correct non-allocations and 0 extra rows.
+- Also reported: fields matching the key, on time, at the key's own workshop, batches added by the dispatcher, approved and unresolved rows.
+
+**Expected:**
+- Before the review: close to Test 10 (73 and 80 of 85 correct, with CASE-097 unsafe in both runs). Run-to-run variation is expected.
+- After the review: perfect. Any case the app's decisions cannot fix is recorded as a limit of the app.
+- Known from the rehearsal: the only decision that stops a clean recommendation, such as the cancelled ORD-297 (CASE-097), is correcting its intent to "question". The app has no "do not allocate" decision.
+- Cost and time: about $0.07 and 10-11 minutes, as in Test 10.
+
+**What it measures:** what the app can reach with a dispatcher who knows the answers. It is not model accuracy and not a real dispatcher's effort; those stay separate.
+
+## Test 11: end-to-end with the dispatcher's review (22 Oct 2026)
+
+**Question:** see the expectation above, whose section (to this heading) has SHA-256 `0a041b0f14bbecef...`, unchanged after the run. Aditya authorized one paid run, a second only if very important, and never a third. Claude Code ran one and wrote [the full report](END_TO_END_TEST_2026-10-22.md).
+
+- **Run:** `output/end_to_end_test_2026-10-22/runs/2026-10-22_22-31-00`, one `uv run python run_full_pipeline.py`, with Test 10's settings and an empty cache. It was traced to LangSmith, because `.env` enables tracing. `config.toml` was restored afterwards (`920d4f7f...`).
+- **Before the review**, by Test 10's rules:
+  - 81/85 correct allocations (78 with every field matching), with 14 of them provisional;
+  - 4 missed: CASE-026 and 051 (intake), CASE-049 and 070 (verification);
+  - 14/15 exceptions not allocated, and CASE-097 unsafe;
+  - labels 146/149; follow-ups joined 36/45.
+- **Approve all with no choices** would approve 67/85, because the provisional rows wait for their warnings to be checked.
+- **The review**, through `GET /reviews/{thread_id}`, `POST /reviews/{thread_id}/preview` and `/finalize`, then `POST /runs/{run_id}/preview` and `/finalize`. It made no model call.
+  - Approve all had 23 key-informed choices: 15 `warnings_checked`, 3 preference corrections, 3 `complete`, 1 `add_batch` and 1 intent correction for CASE-097.
+  - Review again had no choices left to make.
+  - No answer was refused.
+- **After the review:** 85/85 correct allocations and 15/15 correct non-allocations, with 0 extra rows, after both Approve all and Review again. All 85 have every field matching the key and are on time, and 82 are at the key's own workshop. Review again with no choices kept every row and queue unchanged.
+- **Extra, not pre-registered:** on a scratch copy, a Review again that pinned all 85 allocations to the key's own workshops moved three batches and stayed perfect, with 85/85 at the key's workshops.
+- **Cost and time:** 128 calls, all paid: intake 50 ($0.0244), linking 44 ($0.0121), verification 34 ($0.0392). The total was **$0.0757**, with 558 s of model time and 9 min 23 s of wall time.
+- **Second run:** not made. The first run completed and could be scored, and a repeat would only measure run-to-run variation again.
+- **Checks:**
+  - The key and the inputs matched their frozen hashes before and after.
+  - The run's manifest, state and plan are unchanged by the review.
+  - The 145 offline tests passed after the restore (142 before, plus 3 for the new scorer).
 
 ## Test 10: two fresh runs on the human-team golden set (21 Oct 2026)
 

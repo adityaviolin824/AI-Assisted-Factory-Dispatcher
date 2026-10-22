@@ -6,7 +6,7 @@ AI custom-created the questions and dispatch requests after repeated project exp
 
 **Three team members divided the work and comprehensively hand-reviewed the complete set, line by line. The review was performed by humans, not AI.** The returned workbook and the project owner's final clarifications were reconciled into the version 2 golden key on 21 October 2026. The initial questions and draft answers remain AI-authored; see the [review record](../../docs/evaluation/extended_dispatch_100_REVIEW.md) for the evidence and agreed changes.
 
-There are **100 intended task cases across 149 messages**. With the reviewed correct interpretations, the existing deterministic allocator produces **85 on-time recommendations in one cumulative plan**. The other 15 are explicit exceptions. This establishes input feasibility. Model extraction, linking and end-to-end accuracy were measured later, in two paid runs on 21 October 2026 (Test 10); see the [evaluation summary](../../../evaluation/README.md). No paid model call was made to create or validate it.
+There are **100 intended task cases across 149 messages**. With the reviewed correct interpretations, the existing deterministic allocator produces **85 on-time recommendations in one cumulative plan**. The other 15 are explicit exceptions. This establishes input feasibility. Model extraction, linking and end-to-end accuracy were measured later: in two paid runs on 21 October 2026 (Test 10), and in one on 22 October 2026 that also tested the dispatcher's review (Test 11). See the [evaluation summary](../../../evaluation/README.md). No paid model call was made to create or validate it.
 
 ## Files
 

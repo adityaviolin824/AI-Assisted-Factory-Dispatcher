@@ -2,6 +2,8 @@
 
 Two paid runs of the full pipeline on the human-team golden set, scored after allocation. The dispatcher review was not used. Claude Code ran both runs and wrote this report; Test 10 in [PROMPT_TESTING_RESULTS.md](PROMPT_TESTING_RESULTS.md) has the run record. The charts are SVG images in [golden_100_charts/](golden_100_charts/), drawn from the same numbers as the tables. They switch to dark colours when the reader's system uses a dark theme.
 
+A third run, on 22 October 2026, used the same settings and also tested the dispatcher's review. It is recorded separately in the [end-to-end test](END_TO_END_TEST_2026-10-22.md) (Test 11).
+
 ## Verdict
 
 - **Allocations:** 73 of 85 (run 1) and 80 of 85 (run 2) expected allocations were made. 14 of the 15 exceptions were correctly not allocated in both runs.

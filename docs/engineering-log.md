@@ -2,6 +2,32 @@
 
 Entries describe the code and evidence available at the time of each investigation. Older notebook names, settings, output paths and test files may have changed or been removed. For current behavior, read the [backend README](../backend/README.md); for remaining work, read the [project plan](project-plan.md). Do not treat a historical passing test count as a newly rerun result.
 
+## 2026-10-22: End-to-end test with the dispatcher's review (Test 11)
+
+Aditya asked for one fresh run of the whole application on the 100-case golden set, then the dispatcher's review through the app (Approve all, then Review again), with the score before and after in a separate report. Claude Code wrote the expectation and the scoring rules before the run and ran it once. Full report: [end-to-end test](../backend/docs/evaluation/END_TO_END_TEST_2026-10-22.md); test log: Test 11 in [prompt testing results](../backend/docs/evaluation/PROMPT_TESTING_RESULTS.md).
+
+- **New code (test and evaluation only; no pipeline, allocator or review logic changed):**
+  - `backend/eval_run_report/final_plan_score.py`: scores the dispatcher's final table. Only approved rows count as allocated, matched to cases by order, so a batch the dispatcher added also counts.
+  - `backend/score_dispatcher_review.py`: the command that writes that score into the run folder.
+  - `backend/eval_run_report/key_informed_choices.py`: a simulated dispatcher that knows the key, for tests only.
+  - `backend/tests/test_final_plan_score.py`: 3 offline tests of the two modules.
+- **Run:** `output/end_to_end_test_2026-10-22/runs/2026-10-22_22-31-00`, with Test 10's settings. `config.toml` was changed for the run and restored afterwards, with its hash checked. There were 128 paid calls, costing $0.0757, and the run took 9 min 23 s.
+- **Before the review:** 81/85 correct allocations, 4 missed, 14/15 exceptions held and 1 unsafe (CASE-097, a cancelled order).
+- **Review**, through the FastAPI endpoints:
+  - Approve all had 23 choices: 15 warning checks, 3 preference corrections, 3 `complete`, 1 `add_batch` and 1 intent correction.
+  - Review again had no choices.
+  - Both versions scored 85/85 and 15/15, with 0 extra rows and every field matching the key.
+- **Second paid run:** not made. The first run could be scored, and a repeat would only measure run-to-run variation again.
+- **Found, not decided** (report section 6):
+  - There is no "do not allocate" decision, so the cancelled order could only be stopped by relabelling it as a question.
+  - A task that failed verification cannot be named by any decision.
+  - The model-side failures from Test 10 remain.
+- **Verification:**
+  - The key, the inputs, the pre-registered section and the new code had the same hashes before and after the run.
+  - The review did not change the run's `manifest.json`, `state.json` or `plan.json`.
+  - The 145 offline tests passed.
+  - No Git command or installation was used.
+
 ## 2026-10-22: Notebook 07 updated for the finished dispatcher workflow
 
 Aditya asked for notebook 07 (`backend/experimentation_notebooks/07-dispatcher-workflow-with-reallocation.ipynb`) to show the final logic and then to be run. Claude Code wrote the edits as one script, applied it to a scratch copy, ran and checked that copy, and then applied the same script to the notebook and executed it. The notebook went from 26 to 32 cells.

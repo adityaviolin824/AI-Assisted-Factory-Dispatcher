@@ -298,24 +298,36 @@ The allocation rules were tested on 120 historical orders using the supplied sim
 
 The default policy delivered sooner and had fewer late batches in this test, but cost more and had more defective batches. The simulator requires a workshop for every batch, so the evaluation adapter chooses the least-late option when all options are late. The app instead asks the dispatcher to review the case. The [scheduling benchmark report](backend/eval_harness/results/harness_results_2026-10-15.md) includes the other policies and assumptions.
 
-These results measure the scheduling rules, not the accuracy of AI's reading of a conversation. The backend's **127 offline tests passed on 21 October 2026**; later changes have their own checks in the engineering log.
+These results measure the scheduling rules, not the accuracy of AI's reading of a conversation. The backend's **145 offline tests passed on 22 October 2026**; later changes have their own checks in the engineering log.
 
 ### Chat-to-allocation results
 
-The chat-to-allocation pipeline was tested on **100 synthetic cases in 149 messages**, scored before dispatcher review against a human-reviewed answer key. An offline check confirms that 85 cases can be allocated on time together. The other 15 are deliberate exceptions, including a cancelled order and a suspended workshop. The [evaluation guide](evaluation/README.md) explains the test data and scoring rules.
+**How we evaluated it:**
+1. **Test set.** There are 100 synthetic cases in 149 chat messages. The 85 that should be allocated fit on time in one plan, as an offline check confirms. The other 15 are deliberate exceptions, such as a cancelled order or a suspended workshop. A human-reviewed answer key was frozen on 21 October 2026, before any run.
+2. **Rules written first.** Before each paid run, the expected results and the scoring rules were written down and hashed. They were not changed afterwards.
+3. **Fresh runs.** Each run processed the whole chat with an empty answer cache and the same models and settings, so every model call was new.
+4. **Score before the review** (`backend/make_run_report.py`). Each case is matched to the task the app created from its first message. A case is **correct** when the app recommends a workshop that obeys every workshop rule and meets the deadline. It is **missed** when it is sent to a person instead. It is **unsafe** when an exception receives a workshop.
+5. **Score after the review** (Test 11 only; `backend/score_dispatcher_review.py`). A simulated dispatcher who knows the answer key reviewed the paused run through the app's HTTP API. It sent one **Approve all** with 23 choices, then **Review again**, which plans the approved table again. Only rows the dispatcher approved count as allocated.
 
-| Recorded run 2, 21 October 2026 | Result |
-|---|---|
-| Eligible, on-time recommendations | **80 of 85** |
-| Recommendations with all allocation fields matching the key | 77 of 85 |
-| Recommendations that lost a stated preference | 3 |
-| Exceptions correctly held | **14 of 15** |
-| Unsafe recommendations | **1** (a cancelled order was recommended) |
-| Workshop-rule or deadline violations among recommendations | 0 |
-| Follow-ups joined to their task | 35 of 45 |
-| Model calls, cost, time | 128 calls, $0.0700, 10 min 1 s |
+| | Test 10, run 1 (21 Oct) | Test 10, run 2 (21 Oct) | Test 11 (22 Oct), before review | Test 11, after review |
+|---|---:|---:|---:|---:|
+| Correct allocations (of 85) | 73 | 80 | **81** | **85** |
+| - every field matches the key | 71 | 77 | 78 | 85 |
+| Missed (sent to a person) | 12 | 5 | 4 | 0 |
+| Exceptions correctly held (of 15) | 14 | 14 | 14 | **15** |
+| Unsafe allocations | 1 | 1 | 1 | **0** |
+| Chat messages labelled correctly (of 149) | 140 | 145 | 146 | - |
+| Follow-ups joined to their task (of 45) | 30 | 35 | 36 | - |
+| Model calls, cost, time | 124, $0.0728, 10 min 52 s | 128, $0.0700, 10 min 1 s | 128, $0.0757, 9 min 23 s | no model calls |
 
-The cancelled order passed verification and reached allocation. This remains an unsafe result, even though the chosen workshop met the capacity and deadline rules. Missed follow-ups and a Python date check also caused requests to be left unresolved. The [evaluation report](backend/docs/evaluation/GOLDEN_100_RUN_REPORT.md) compares both recorded runs and documents the failures and proposed fixes.
+**What the results show:**
+- The model and Python on their own did best in Test 11 (81 of 85), and the allocator broke no workshop rule in any run.
+- With the dispatcher's review, the table was perfect: everything that should be allocated was, and nothing else was.
+- The "after review" column is the app's ceiling, not a measured human result, because the simulated dispatcher knew the answers.
+- The cancelled order (CASE-097) was recommended in all three runs. It could only be stopped by relabelling it as a question, because the app has no "do not allocate" choice yet. This is the most important fix.
+- Scores varied from 73 to 81 across three identical setups, so a single run's score is indicative only.
+
+The [evaluation guide](evaluation/README.md) explains the test data and scoring. The [Test 10 report](backend/docs/evaluation/GOLDEN_100_RUN_REPORT.md) analyses the failures of the first two runs, and the [Test 11 report](backend/docs/evaluation/END_TO_END_TEST_2026-10-22.md) records the dispatcher's review.
 
 AI custom-created this test set after repeated project experiments. Its questions and dispatch requests span several difficulty levels, designed to resemble real-life situations and target weaknesses in our system. **Three team members divided the work and comprehensively hand-reviewed the entire set, line by line. This review was done by humans, not AI.** Their comments and the owner's final clarifications were reconciled into the [human-team golden key](backend/docs/evaluation/extended_dispatch_100_human_team_golden.json). The [review record](backend/docs/evaluation/extended_dispatch_100_REVIEW.md) preserves the source workbook, corrections and provenance.
 

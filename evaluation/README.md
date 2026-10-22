@@ -18,11 +18,12 @@ Two separate things were evaluated, and their results are kept apart:
 | Golden answer key (version 2, frozen before the model runs) | [Human-reviewed answers](../backend/docs/evaluation/extended_dispatch_100_human_team_golden.json) |
 | The team's returned review workbook, unchanged | [Review workbook](../backend/docs/evaluation/extended_dispatch_100_human_team_review.xlsx) |
 | Review record: who reviewed, what changed, file hashes | [Review evidence](../backend/docs/evaluation/extended_dispatch_100_REVIEW.md) |
-| Full report of both runs, with failure analysis and charts | [Run comparison and findings](../backend/docs/evaluation/GOLDEN_100_RUN_REPORT.md) |
+| Test 10: both runs, with failure analysis and charts | [Run comparison and findings](../backend/docs/evaluation/GOLDEN_100_RUN_REPORT.md) |
+| Test 11: one run, before and after the dispatcher's review | [End-to-end test](../backend/docs/evaluation/END_TO_END_TEST_2026-10-22.md) |
 | Run 2: every plan row with its reason | [Detailed run 2 results](golden_100_run_2_report.md) |
-| Log of every paid test run (Test 10 covers these runs) | [Experiment history](../backend/docs/evaluation/PROMPT_TESTING_RESULTS.md) |
+| Log of every paid test run (Tests 10 and 11 cover these runs) | [Experiment history](../backend/docs/evaluation/PROMPT_TESTING_RESULTS.md) |
 | Earlier notebooks and selected debugging records | [Development experiments](../experiments/README.md) |
-| Scoring code | [Report command](../backend/make_run_report.py) and [scoring modules](../backend/eval_run_report/) |
+| Scoring code | [Report command](../backend/make_run_report.py) (before the review), [review score command](../backend/score_dispatcher_review.py) (after it) and [scoring modules](../backend/eval_run_report/) |
 
 The detailed run 2 report is an unchanged copy of the generated report for run `2026-10-21_23-43-53`. The original run folder is excluded from version control; paths inside the report are recorded relative to `backend/`. Its "Key's own description" preserves the key's frozen text from before testing. The offline feasibility checker and saved regression snapshots are kept locally rather than published here.
 
@@ -96,6 +97,21 @@ An offline check using the key's expected interpretations confirms that all 85 a
 
 Each case is matched to the task the app created from the case's first message. A case that should be allocated is **correct** when the app recommends a workshop that obeys every workshop rule and meets the deadline. A different workshop from the key's own plan is not an error, because earlier tasks can take queue time in a different order. A case is **missed** when the app sends it to a person instead. The rules are fixed in "How the score works" in [NEW_TEST_SETS_PLAN.md](../backend/docs/evaluation/NEW_TEST_SETS_PLAN.md), and the expectations were written down and hashed before the runs.
 
+After the dispatcher's review (Test 11), a different rule applies: only rows the dispatcher approved count as allocated. Each approved row counts for the case of its order, so a batch the dispatcher added also counts. A table is **perfect** when all 85 cases are allocated correctly and no exception or unrelated row is approved. These rules are in `backend/eval_run_report/final_plan_score.py`, and they were written and hashed before Test 11 ran.
+
+### All three runs, before and after the dispatcher's review
+
+All three runs used the same inputs and settings and started with empty answer caches. In Test 11, a simulated dispatcher who knows the key then reviewed the paused run through the HTTP API. It sent one Approve all with 23 choices, then Review again. `backend/score_dispatcher_review.py` scored the result, counting only approved rows as allocated.
+
+| | Test 10, run 1 | Test 10, run 2 | Test 11, before review | Test 11, after review |
+|---|---:|---:|---:|---:|
+| Correct allocations (of 85) | 73 | 80 | **81** | **85** |
+| Exceptions correctly held (of 15) | 14 | 14 | 14 | **15** |
+| Unsafe allocations | 1 | 1 | 1 | **0** |
+| Cost, time | $0.0728, 10 min 52 s | $0.0700, 10 min 1 s | $0.0757, 9 min 23 s | no model calls |
+
+The "after review" result is the app's ceiling, because the simulated dispatcher had the key. The cancelled order (CASE-097) could only be stopped by relabelling it as a question: the app has no "do not allocate" choice yet. See the [Test 11 report](../backend/docs/evaluation/END_TO_END_TEST_2026-10-22.md).
+
 ### Recorded results: run 2 (21 October 2026)
 
 The table records run `2026-10-21_23-43-53`. Both model runs used the same inputs and settings and started with empty answer caches. The [run comparison](../backend/docs/evaluation/GOLDEN_100_RUN_REPORT.md) documents their results and variation.
@@ -135,5 +151,6 @@ These changes remain proposals. No improvement is claimed until it is tested.
 ### Limits
 
 - The chat is synthetic and its wording is templated, and every chat deadline equals the order's due date. Results on these inputs do not establish performance on messy factory conversations.
-- Two runs show that run-to-run variation exists, not how large it is. A case that passed here can still fail in another run.
+- Three runs (73, 80 and 81 of 85) show that run-to-run variation exists, not how large it is. A case that passed here can still fail in another run.
+- The after-review score used a simulated dispatcher who knew the key. It shows what the app's decisions can fix, not how well a real dispatcher would do, and the time a real review takes was not measured.
 - This set measures interpretation and safe allocation. It does not replace the harness's official metrics.

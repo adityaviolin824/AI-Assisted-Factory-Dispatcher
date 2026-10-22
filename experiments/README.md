@@ -1,6 +1,6 @@
 # Experiments
 
-These notebooks cover chat processing, workshop allocation, the combined LangGraph pipeline and the first dispatcher review screen. They are earlier stages of the backend. The current application is described in the [backend README](../backend/README.md).
+These notebooks belong to [AI-Assisted-Factory-Dispatcher](../README.md). They cover chat processing, workshop allocation, the combined LangGraph pipeline and the first dispatcher review screen. They are earlier stages of the backend. The current application is described in the [backend README](../backend/README.md).
 
 The task stayed the same through these steps: read a dispatch request, check which workshops can make the batch and take the extra work, check their restrictions, and give the dispatcher a usable recommendation.
 

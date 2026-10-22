@@ -1,5 +1,7 @@
 # Project explanation for presentations
 
+Development and presentation notes for [AI-Assisted-Factory-Dispatcher](../README.md). The application is named SweaterCo Dispatch Copilot.
+
 Current implementation status updated: 13 October 2026; the graph's dispatcher review pause added 20 October 2026. The historical debugging and run evidence below retains its 10 October processing v3/allocation v4 baseline. Use this to explain the project to the professor. The [backend README](../backend/README.md) explains the implementation in more detail, and the [project plan](project-plan.md) distinguishes completed work from what comes next.
 
 The [experiment guide](../experiments/README.md) gives a reading order for the earlier notebooks. Its [development notes](../experiments/development-notes.md) explain four investigations, and the [timeline](../experiments/timeline.md) connects them to the later modules and API.

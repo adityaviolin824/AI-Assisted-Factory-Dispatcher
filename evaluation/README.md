@@ -1,5 +1,7 @@
 # Evaluation
 
+Evaluation records for [AI-Assisted-Factory-Dispatcher](../README.md), developed as SweaterCo Dispatch Copilot.
+
 This folder explains what was tested, where the data and scores are, and the recorded results on our 100-case test set. Backend data, answer keys and scoring code remain in their existing locations; the links below provide one place to find them.
 
 Two separate things were evaluated, and their results are kept apart:

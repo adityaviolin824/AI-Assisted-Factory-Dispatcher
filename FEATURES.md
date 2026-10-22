@@ -1,5 +1,7 @@
 # SweaterCo Dispatch Copilot
 
+Feature notes for [AI-Assisted-Factory-Dispatcher](README.md).
+
 ## From factory chat to a dispatch decision you can inspect
 
 **Project highlights · Evidence recorded through 20 October 2026**

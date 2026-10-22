@@ -2,6 +2,13 @@
 
 Entries describe the code and evidence available at the time of each investigation. Older notebook names, settings, output paths and test files may have changed or been removed. For current behavior, read the [backend README](../backend/README.md); for remaining work, read the [project plan](project-plan.md). Do not treat a historical passing test count as a newly rerun result.
 
+## 2026-10-22: Identify the GitHub repository in the public guides
+
+- **Request:** use the confirmed repository name, `AI-Assisted-Factory-Dispatcher`, in the relevant Markdown guides and prepare a longer GitHub About description.
+- **Naming:** retained SweaterCo Dispatch Copilot as the application name. Added the canonical GitHub URL to the root README and linked the repository name back to that overview from the backend, feature, experiment, evaluation and presentation guides. Clarified the root folder in the setup instructions without renaming any local folder or adding Git commands. Existing third-party repository links remain unchanged.
+- **Description:** prepared a 317-character summary of chat processing, workshop checks, dispatcher approval, the technical stack, saved responses and human-reviewed evaluation data. GitHub's own Desktop issue 19465 records the 350-character description limit. The description is supplied for the owner to paste into About; no GitHub settings were changed.
+- **Verification:** counted the description, checked the new local links and canonical URL, and compared the inline Mermaid bodies and protected files with the pre-edit snapshot. No code, notebook, diagram, ignore rule, dependency or model setting was changed. No Git command, model call or installation was made.
+
 ## 2026-10-22: Explain model roles, practical value and total spending in the README
 
 - **Request:** make the root README clear about which models handle each task, why the product helps the dispatch team, and the team's reported total project spending of 70 cents.

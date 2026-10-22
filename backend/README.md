@@ -1,5 +1,7 @@
 # Backend implementation
 
+Backend for [AI-Assisted-Factory-Dispatcher](../README.md), the repository for SweaterCo Dispatch Copilot.
+
 Last checked: 20 October 2026, after adding the dispatcher review pause to the graph. The current application path uses the Python modules, `run_full_pipeline.py` and `resume_dispatcher_review.py`; the first FastAPI endpoints (`main.py`) serve saved runs and the paused review. Notebooks 05 and 06 are the experimental references; intentional differences are declared in the module tests.
 
 **One-batch final approval, implemented 21 October:** the dispatcher completes all choices locally, with no per-click mutation, recalculation or persisted edits. One **Approve all** submits the set through `POST /reviews/{thread_id}/finalize`; Python keeps the dispatcher's destinations, schedules flexible work, saves immediately and returns the final dispatch table plus changed rows. This supersedes the older per-edit checkpoint/empty-approval interaction described below. Reallocation and its optional review/approval flow remain pending. Docker comes at the absolute end.

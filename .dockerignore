@@ -1,0 +1,21 @@
+# What `docker build .` may send to Docker. The build starts at the repository root, but the image
+# needs only backend/, so leave everything out and then let backend/ back in. The last matching line wins.
+*
+!backend/
+
+# Never send secrets or local tool settings, even from inside backend/.
+**/.env
+**/.env.*
+backend/.claude/
+**/.DS_Store
+
+# Made on each computer or by each run. The image builds its own .venv; saved runs, model-answer
+# caches and review checkpoints are mounted when the container starts (see the Dockerfile).
+backend/.venv/
+backend/output/
+**/__pycache__/
+
+# Not used by the API. The notebooks hold their own outputs and chat storage, and the tests read them.
+backend/experimentation_notebooks/
+backend/tests/
+backend/testing_runs/

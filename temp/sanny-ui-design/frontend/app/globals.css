@@ -1,0 +1,955 @@
+/* Light enterprise dashboard theme. The existing state language stays intact:
+   amber/dashed is provisional, green/solid is approved, and red needs attention. */
+:root {
+  --page: #f4f7fb;
+  --surface: #ffffff;
+  --raised: #eef3ff;
+  --seam: #dce3ee;
+  --control: #aab7ca;
+  --text: #172033;
+  --muted: #657187;
+  --gold: #d9951b;
+  --red: #d84b4b;
+  --blue: #315ee8;
+  --blue-dark: #2448b8;
+  --green: #16805f;
+  --shadow-sm: 0 1px 2px rgb(20 33 61 / 5%), 0 8px 24px rgb(20 33 61 / 5%);
+  --shadow-md: 0 14px 36px rgb(20 33 61 / 9%);
+  --sans: var(--font-archivo), "Helvetica Neue", Arial, sans-serif;
+  --serif: var(--font-literata), Georgia, serif;
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  color: var(--text);
+  background: var(--page);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+main {
+  width: min(1560px, 100%);
+  margin: 0 auto;
+  padding: 34px 40px 72px;
+}
+
+a {
+  color: var(--blue-dark);
+  text-decoration-color: #9eb4f4;
+  text-underline-offset: 3px;
+}
+
+:focus-visible {
+  outline: 3px solid rgb(49 94 232 / 28%);
+  outline-offset: 3px;
+}
+
+/* Headings use Archivo's expanded width, like the markings stencilled on cartons. */
+h1,
+h2 {
+  font-stretch: 125%;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+h1 {
+  font-size: clamp(28px, 3vw, 38px);
+  letter-spacing: -0.035em;
+  margin: 0;
+}
+
+h2 {
+  font-size: 22px;
+  letter-spacing: -0.02em;
+  margin: 36px 0 12px;
+}
+
+h3 {
+  font-size: 16px;
+  font-weight: 650;
+  margin: 24px 0 8px;
+}
+
+p {
+  margin: 10px 0;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+/* Words a person wrote: chat messages and quoted source messages. */
+.spoken {
+  font-family: var(--serif);
+  line-height: 1.6;
+}
+
+/* App bar with the Chat/Dispatcher mode switch, on every page. */
+.app-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 32px;
+  min-height: 68px;
+  padding: 12px max(32px, calc((100vw - 1560px) / 2 + 40px));
+  background: rgb(255 255 255 / 94%);
+  border-bottom: 1px solid var(--seam);
+  box-shadow: 0 1px 0 rgb(20 33 61 / 2%);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  backdrop-filter: blur(14px);
+}
+
+.brand {
+  color: #101a2d;
+  font-size: 17px;
+  font-stretch: 125%;
+  font-weight: 750;
+  letter-spacing: -0.015em;
+}
+
+.mode-switch {
+  display: flex;
+  padding: 3px;
+  background: #f1f4f9;
+  border: 1px solid #e3e8f1;
+  border-radius: 10px;
+}
+
+.mode-switch a {
+  padding: 7px 22px;
+  border-radius: 7px;
+  color: var(--muted);
+  font-stretch: 125%;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.mode-switch a:hover {
+  color: var(--blue-dark);
+}
+
+.mode-switch a[aria-current="page"] {
+  background: var(--surface);
+  color: var(--blue-dark);
+  box-shadow: 0 1px 5px rgb(20 33 61 / 12%);
+}
+
+.about-link {
+  margin-left: auto;
+  color: var(--muted);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.about-link:hover {
+  color: var(--blue-dark);
+}
+
+/* Page title with its controls on one line, wrapping on narrow screens. */
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 32px;
+  justify-content: space-between;
+  padding-bottom: 4px;
+}
+
+/* A flex item never shrinks below its content by default; the run select needs it to. */
+.page-head .toolbar {
+  min-width: 0;
+}
+
+.lede {
+  max-width: 72ch;
+}
+
+/* A state still open: a partial plan, missing warnings, a provisional suggestion. */
+.notice {
+  padding: 12px 16px;
+  background: #fff9eb;
+  border-left: 3px dashed var(--gold);
+  border-radius: 0 9px 9px 0;
+  max-width: 96ch;
+}
+
+.error {
+  padding: 12px 16px;
+  background: #fff1f1;
+  border-left: 3px solid var(--red);
+  border-radius: 0 9px 9px 0;
+  max-width: 96ch;
+}
+
+/* Which plan is shown: dashed before the dispatcher's review, solid once approved and saved. */
+.run-state {
+  padding: 10px 14px;
+  background: #fff9eb;
+  border-left: 3px dashed var(--gold);
+  border-radius: 0 9px 9px 0;
+}
+
+.run-state.final {
+  background: #edf9f4;
+  border-left-color: var(--green);
+  border-left-style: solid;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  background: var(--surface);
+}
+
+th,
+td {
+  border-bottom: 1px solid var(--seam);
+  padding: 11px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  background: #f7f9fc;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+td.number,
+th.number {
+  text-align: right;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+tbody tr:hover td {
+  background: #f7f9ff;
+}
+
+tr.selected td,
+tr.selected:hover td {
+  background: #e9efff;
+}
+
+td.reason {
+  min-width: 260px;
+}
+
+td.nowrap {
+  white-space: nowrap;
+}
+
+/* Worklist thread marks, repeated in words in the Outcome column. */
+tr[data-group] td:first-child {
+  border-left: 3px solid transparent;
+}
+
+tr[data-group="attention"] td:first-child {
+  border-left-color: var(--red);
+}
+
+tr[data-group="suggested"] td:first-child {
+  border-left: 3px dashed var(--gold);
+}
+
+tr[data-group="approved"] td:first-child {
+  border-left-color: var(--gold);
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.legend span {
+  padding-left: 8px;
+  border-left: 3px solid var(--red);
+}
+
+.legend .mark-suggested {
+  border-left: 3px dashed var(--gold);
+}
+
+.legend .mark-approved {
+  border-left-color: var(--gold);
+}
+
+button,
+select,
+input,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  padding: 8px 15px;
+  background: var(--surface);
+  border: 1px solid #cbd5e3;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgb(20 33 61 / 5%);
+  transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease, background 150ms ease;
+}
+
+button:hover {
+  background: #f8faff;
+  border-color: #91a6d8;
+  box-shadow: 0 4px 12px rgb(20 33 61 / 8%);
+  transform: translateY(-1px);
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.primary {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: #ffffff;
+  box-shadow: 0 5px 14px rgb(49 94 232 / 22%);
+}
+
+.primary:hover {
+  background: var(--blue-dark);
+  border-color: var(--blue-dark);
+}
+
+select,
+input,
+textarea {
+  padding: 9px 11px;
+  background: var(--surface);
+  border: 1px solid #cbd5e3;
+  border-radius: 8px;
+  box-shadow: inset 0 1px 2px rgb(20 33 61 / 3%);
+}
+
+select:hover,
+input:hover,
+textarea:hover {
+  border-color: #98a9c1;
+}
+
+label {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  max-width: 100%;
+  color: var(--muted);
+}
+
+/* A select is as wide as its longest option; on a phone it must shrink to the screen. */
+select {
+  min-width: 0;
+  max-width: 100%;
+  color: var(--text);
+}
+
+.toolbar,
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.filters {
+  margin: 16px 0 10px;
+}
+
+.filters button[aria-pressed="true"] {
+  color: var(--blue-dark);
+  background: #eaf0ff;
+  border-color: #9ab0ef;
+  box-shadow: inset 0 0 0 1px #9ab0ef;
+}
+
+.link-button {
+  border: none;
+  background: none;
+  padding: 0;
+  margin-right: 8px;
+  text-decoration: underline;
+  text-decoration-color: var(--gold);
+  text-underline-offset: 3px;
+}
+
+/* Worklist beside the detail panel on wide screens, one above the other on narrow ones. */
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 24px;
+  align-items: start;
+}
+
+/* The right column stays in view: the task details, and during a review the tray of unsaved
+   choices under them. The details scroll and shrink so the tray always fits. */
+.desk {
+  position: sticky;
+  top: 16px;
+  max-height: calc(100vh - 32px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.desk .review-bar {
+  flex: none;
+  margin: 0;
+}
+
+.details {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 6px 22px 22px;
+  background: var(--surface);
+  border: 1px solid var(--seam);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.details h2 {
+  margin-top: 16px;
+}
+
+.details th {
+  background: #f2f5fb;
+}
+
+.empty-details {
+  padding: 20px;
+  border: 1px dashed var(--seam);
+  background: rgb(255 255 255 / 60%);
+  border-radius: 12px;
+}
+
+.quotes {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.quotes li {
+  margin: 12px 0;
+  padding-left: 14px;
+  padding: 10px 14px;
+  background: #f8fafc;
+  border-left: 3px solid #b8c7e4;
+  border-radius: 0 8px 8px 0;
+}
+
+.quotes .message-id {
+  display: block;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 16px;
+  font-size: 14px;
+}
+
+.facts dt {
+  color: var(--muted);
+}
+
+.facts dd {
+  margin: 0;
+}
+
+/* Dispatcher review: the thread field, then the unsaved choices and Approve all. */
+.review-bar {
+  margin: 12px 0;
+  padding: 8px 18px 12px;
+  background: var(--surface);
+  border: 1px solid var(--seam);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.review-bar.reviewing {
+  border-left: 3px dashed var(--gold);
+}
+
+.review-bar .notice {
+  background: #fff9eb;
+}
+
+.decision-list {
+  max-height: 7.5em;
+  overflow-y: auto;
+  margin: 6px 0;
+  padding-left: 20px;
+  font-size: 14px;
+}
+
+/* Unsaved choices are basted, not sewn: dashed until Approve all saves them. */
+.choices {
+  margin: 16px 0;
+  padding: 2px 16px 14px;
+  background: #f7f9fc;
+  border: 1px solid var(--seam);
+  border-radius: 10px;
+}
+
+.choices.pending {
+  border-left: 3px dashed var(--gold);
+}
+
+.choices h3 {
+  margin-top: 12px;
+}
+
+.unsaved {
+  color: var(--gold);
+  font-weight: 600;
+}
+
+.unsaved.block {
+  display: block;
+  white-space: nowrap;
+}
+
+.choices fieldset {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0;
+  padding: 8px 12px 12px;
+  border: 1px solid var(--seam);
+  border-radius: 4px;
+}
+
+.choices legend {
+  padding: 0 6px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* Each choice is a full-width row: the label on the left, its control on the right. */
+.choices label {
+  display: flex;
+  justify-content: space-between;
+}
+
+.choices select,
+.choices input:not([type="checkbox"]) {
+  width: min(13rem, 60%);
+}
+
+.choices label.check {
+  justify-content: flex-start;
+  flex-wrap: nowrap;
+}
+
+.choices fieldset input[type="checkbox"] {
+  margin: 0;
+}
+
+/* Chat: the conversation with its composer beside the processing panel. */
+.chat-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 28px;
+  align-items: start;
+  margin-top: 16px;
+}
+
+.conversation {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 150px);
+  min-height: 520px;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--seam);
+  border-radius: 14px;
+  box-shadow: var(--shadow-md);
+}
+
+/* column-reverse starts the scroll at the bottom and keeps the newest message in view. */
+.timeline {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column-reverse;
+  background: linear-gradient(180deg, #f7f9fd 0%, #fbfcff 100%);
+}
+
+.timeline ol {
+  list-style: none;
+  margin: 0;
+  padding: 18px;
+}
+
+.timeline li {
+  width: fit-content;
+  max-width: min(76%, 760px);
+  margin: 0 0 12px;
+  padding: 12px 16px;
+  background: var(--surface);
+  border: 1px solid #e0e6f0;
+  border-radius: 4px 14px 14px 14px;
+  box-shadow: 0 3px 12px rgb(20 33 61 / 6%);
+}
+
+.timeline-empty {
+  flex: 1;
+  margin: 0;
+  padding: 20px;
+}
+
+.message-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 0;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  color: #34425c;
+}
+
+.message-meta time {
+  color: var(--muted);
+}
+
+.message-text {
+  margin: 2px 0 0;
+  max-width: 68ch;
+  color: #222d42;
+  font-size: 17px;
+  white-space: pre-wrap;
+}
+
+.composer {
+  display: grid;
+  gap: 10px;
+  padding: 16px 18px 18px;
+  background: #ffffff;
+  border-top: 1px solid var(--seam);
+}
+
+.composer-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  align-items: center;
+}
+
+.message-field {
+  display: grid;
+  gap: 6px;
+}
+
+.composer textarea {
+  width: 100%;
+  resize: vertical;
+  font-family: var(--serif);
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.composer .error {
+  margin: 0;
+}
+
+.hint {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.process-panel {
+  position: sticky;
+  top: 16px;
+  padding: 8px 22px 22px;
+  background: var(--surface);
+  border: 1px solid var(--seam);
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+}
+
+.process-panel h2 {
+  margin-top: 16px;
+}
+
+/* A snapshot is dashed until it has been processed into a run. */
+.snapshot {
+  margin-top: 20px;
+  padding-left: 14px;
+  border-left: 3px dashed var(--gold);
+}
+
+.snapshot.final {
+  border-left-style: solid;
+}
+
+summary {
+  cursor: pointer;
+}
+
+pre {
+  max-height: 240px;
+  overflow: auto;
+  padding: 10px 12px;
+  background: #f4f7fb;
+  border: 1px solid var(--seam);
+  border-radius: 9px;
+  font-family: var(--serif);
+  font-size: 14px;
+  white-space: pre-wrap;
+}
+
+.open-run {
+  font-weight: 650;
+}
+
+.run-list {
+  list-style: none;
+  padding: 0;
+  font-size: 14px;
+}
+
+.run-list li {
+  margin: 6px 0;
+}
+
+/* Introduction: a worked example, the three-step flow and what works today. */
+.intro {
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.intro h1 {
+  max-width: 760px;
+  font-size: clamp(38px, 5vw, 60px);
+  margin-top: 48px;
+}
+
+.intro .lede {
+  max-width: 760px;
+  color: #536178;
+  font-size: 20px;
+  line-height: 1.6;
+}
+
+.example {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  gap: 44px;
+  margin: 40px 0 46px;
+  padding: 12px 30px 28px;
+  background: var(--surface);
+  border: 1px solid var(--seam);
+  border-radius: 16px;
+  box-shadow: var(--shadow-md);
+}
+
+.example h2 {
+  font-size: 18px;
+  margin-top: 20px;
+}
+
+.example blockquote {
+  margin: 0;
+  padding-left: 16px;
+  padding: 16px 18px;
+  background: #f7f9fc;
+  border-left: 3px solid var(--blue);
+  border-radius: 0 10px 10px 0;
+  font-size: 21px;
+}
+
+.questions dt {
+  font-weight: 650;
+  margin-top: 14px;
+}
+
+.questions dd {
+  margin: 4px 0 0;
+  color: var(--muted);
+  max-width: 64ch;
+}
+
+.example .run-state {
+  margin-top: 24px;
+}
+
+.steps {
+  padding-left: 0;
+  list-style: none;
+  counter-reset: step;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  max-width: none;
+}
+
+.steps li {
+  counter-increment: step;
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  gap: 6px;
+  margin: 0;
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--seam);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.steps li::before {
+  content: counter(step);
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  color: #ffffff;
+  background: var(--blue);
+  border-radius: 50%;
+  font-size: 21px;
+  font-stretch: 125%;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.intro .toolbar {
+  gap: 12px;
+  font-weight: 650;
+}
+
+.intro .toolbar a {
+  display: inline-flex;
+  padding: 10px 16px;
+  color: #ffffff;
+  background: var(--blue);
+  border-radius: 8px;
+  box-shadow: 0 5px 14px rgb(49 94 232 / 18%);
+  text-decoration: none;
+}
+
+.intro .toolbar a:hover {
+  background: var(--blue-dark);
+}
+
+.status-list {
+  display: grid;
+  gap: 10px;
+  padding: 0;
+  max-width: 850px;
+  list-style: none;
+}
+
+.status-list li {
+  margin: 0;
+  padding: 12px 16px 12px 44px;
+  background: var(--surface);
+  border: 1px solid var(--seam);
+  border-radius: 10px;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+}
+
+.status-list li::before {
+  content: "";
+  position: absolute;
+  top: 17px;
+  left: 18px;
+  width: 10px;
+  height: 10px;
+  background: var(--green);
+  border-radius: 50%;
+}
+
+@media (max-width: 1100px) {
+  .workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .desk {
+    position: static;
+    max-height: none;
+  }
+
+  .chat-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .conversation {
+    height: 75vh;
+    min-height: 440px;
+  }
+
+  .process-panel {
+    position: static;
+  }
+}
+
+@media (max-width: 800px) {
+  .example {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    padding: 4px 18px 20px;
+  }
+
+  .intro h1 {
+    font-size: 30px;
+  }
+
+  .steps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  main {
+    padding: 24px 16px 48px;
+  }
+
+  .app-bar {
+    position: static;
+    padding: 10px 16px;
+  }
+
+  .mode-switch a {
+    padding: 6px 14px;
+  }
+
+  h1 {
+    font-size: 24px;
+  }
+
+  .about-link {
+    margin-left: 0;
+  }
+
+  .timeline ol {
+    padding: 12px;
+  }
+
+  .timeline li {
+    max-width: 92%;
+  }
+}

@@ -2,6 +2,49 @@
 
 Entries describe the code and evidence available at the time of each investigation. Older notebook names, settings, output paths and test files may have changed or been removed. For current behavior, read the [backend README](../backend/README.md); for remaining work, read the [project plan](project-plan.md). Do not treat a historical passing test count as a newly rerun result.
 
+## 2026-10-22: Very dark default theme and a blue-and-white light theme
+
+- **Request and decisions:** Aditya asked for a very dark main theme (from a reference image of a near-black dashboard), chose a teammate's (Sanny's) blue-and-white card experiment as the light theme, kept dark as the default and chose green for approved. Colour details within those limits were left to Claude Code, with no major changes. This is a user decision against `frontend/AGENTS.md`'s "distinctive dark interfaces, no generic SaaS templates" rule for the light theme only.
+- **Why not copy the experiment's file:** it was built from a stylesheet older than the light mode switch (no dark theme, no switch styles), and reading and measuring it showed:
+  - gold text at 2.5:1 and control borders at 1.5:1;
+  - "approved" in two colours (green banner, gold rows);
+  - a fixed top bar over the sticky side panels;
+  - 36 colours typed into the rules.
+- **Change:** `frontend/app/globals.css` only, plus the two expected colours in `frontend/tests/theme.spec.ts`. No component or behaviour changed.
+  - **Theme settings:** every colour is a named setting, and the light theme redefines the same names.
+  - **Dark:** near-black with a faint indigo tint, page `#0B0E16`.
+  - **Light:** Sanny's palette, with darker gold and red, and borders strong enough to read.
+  - **State colours:** dashed gold for provisional, solid green for approved, red for attention, each with a tinted background.
+  - **Cards:** panels are cards in both themes; tables stay rows.
+  - **Chat messages:** full-width cards, not bubbles, as `frontend/DESIGN.md` decided.
+- **Evidence:**
+  - **Contrast:** measured for every colour pair the stylesheet uses. Text is at least 4.5:1 and state lines and control borders at least 3:1 in both themes.
+  - **Worklist width:** a measured regression was fixed by its proven cause. With 12px horizontal cell padding the worklist overflowed its column by 15px at 1440px with an unsaved choice; with 10px it overflowed by 0. At 1280px it already scrolled with the old layout (59px, now 66px).
+  - **Checks:** `npm test` 41 passed, and typecheck, lint and build are clean.
+  - **Screenshots:** every page in both themes at 1440px and 390px. The data came from a real saved run, answered from disk inside the browser test (no FastAPI, no model call, no write).
+- **Attribution:** Aditya made the theme decisions. The light palette and card format are Sanny's. Claude Code implemented, measured and documented the change.
+
+## 2026-10-22: Placeholder Dockerfile for the backend API
+
+- **Request:** Aditya asked for an accurate placeholder `Dockerfile` and `.dockerignore`, which they do not plan to start, and asked whether the static frontend could go in the same image. This is an explicit exception to the instruction files' rule that Docker comes last; nothing was built or run with Docker.
+- **What the image holds:**
+  - `python:3.13.14-slim`, because `pyproject.toml` pins Python 3.13.14 and forbids uv downloading Python;
+  - uv 0.11.26, the version that wrote `uv.lock`;
+  - the runtime dependencies from `uv sync --locked --no-dev`;
+  - `backend/`, started with `fastapi run main.py` on port 8000.
+
+  `output/` (saved runs, model-answer cache, review checkpoints) is mounted at run time instead of copied. The API needs no key. A processing script needs the key passed with `--env-file` when the container starts.
+- **`.dockerignore`:** leaves out everything, lets `backend/` back in, then removes `.env` files, `.claude/`, `.venv/`, `output/`, caches, notebooks, tests and test runs. Leaving out by default means a new root folder or secret file is not sent to Docker by accident.
+- **Frontend left out:** every page is prerendered, but the browser reaches FastAPI through the Next.js rewrite `/api/backend`. Static export does not support rewrites (`node_modules/next/dist/docs/01-app/02-guides/static-exports.md`). One image would need `output: "export"` (with `trailingSlash`) in `next.config.ts`, and FastAPI would need to serve the API under `/api/backend` and the exported files. The other way is a second, Node-based image with Compose. Either changes application code or adds files, so neither belongs in a placeholder.
+- **Checks without Docker:**
+  - both base images were confirmed in their registries (Docker Hub, and an HTTP 200 for the uv manifest on GHCR);
+  - `uv lock --check` passes, so `uv sync --locked` would accept the lock;
+  - `fastapi run` defaults to host 0.0.0.0;
+  - a copy of `backend/` with the same exclusions (234 files, 3.0 MB, no `.env`) imported `main` and `run_full_pipeline`. Through FastAPI's test client it answered `/runs` with `[]`, `/reviews/TH1` with 404 and `/docs` with 200.
+
+  `.dockerignore` matching is Docker's own and was not exercised.
+- **Attribution:** Aditya set the scope (placeholder, never started) and asked the frontend question. Claude Code wrote the files and ran the checks.
+
 ## 2026-10-22: Identify the GitHub repository in the public guides
 
 - **Request:** use the confirmed repository name, `AI-Assisted-Factory-Dispatcher`, in the relevant Markdown guides and prepare a longer GitHub About description.

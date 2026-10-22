@@ -18,7 +18,7 @@ function watchTheme(onChange: () => void) {
   return () => observer.disconnect();
 }
 
-// Light mode on or off, on every page. Dark is the default. Only colours change, nothing else.
+// Light mode on or off, on every page. Dark is the default. Only colours and shadows change, not the layout.
 export default function ThemeSwitch() {
   // The server cannot see the browser's choice, so the server-drawn switch is off (dark).
   const light = useSyncExternalStore(watchTheme, isLight, () => false);

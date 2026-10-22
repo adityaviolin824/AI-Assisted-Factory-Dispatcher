@@ -16,25 +16,25 @@ test("the light mode switch changes the colours, and a reload keeps the choice w
   const body = page.locator("body");
   const lightSwitch = page.getByRole("switch", { name: "Light mode" });
 
-  // Dark is the default: raw indigo page.
+  // Dark is the default: near-black page.
   await page.goto("/");
   await expect(lightSwitch).toHaveAttribute("aria-checked", "false");
-  await expect(body).toHaveCSS("background-color", "rgb(18, 26, 48)");
+  await expect(body).toHaveCSS("background-color", "rgb(11, 14, 22)");
 
-  // On: ecru page, and the choice is remembered.
+  // On: pale blue-grey page, and the choice is remembered.
   await lightSwitch.click();
   await expect(lightSwitch).toHaveAttribute("aria-checked", "true");
   await expect(html).toHaveAttribute("data-theme", "light");
-  await expect(body).toHaveCSS("background-color", "rgb(244, 239, 226)");
+  await expect(body).toHaveCSS("background-color", "rgb(244, 247, 251)");
 
   // A reload starts in light mode: the script in layout.tsx applies it before React starts.
   await page.reload();
   await expect(lightSwitch).toHaveAttribute("aria-checked", "true");
-  await expect(body).toHaveCSS("background-color", "rgb(244, 239, 226)");
+  await expect(body).toHaveCSS("background-color", "rgb(244, 247, 251)");
 
   // Off again: back to dark.
   await lightSwitch.click();
   await expect(lightSwitch).toHaveAttribute("aria-checked", "false");
-  await expect(body).toHaveCSS("background-color", "rgb(18, 26, 48)");
+  await expect(body).toHaveCSS("background-color", "rgb(11, 14, 22)");
   expect(errors).toEqual([]);
 });

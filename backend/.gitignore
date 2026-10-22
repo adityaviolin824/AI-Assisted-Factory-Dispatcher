@@ -20,6 +20,7 @@ full_evaluation_suite/rag-eval-deepeval/
 demo_fastapi_backend/
 # Run folders and saved model answers written by the processing modules (config.toml [output]).
 /output/
+/temp/
 
 # Keep Python source, notebooks, pyproject.toml and uv.lock available to commit.
 

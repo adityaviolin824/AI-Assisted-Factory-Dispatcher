@@ -1,32 +1,69 @@
-/* Palette and type from DESIGN.md: indigo denim, undyed ecru cotton, gold topstitching thread
-   and the red selvedge edge. Gold thread marks state: dashed is provisional, solid is final. */
+/* Two themes share every rule below; only these colour settings differ (DESIGN.md). Dark is the
+   default. The app bar's switch sets data-theme="light" on <html> for the blue-and-white theme.
+   State marks mean the same in both: dashed gold is provisional, solid green is approved and saved,
+   red needs attention. Text is at least 4.5:1 and state lines and control borders at least 3:1 on
+   every background the theme uses. */
 :root {
-  --page: #121a30;
-  --surface: #1b2542;
-  --raised: #25315a;
-  --seam: #34426a;
-  --control: #6e7ba1;
+  /* Near-black with a faint indigo tint, so the denim palette stays; ecru text. */
+  --page: #0b0e16;
+  --surface: #151a27; /* cards and panels, the app bar, table rows */
+  --inset: #10141e; /* areas set into a card: table heads, the choices box, quotes, the chat log */
+  --hover: #1c2232; /* the table row under the pointer */
+  --selected: #252d43; /* the selected row and the pressed filter */
+  --seam: #262e42; /* dividing lines and table rules */
+  --card-line: transparent; /* dark cards stand out by tone, so they need no outline */
+  --control: #6e7ba1; /* borders of buttons and fields */
   --text: #ede6d3;
   --muted: #a9b2ca;
   --gold: #e3a73e;
+  --green: #5cc49a;
   --red: #ee7564;
+  /* Backgrounds behind open (gold), error (red) and saved (green) notes. */
+  --tint-open: #211c16;
+  --tint-error: #25171b;
+  --tint-saved: #12221e;
+  --accent: #ede6d3; /* primary buttons, with --on-accent text */
+  --on-accent: #0b0e16;
+  --link: #ede6d3;
+  --link-line: #e3a73e;
+  --highlight: #e3a73e; /* keyboard focus and the active filter */
+  --switch-on: #ede6d3; /* the current page in the Chat/Dispatcher switch */
+  --switch-on-text: #0b0e16;
+  --shadow-sm: none;
+  --shadow-md: none;
   --sans: var(--font-archivo), "Helvetica Neue", Arial, sans-serif;
   --serif: var(--font-literata), Georgia, serif;
   color-scheme: dark;
 }
 
-/* Light mode, set by the app bar's switch: indigo ink on undyed ecru. Gold and red are darker so
-   they stay readable on a pale page (text at least 4.5:1, lines and control borders at least 3:1). */
+/* Light: white cards on a pale blue-grey page, with a blue accent. Gold and red are darker than in
+   dark mode so they stay readable on white. */
 :root[data-theme="light"] {
-  --page: #f4efe2;
-  --surface: #e9e2ce;
-  --raised: #ddd3b9;
-  --seam: #b6a886;
-  --control: #6c7391;
-  --text: #121a30;
-  --muted: #4a5473;
-  --gold: #7a5000;
-  --red: #b23b2a;
+  --page: #f4f7fb;
+  --surface: #ffffff;
+  --inset: #f6f8fc;
+  --hover: #f5f8ff;
+  --selected: #e9efff;
+  --seam: #dce3ee;
+  --card-line: var(--seam);
+  --control: #7f8ca3;
+  --text: #172033;
+  --muted: #5f6a80;
+  --gold: #9a5d00;
+  --green: #16805f;
+  --red: #d84b4b;
+  --tint-open: #fff8e8;
+  --tint-error: #fff1f1;
+  --tint-saved: #edf9f4;
+  --accent: #315ee8;
+  --on-accent: #ffffff;
+  --link: #2448b8;
+  --link-line: #9eb4f4;
+  --highlight: #315ee8;
+  --switch-on: #ffffff;
+  --switch-on-text: #2448b8;
+  --shadow-sm: 0 1px 2px rgb(20 33 61 / 5%), 0 8px 24px rgb(20 33 61 / 5%);
+  --shadow-md: 0 14px 36px rgb(20 33 61 / 9%);
   color-scheme: light;
 }
 
@@ -41,20 +78,24 @@ body {
   font-family: var(--sans);
   font-size: 16px;
   line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
 }
 
+/* Content is centred and at most 1560px wide, so very wide screens do not stretch the tables. */
 main {
-  padding: 24px 32px 64px;
+  width: min(1560px, 100%);
+  margin: 0 auto;
+  padding: 34px 40px 72px;
 }
 
 a {
-  color: var(--text);
-  text-decoration-color: var(--gold);
+  color: var(--link);
+  text-decoration-color: var(--link-line);
   text-underline-offset: 3px;
 }
 
 :focus-visible {
-  outline: 2px solid var(--gold);
+  outline: 2px solid var(--highlight);
   outline-offset: 2px;
 }
 
@@ -67,13 +108,15 @@ h2 {
 }
 
 h1 {
-  font-size: 28px;
+  font-size: clamp(28px, 3vw, 38px);
+  letter-spacing: -0.035em;
   margin: 0;
 }
 
 h2 {
-  font-size: 21px;
-  margin: 32px 0 10px;
+  font-size: 22px;
+  letter-spacing: -0.02em;
+  margin: 36px 0 12px;
 }
 
 h3 {
@@ -96,32 +139,37 @@ p {
   line-height: 1.6;
 }
 
-/* App bar with the Chat/Dispatcher mode switch, on every page. */
+/* App bar with the Chat/Dispatcher mode switch, on every page. Its side padding lines its contents
+   up with the centred page content below. */
 .app-bar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 12px 28px;
-  padding: 10px 32px;
+  gap: 14px 32px;
+  min-height: 68px;
+  padding: 12px max(40px, calc((100vw - 1560px) / 2 + 40px));
   background: var(--surface);
   border-bottom: 1px solid var(--seam);
 }
 
 .brand {
+  font-size: 17px;
   font-stretch: 125%;
-  font-weight: 700;
+  font-weight: 750;
+  letter-spacing: -0.015em;
 }
 
 .mode-switch {
   display: flex;
   padding: 3px;
-  border: 1px solid var(--control);
-  border-radius: 7px;
+  background: var(--page);
+  border: 1px solid var(--seam);
+  border-radius: 10px;
 }
 
 .mode-switch a {
-  padding: 6px 20px;
-  border-radius: 4px;
+  padding: 7px 22px;
+  border-radius: 7px;
   color: var(--muted);
   font-stretch: 125%;
   font-weight: 650;
@@ -129,17 +177,24 @@ p {
 }
 
 .mode-switch a:hover {
-  color: var(--text);
+  color: var(--link);
 }
 
 .mode-switch a[aria-current="page"] {
-  background: var(--text);
-  color: var(--page);
+  background: var(--switch-on);
+  color: var(--switch-on-text);
+  box-shadow: var(--shadow-sm);
 }
 
 .about-link {
   margin-left: auto;
   color: var(--muted);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.about-link:hover {
+  color: var(--link);
 }
 
 /* The light mode switch. The knob follows <html>'s data-theme, so it is right from the first paint. */
@@ -186,6 +241,8 @@ p {
   flex-wrap: wrap;
   align-items: center;
   gap: 12px 32px;
+  justify-content: space-between;
+  padding-bottom: 4px;
 }
 
 /* A flex item never shrinks below its content by default; the run select needs it to. */
@@ -199,27 +256,32 @@ p {
 
 /* A state still open: a partial plan, missing warnings, a provisional suggestion. */
 .notice {
-  padding: 10px 14px;
-  background: var(--surface);
+  padding: 12px 16px;
+  background: var(--tint-open);
   border-left: 3px dashed var(--gold);
+  border-radius: 0 9px 9px 0;
   max-width: 96ch;
 }
 
 .error {
-  padding: 10px 14px;
-  background: var(--surface);
+  padding: 12px 16px;
+  background: var(--tint-error);
   border-left: 3px solid var(--red);
+  border-radius: 0 9px 9px 0;
   max-width: 96ch;
 }
 
-/* Which plan is shown: dashed before the dispatcher's review, solid once approved and saved. */
+/* Which plan is shown: dashed gold before the dispatcher's review, solid green once approved and saved. */
 .run-state {
-  padding-left: 12px;
+  padding: 10px 14px;
+  background: var(--tint-open);
   border-left: 3px dashed var(--gold);
+  border-radius: 0 9px 9px 0;
 }
 
 .run-state.final {
-  border-left-style: solid;
+  background: var(--tint-saved);
+  border-left: 3px solid var(--green);
 }
 
 table {
@@ -227,18 +289,19 @@ table {
   width: 100%;
   font-size: 14px;
   font-variant-numeric: tabular-nums;
+  background: var(--surface);
 }
 
 th,
 td {
   border-bottom: 1px solid var(--seam);
-  padding: 8px 10px;
+  padding: 11px 10px;
   text-align: left;
   vertical-align: top;
 }
 
 th {
-  background: var(--surface);
+  background: var(--inset);
   color: var(--muted);
   font-weight: 600;
 }
@@ -253,12 +316,12 @@ th.number {
 }
 
 tbody tr:hover td {
-  background: var(--surface);
+  background: var(--hover);
 }
 
 tr.selected td,
 tr.selected:hover td {
-  background: var(--raised);
+  background: var(--selected);
 }
 
 td.reason {
@@ -283,7 +346,7 @@ tr[data-group="suggested"] td:first-child {
 }
 
 tr[data-group="approved"] td:first-child {
-  border-left-color: var(--gold);
+  border-left-color: var(--green);
 }
 
 .legend {
@@ -304,7 +367,7 @@ tr[data-group="approved"] td:first-child {
 }
 
 .legend .mark-approved {
-  border-left-color: var(--gold);
+  border-left-color: var(--green);
 }
 
 button,
@@ -316,10 +379,10 @@ textarea {
 }
 
 button {
-  padding: 7px 14px;
-  background: transparent;
+  padding: 8px 15px;
+  background: var(--surface);
   border: 1px solid var(--control);
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -335,18 +398,18 @@ button:disabled {
 }
 
 .primary {
-  background: var(--text);
-  border-color: var(--text);
-  color: var(--page);
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
 }
 
 select,
 input,
 textarea {
-  padding: 7px 10px;
-  background: var(--page);
+  padding: 9px 11px;
+  background: var(--surface);
   border: 1px solid var(--control);
-  border-radius: 6px;
+  border-radius: 8px;
 }
 
 label {
@@ -378,8 +441,10 @@ select {
 }
 
 .filters button[aria-pressed="true"] {
-  border-color: var(--gold);
-  box-shadow: inset 0 0 0 1px var(--gold);
+  color: var(--link);
+  background: var(--selected);
+  border-color: var(--highlight);
+  box-shadow: inset 0 0 0 1px var(--highlight);
 }
 
 .link-button {
@@ -396,7 +461,7 @@ select {
 .workspace {
   display: grid;
   grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-  gap: 28px;
+  gap: 24px;
   align-items: start;
 }
 
@@ -419,23 +484,21 @@ select {
 .details {
   min-height: 0;
   overflow-y: auto;
-  padding: 4px 20px 20px;
+  padding: 6px 22px 22px;
   background: var(--surface);
-  border-radius: 4px;
+  border: 1px solid var(--card-line);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
 }
 
 .details h2 {
   margin-top: 16px;
 }
 
-.details th {
-  background: var(--raised);
-}
-
 .empty-details {
   padding: 20px;
   border: 1px dashed var(--seam);
-  border-radius: 4px;
+  border-radius: 12px;
 }
 
 .quotes {
@@ -446,8 +509,10 @@ select {
 
 .quotes li {
   margin: 12px 0;
-  padding-left: 14px;
-  border-left: 2px solid var(--seam);
+  padding: 10px 14px;
+  background: var(--inset);
+  border-left: 3px solid var(--control);
+  border-radius: 0 8px 8px 0;
 }
 
 .quotes .message-id {
@@ -474,17 +539,15 @@ select {
 /* Dispatcher review: the thread field, then the unsaved choices and Approve all. */
 .review-bar {
   margin: 12px 0;
-  padding: 4px 16px 8px;
+  padding: 8px 18px 12px;
   background: var(--surface);
-  border-radius: 4px;
+  border: 1px solid var(--card-line);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
 }
 
 .review-bar.reviewing {
   border-left: 3px dashed var(--gold);
-}
-
-.review-bar .notice {
-  background: var(--page);
 }
 
 .decision-list {
@@ -499,8 +562,9 @@ select {
 .choices {
   margin: 16px 0;
   padding: 2px 16px 14px;
-  background: var(--page);
-  border-radius: 4px;
+  background: var(--inset);
+  border: 1px solid var(--card-line);
+  border-radius: 10px;
 }
 
 .choices.pending {
@@ -570,8 +634,11 @@ select {
   flex-direction: column;
   height: calc(100vh - 150px);
   min-height: 520px;
-  border: 1px solid var(--seam);
-  border-radius: 4px;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--card-line);
+  border-radius: 14px;
+  box-shadow: var(--shadow-md);
 }
 
 /* column-reverse starts the scroll at the bottom and keeps the newest message in view. */
@@ -581,17 +648,24 @@ select {
   overflow-y: auto;
   display: flex;
   flex-direction: column-reverse;
+  background: var(--inset);
 }
 
 .timeline ol {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 18px;
 }
 
+/* Each message is a card across the full width: the chat is one shared log read by many people,
+   not a two-person messenger, so there are no left and right bubbles (DESIGN.md). */
 .timeline li {
-  padding: 12px 20px;
-  border-bottom: 1px solid var(--seam);
+  margin: 0 0 12px;
+  padding: 12px 16px;
+  background: var(--surface);
+  border: 1px solid var(--card-line);
+  border-radius: 10px;
+  box-shadow: var(--shadow-sm);
 }
 
 .timeline-empty {
@@ -623,7 +697,7 @@ select {
 .composer {
   display: grid;
   gap: 10px;
-  padding: 14px 20px 16px;
+  padding: 16px 18px 18px;
   background: var(--surface);
   border-top: 1px solid var(--seam);
 }
@@ -660,16 +734,18 @@ select {
 .process-panel {
   position: sticky;
   top: 16px;
-  padding: 4px 20px 20px;
+  padding: 8px 22px 22px;
   background: var(--surface);
-  border-radius: 4px;
+  border: 1px solid var(--card-line);
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
 }
 
 .process-panel h2 {
   margin-top: 16px;
 }
 
-/* A snapshot is dashed until it has been processed into a run. */
+/* A snapshot is dashed gold until it has been processed into a run, then solid green. */
 .snapshot {
   margin-top: 20px;
   padding-left: 14px;
@@ -677,7 +753,7 @@ select {
 }
 
 .snapshot.final {
-  border-left-style: solid;
+  border-left: 3px solid var(--green);
 }
 
 summary {
@@ -688,8 +764,9 @@ pre {
   max-height: 240px;
   overflow: auto;
   padding: 10px 12px;
-  background: var(--page);
-  border-radius: 4px;
+  background: var(--inset);
+  border: 1px solid var(--seam);
+  border-radius: 9px;
   font-family: var(--serif);
   font-size: 14px;
   white-space: pre-wrap;
@@ -712,25 +789,32 @@ pre {
 /* Introduction: a worked example, the three-step flow and what works today. */
 .intro {
   max-width: 1080px;
+  margin: 0 auto;
 }
 
 .intro h1 {
-  font-size: 40px;
-  margin-top: 24px;
+  max-width: 760px;
+  font-size: clamp(38px, 5vw, 60px);
+  margin-top: 48px;
 }
 
 .intro .lede {
-  font-size: 18px;
+  max-width: 760px;
+  color: var(--muted);
+  font-size: 20px;
+  line-height: 1.6;
 }
 
 .example {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
-  gap: 40px;
-  margin: 32px 0;
-  padding: 8px 28px 24px;
+  gap: 44px;
+  margin: 40px 0 46px;
+  padding: 12px 30px 28px;
   background: var(--surface);
-  border-radius: 4px;
+  border: 1px solid var(--card-line);
+  border-radius: 16px;
+  box-shadow: var(--shadow-md);
 }
 
 .example h2 {
@@ -740,8 +824,10 @@ pre {
 
 .example blockquote {
   margin: 0;
-  padding-left: 16px;
-  border-left: 2px solid var(--seam);
+  padding: 16px 18px;
+  background: var(--inset);
+  border-left: 3px solid var(--control);
+  border-radius: 0 10px 10px 0;
   font-size: 21px;
 }
 
@@ -760,23 +846,38 @@ pre {
   margin-top: 24px;
 }
 
+/* The three steps side by side, each a card with its number in a circle. */
 .steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
   padding-left: 0;
   list-style: none;
   counter-reset: step;
-  max-width: 72ch;
 }
 
 .steps li {
   counter-increment: step;
   display: grid;
-  grid-template-columns: 40px 1fr;
-  margin: 14px 0;
+  grid-template-columns: 42px 1fr;
+  gap: 6px;
+  margin: 0;
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--card-line);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
 }
 
 .steps li::before {
   content: counter(step);
-  color: var(--gold);
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  color: var(--on-accent);
+  background: var(--accent);
+  border-radius: 50%;
   font-size: 21px;
   font-stretch: 125%;
   font-weight: 700;
@@ -784,17 +885,35 @@ pre {
 }
 
 .intro .toolbar {
-  gap: 24px;
+  gap: 12px;
   font-weight: 650;
 }
 
+.intro .toolbar a {
+  display: inline-flex;
+  padding: 10px 16px;
+  color: var(--on-accent);
+  background: var(--accent);
+  border-radius: 8px;
+  text-decoration: none;
+}
+
+/* One card per line. No coloured dot: the list includes work that is not built yet. */
 .status-list {
-  padding-left: 20px;
-  max-width: 72ch;
+  display: grid;
+  gap: 10px;
+  max-width: 850px;
+  padding: 0;
+  list-style: none;
 }
 
 .status-list li {
-  margin: 6px 0;
+  margin: 0;
+  padding: 12px 16px;
+  background: var(--surface);
+  border: 1px solid var(--card-line);
+  border-radius: 10px;
+  box-shadow: var(--shadow-sm);
 }
 
 @media (max-width: 1100px) {
@@ -831,11 +950,15 @@ pre {
   .intro h1 {
     font-size: 30px;
   }
+
+  .steps {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 @media (max-width: 640px) {
   main {
-    padding: 16px 16px 48px;
+    padding: 24px 16px 48px;
   }
 
   .app-bar {
@@ -848,5 +971,9 @@ pre {
 
   h1 {
     font-size: 24px;
+  }
+
+  .timeline ol {
+    padding: 12px;
   }
 }

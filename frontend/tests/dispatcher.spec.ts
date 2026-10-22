@@ -44,7 +44,28 @@ test("a suggested row shows its selected workshop and the comparison", async ({ 
   await expect(comparison.filter({ hasText: "W6" })).toContainText("Selected");
   await expect(comparison.filter({ hasText: "W1" })).toContainText("Ranked 2");
   await expect(comparison.filter({ hasText: "W4" })).toContainText("Rejected: cannot_make_category=TOPS");
-  await expect(details(page, "T:L0001:J1")).toContainText("Pieces (orders.csv)150");
+  await expect(details(page, "T:L0001:J1")).toContainText("Pieces150, from orders.csv");
+});
+
+test("a batch the dispatcher added shows its facts as added, not corrected", async ({ page }) => {
+  const plan = makePlan();
+  const suggested = plan.decisions[0];
+  const facts = { order_id: "ORD-001", quantity: "300" };
+  const task = {
+    ...suggested.task,
+    task_id: "ADD-1",
+    source_message_ids: [],
+    added: true,
+    quantity: 300,
+    dispatcher: { facts, resolved: [], recorded: { order_id: null, quantity: null }, recorded_deadline: null },
+  };
+  plan.decisions.push({ ...suggested, task_id: "ADD-1", task });
+  plan.summary_rows.unshift({ ...plan.summary_rows[0], id: "ADD-1", messages: [], reason: "Added by the dispatcher." });
+  await openRun(page, plan);
+  await page.getByRole("button", { name: "ADD-1" }).click();
+  await expect(details(page, "ADD-1")).toContainText("Added by the dispatcher: no chat message.");
+  await expect(details(page, "ADD-1")).toContainText("Added by the dispatcher: order_id ORD-001; quantity 300");
+  await expect(details(page, "ADD-1")).not.toContainText("Corrected by the dispatcher");
 });
 
 test("an informational option is never shown as selected", async ({ page }) => {

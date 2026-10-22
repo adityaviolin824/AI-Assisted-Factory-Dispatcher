@@ -1,6 +1,6 @@
-import { INTENTS, type LocalChoice, PREFERENCES } from "@/lib/choices";
+import { INTENTS, type LocalChoice, PREFERENCE_LABELS, PREFERENCES } from "@/lib/choices";
 import { days } from "@/lib/format";
-import type { DecisionRecord, Task } from "@/lib/types";
+import type { DecisionRecord, DispatcherEntry, Task } from "@/lib/types";
 
 export type Workshop = { workshop_id: string; name: string };
 
@@ -10,14 +10,17 @@ type Props = {
   warnings: string[];
   workshops: Workshop[];
   choice: LocalChoice;
+  // The dispatcher's saved choices for this task, which Review again can undo.
+  saved?: DispatcherEntry;
   onChange: (choice: LocalChoice) => void;
 };
 
 // The dispatcher's choices for one task. They stay in the page until Approve all; changing them
 // sends nothing and calculates nothing.
-export default function ChoiceForm({ task, record, warnings, workshops, choice, onChange }: Props) {
+export default function ChoiceForm({ task, record, warnings, workshops, choice, saved, onChange }: Props) {
   const shown: Record<string, string> = {
     order_id: task.order_id ?? "",
+    quantity: task.quantity?.toString() ?? "",
     due_date: task.due_date ?? "",
     preference: task.preference,
     intent: task.intent,
@@ -26,7 +29,9 @@ export default function ChoiceForm({ task, record, warnings, workshops, choice, 
   // select shows what was recorded; choosing it again stages nothing, as it equals the shown value.
   const intents = INTENTS.includes(task.intent) ? INTENTS : [task.intent, ...INTENTS];
   const facts = choice.facts ?? {};
-  const pending = Boolean(choice.workshop_id || Object.keys(facts).length || choice.warnings_checked?.length);
+  const pending = Boolean(
+    choice.workshop_id || choice.complete || choice.clear || Object.keys(facts).length || choice.warnings_checked?.length,
+  );
 
   // A correction is kept only while it differs from what the review shows.
   function changeFact(name: string, value: string) {
@@ -46,10 +51,28 @@ export default function ChoiceForm({ task, record, warnings, workshops, choice, 
   return (
     <section className={pending ? "choices pending" : "choices"} aria-label={`Your choices for ${task.task_id}`}>
       <h3>Your choices{pending && <span className="unsaved"> (unsaved)</span>}</h3>
+      {saved && (
+        <label className="check">
+          <input
+            type="checkbox"
+            checked={choice.clear ?? false}
+            onChange={(event) => onChange(event.target.checked ? { clear: true } : {})}
+          />
+          {saved.added ? "Remove this added batch" : "Undo my saved choices for this task"}
+        </label>
+      )}
+      {choice.clear && (
+        <p className="hint">
+          {saved?.added
+            ? "Python plans without this batch, so its queue time is freed."
+            : "Python plans this task as processing recorded it, without your earlier workshop choice or corrections."}
+        </p>
+      )}
       <label>
         Workshop
         <select
           value={choice.workshop_id ?? ""}
+          disabled={choice.clear}
           onChange={(event) => onChange({ ...choice, workshop_id: event.target.value || undefined })}
         >
           <option value="">{record?.selected_workshop ? `Keep ${record.selected_workshop}, as shown` : "None, as shown"}</option>
@@ -62,11 +85,20 @@ export default function ChoiceForm({ task, record, warnings, workshops, choice, 
       </label>
       {choice.workshop_id && <p className="hint">{consequence(record, choice.workshop_id)}</p>}
 
-      <fieldset>
+      <fieldset disabled={choice.clear}>
         <legend>Correct the request</legend>
         <label>
           Order
           <input value={facts.order_id ?? shown.order_id} onChange={(event) => changeFact("order_id", event.target.value)} />
+        </label>
+        <label>
+          Quantity
+          <input
+            inputMode="numeric"
+            placeholder="orders.csv quantity"
+            value={facts.quantity ?? shown.quantity}
+            onChange={(event) => changeFact("quantity", event.target.value)}
+          />
         </label>
         <label>
           Deadline
@@ -80,7 +112,9 @@ export default function ChoiceForm({ task, record, warnings, workshops, choice, 
           Preference
           <select value={facts.preference ?? shown.preference} onChange={(event) => changeFact("preference", event.target.value)}>
             {PREFERENCES.map((value) => (
-              <option key={value}>{value}</option>
+              <option key={value} value={value}>
+                {PREFERENCE_LABELS[value] ?? value}
+              </option>
             ))}
           </select>
         </label>
@@ -92,10 +126,27 @@ export default function ChoiceForm({ task, record, warnings, workshops, choice, 
             ))}
           </select>
         </label>
+        {/* A batch the dispatcher added is already complete. */}
+        {!task.added && (
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={choice.complete ?? false}
+              onChange={(event) => onChange({ ...choice, complete: event.target.checked || undefined })}
+            />
+            The request is complete: plan it with these facts
+          </label>
+        )}
+        {choice.complete && (
+          <p className="hint">
+            Python plans this request as an allocation and treats its open questions as answered. It needs the order; an
+            empty quantity or deadline means the order&apos;s own, from orders.csv.
+          </p>
+        )}
       </fieldset>
 
       {warnings.length > 0 && (
-        <fieldset>
+        <fieldset disabled={choice.clear}>
           <legend>Unresolved inputs that may change this request</legend>
           {warnings.map((rowId) => (
             <label key={rowId} className="check">

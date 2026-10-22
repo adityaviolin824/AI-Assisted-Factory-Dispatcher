@@ -65,6 +65,7 @@ export default function TaskTable({ plan, selectedId, onSelect, choices = {} }: 
                 <td>{outcomeLabel(row.outcome)}</td>
                 <td>
                   {workshopText(plan, row)}
+                  {choices[row.id]?.clear && <span className="unsaved block">Unsaved: undo</span>}
                   {choices[row.id]?.workshop_id && (
                     <span className="unsaved block">Unsaved: {choices[row.id].workshop_id}</span>
                   )}

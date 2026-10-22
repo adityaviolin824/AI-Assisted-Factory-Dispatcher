@@ -55,6 +55,7 @@ MOVED = {
 NEW = {
     "task_routing.route_verified_tasks": ["route_task", "route_tasks"],
     "task_allocation_to_workshops.allocation_plan": ["summary_row", "inputs_without_outcome", "plan_saved_run"],
+    "task_allocation_to_workshops.recommend_one_task": ["batch_pieces"],
     "run_allocation": ["main"],
 }
 # Moved from notebook 05, then changed on purpose (see docs/legacy/ALLOCATION_MODULARIZATION_PLAN.md): routing
@@ -66,7 +67,9 @@ NEW = {
 # saves review_warnings, and summarize_plan marks the planned tasks an unresolved input may modify
 # as provisional (checked by PartialRuns and ProvisionalRows). Since 18 October 2026 recommend gives
 # a request whose deadline is on or before the dispatch date the status "deadline_passed" and
-# calculates nothing for it (checked through expected_decision and by ControlledChecks).
+# calculates nothing for it (checked through expected_decision and by ControlledChecks). Since 22 October
+# 2026 recommend sizes the batch with batch_pieces: a quantity only the dispatcher's review can give,
+# otherwise the order's pieces as before (checked in test_dispatcher_review.py).
 CHANGED = {
     "task_allocation_to_workshops.allocation_plan": ["plan_tasks", "summarize_plan", "plan_allocation"],
     "task_allocation_to_workshops.recommend_one_task": ["recommend"],

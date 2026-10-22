@@ -50,7 +50,9 @@ export default function TaskDetails({ plan, row, onSelect, children }: Props) {
           ))}
         </ul>
       ) : (
-        <p className="muted">The plan holds no quoted text for this row.</p>
+        <p className="muted">
+          {task?.added ? "Added by the dispatcher: no chat message." : "The plan holds no quoted text for this row."}
+        </p>
       )}
 
       {link && (
@@ -80,8 +82,8 @@ function TaskFacts({ task, record }: { task: Task; record: DecisionRecord | null
         </dd>
         <dt>Order</dt>
         <dd>{task.order_id ?? "unknown"}</dd>
-        <dt>Pieces (orders.csv)</dt>
-        <dd>{order ? order.pieces : missing}</dd>
+        <dt>Pieces</dt>
+        <dd>{order ? `${order.pieces}, ${task.quantity ? "the dispatcher's quantity" : "from orders.csv"}` : missing}</dd>
         <dt>Category</dt>
         <dd>{order ? order.category : missing}</dd>
         <dt>Order status</dt>
@@ -101,11 +103,12 @@ function TaskFacts({ task, record }: { task: Task; record: DecisionRecord | null
         <dt>Split requested</dt>
         <dd>{task.wants_split ? "yes" : "no"}</dd>
       </dl>
+      {/* An added batch has no recorded value to correct: its facts are the dispatcher's own. */}
       {corrected && (
         <p>
-          <strong>Corrected by the dispatcher:</strong>{" "}
+          <strong>{task.added ? "Added by the dispatcher:" : "Corrected by the dispatcher:"}</strong>{" "}
           {Object.entries(corrected.facts)
-            .map(([name, value]) => `${name} ${corrected.recorded[name] ?? "none"} -> ${value}`)
+            .map(([name, value]) => (task.added ? `${name} ${value}` : `${name} ${corrected.recorded[name] ?? "none"} -> ${value}`))
             .join("; ")}
         </p>
       )}

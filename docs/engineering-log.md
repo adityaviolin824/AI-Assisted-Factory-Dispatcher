@@ -2,6 +2,174 @@
 
 Entries describe the code and evidence available at the time of each investigation. Older notebook names, settings, output paths and test files may have changed or been removed. For current behavior, read the [backend README](../backend/README.md); for remaining work, read the [project plan](project-plan.md). Do not treat a historical passing test count as a newly rerun result.
 
+## 2026-10-22: Notebook 07 updated for the finished dispatcher workflow
+
+Aditya asked for notebook 07 (`backend/experimentation_notebooks/07-dispatcher-workflow-with-reallocation.ipynb`) to show the final logic and then to be run. Claude Code wrote the edits as one script, applied it to a scratch copy, ran and checked that copy, and then applied the same script to the notebook and executed it. The notebook went from 26 to 32 cells.
+
+- **What changed:**
+  - Introduction, map and function table: **Check workshop options** (`POST /reviews/{thread_id}/preview`) and **Review again** (`review_saved_plan`; `POST /runs/{run_id}/preview` and `/finalize`).
+  - Part 4b: what the dispatcher can do for each problem type now (`complete`, `add_batch`, quantity, duplicates, split). Pieces is the batch size (`batch_pieces`). An added batch's row says it has no source message. The provisional hint prints the exact `row_ids` that `warnings_checked` needs.
+  - Part 4c: the change list handles added and removed batches, and explains a move with the queues of both workshops.
+  - Part 6: the decision table, and three new example choices: `complete` for ORD-024, a quantity of 300 for ORD-073 and `add_batch` for its other 100 pieces.
+  - Part 9 said reallocation was "planned, not built". It now runs Review again in four parts (9a to 9d). It works on a temporary copy of the run unless `SAVE_RESULT` is True. It checks that the chosen workshops are used, that Python planned once from the original queues, and that `plan-history/` keeps the earlier table.
+  - "How this notebook was checked" lists the checks below.
+- **Results with the example choices** (30-request run `2026-10-14_14-40-08`):
+  - Approve all: 6 choices accepted, 10 rows change, 8 approved and 23 unresolved.
+  - Review again: 3 choices (ORD-081 fixed at W5, the W1 choice for ORD-008 undone, ADD-1 removed). 8 rows change, and revision 2 has 6 approved and 24 unresolved. All three checks pass.
+- **Other checks**, each in a fresh kernel with settings changed in memory only:
+  - no choices: "Nothing changed" in Approve all and in Review again;
+  - the blocker-cases run with `warnings_checked` for T:L0014:J1: 5 approved;
+  - the extended run (181 rows) and the 13 October run: the three lists add up to every row;
+  - a choice for a missing task in Part 6, and for a missing added batch in Part 9b: both refused, nothing saved;
+  - `SAVE_RESULT = True` on a copy of the run outside `backend/`: files written in that copy only;
+  - a golden-set run with the default `config.toml`: Part 2 stops as designed.
+- **Found, not decided:** Approve all and Review again treat accepted lateness differently.
+  - Approve all refuses choices in which an acceptance no longer covers its task. Review again checks only `accept_late` choices in the new answer (`late_ids`, `dispatcher_decisions.py` line 278), not saved ones.
+  - Example: ORD-053's saved acceptance covers W5 up to 0.06 days late. After Review again fixes ORD-081 at W5, ORD-053's best option is W2, 0.28 days late.
+  - Sent as one Approve all on the first review, the same net choices are refused: "the accepted lateness (W5, version 1, up to 0.06 days) does not cover it". Split across Approve all and Review again, they are accepted, and ORD-053 returns to Needs attention; the change list shows it.
+  - Backend behavior was not changed. Aditya decides whether Review again should refuse too.
+- **Mistake, corrected:** a trial copy was briefly saved in `backend/experimentation_notebooks/` as `.trial-07.ipynb`. After its hash was checked against the trial, it was moved to the scratchpad; no trial file remains in the project.
+- **Environment note:** `backend/.venv/bin/jupyter` points to a Python path from an older folder name, so the notebook was executed with nbclient through `uv run --offline --no-sync`.
+- **Verification:** all 32 cells ran with no error. The 266 files in `backend/output/runs/` and the golden-set run files had the same hashes before and after. No Git command, installation or model call was used.
+
+## 2026-10-22: Review fixes after step 5
+
+Aditya pasted four review findings after step 5. Claude Code proved each one with a failing test or check before fixing it.
+
+- **`complete` ignored saved corrections** (`backend/dispatcher_review/dispatcher_decisions.py`).
+  - Cause: `complete` checked the order ID and intent of the verified task, not the task with the dispatcher's saved corrections. Two failures were proven:
+    - A request already corrected to ORD-041 was refused with "give the order ID".
+    - A request corrected to a question and then completed stayed a question (`reference`).
+  - Fix: `complete` now reads `corrected = {**task, **entry.get("facts", {})}`.
+  - New test: `test_completing_a_request_uses_its_saved_corrections`.
+- **Choices could change while Approve all saved** (`frontend/app/dispatcher/page.tsx`, `frontend/app/globals.css`).
+  - Cause: the choice form and the Add a batch form stayed enabled during the request. A choice changed then was not in the request, and the saved plan replaced it.
+  - Fix: both forms sit in an invisible `<fieldset className="lock" disabled={approving}>`. This covers Review again too, because it uses the same `approving` state.
+  - New browser test: "while Approve all runs, the choices cannot be changed". Before the fix it failed with "Expected: disabled, Received: enabled".
+- **A new batch's workshop could not be chosen after Check workshop options** (`frontend/components/AddBatchForm.tsx`, `frontend/app/dispatcher/page.tsx`).
+  - Cause: the preview names the batch ADD-n and shows its comparison. The choice form reads the open review, which has no ADD-n row, so the dispatcher had to remove the batch and add it again.
+  - Fix:
+    - Each staged batch in Added batches now has its own workshop select.
+    - A preview-only added row says to choose its workshop there.
+    - The browser does not guess which preview ADD-n belongs to which staged batch. Python numbers added batches, and copying that numbering into JavaScript was rejected as fragile.
+  - New browser test: "an added batch's workshop can be chosen after checking its options".
+- **Sending a chat message could erase the next draft** (`frontend/components/Composer.tsx`).
+  - Cause: the text box stayed editable while a message was sent, and the saved answer then ran `setText("")`. A proof test typed " Also ORD-062." during a held send. The box showed it, then became empty when the answer arrived.
+  - Fix: `readOnly={sending}` on the text box. It keeps focus and takes no typing until the message is saved.
+  - Alternative considered: clearing the box only if its text was unchanged. It was rejected because after a failure, "Your message is still here" and the reused submission ID would then refer to an edited draft.
+  - New browser test: "while a message sends, its text box cannot change".
+- **Verification:**
+  - 142 offline backend tests pass (141 before, plus 1).
+  - 52 browser tests pass (49 before, plus 3).
+  - Frontend typecheck, lint and build are clean.
+  - Screenshots of the Added batches selects were checked in both themes.
+  - No Git command, installation or model call was used.
+- **Still open, not part of these findings:** the Operations chat calls proposed `/chat/...` endpoints that FastAPI does not serve yet. The browser tests mock them.
+
+## 2026-10-22: Dispatcher completion plan, step 5: review again
+
+- **Decision:** Aditya decided that rows approved the first time are not fixed. Python may move any row the dispatcher did not choose a workshop for, and the changes table shows every move ("that is exactly why the review exists, and this is an mvp"). Keeping earlier approved rows fixed was considered and not chosen. Claude Code implemented it.
+- **Change:**
+  - New `review_saved_plan` (`backend/dispatcher_review/dispatcher_decisions.py`). It reads the saved `dispatcher-decisions.json` and `dispatcher-plan.json` and calls `apply_answer` with `"finalize"` once, so every earlier choice stays and the plan is rebuilt once from the original queues.
+  - New endpoints `POST /runs/{run_id}/preview` and `POST /runs/{run_id}/finalize` (`backend/fastapi_routes/runs.py`). Both answer 404 for an unknown run or a run without an approved plan, and both return `{"review", "refused"}`.
+    - Preview saves nothing.
+    - Finalize labels the result with `finalize_review` and saves it with `save_dispatcher_files`, so `plan-history/` keeps the earlier version and the revision goes up by one.
+    - A refused set saves nothing.
+  - A saved added batch can now be named. `apply_answer` also accepts the `ADD-n` IDs already in the decisions, so `clear` removes a batch and the other decisions change it. The refusal for an unknown ID now reads "is not a verified task or added batch of this run."
+  - Frontend:
+    - A **Review again** button on an approved plan opens it with the same choice form, Add a batch form and review bar.
+    - Check workshop options and Approve all call the run endpoints, and **Close without saving** reads the run again.
+    - On a row with saved choices, the form offers "Undo my saved choices for this task", or "Remove this added batch" for an added batch. Either one sends a single `clear` and disables the row's other fields.
+    - "The request is complete" is hidden for an added batch, which is already complete.
+    - Disabled inputs and selects are now dimmed like disabled buttons.
+  - The paused review's disabled **Reallocate** and **Review again after reallocation** buttons are unchanged, as `frontend/AGENTS.md` requires. Review again on a saved plan is a separate button.
+- **Problems proven before each fix:**
+  - **Wrong changes.** A saved plan had T8 at W6 and one added batch. With no new choice, `apply_answer` kept the queues identical but listed all 4 approved rows as changed: the saved rows say "approved", and the new draft says "recommendation" or "dispatcher_choice". `review_saved_plan` therefore compares the saved plan with the draft labelled as `finalize_review` would label it. A mutation check, comparing against the raw draft again, makes the new route test fail.
+  - **Added batch could not be named.** `clear ADD-1` was refused with "'ADD-1' is not a verified task of this run."
+  - **Removed batch not listed.** After that fix, removing ADD-1 gave an empty change list, because `changed_rows` only walked the new plan's rows. A removed row is now listed last with `after: null`, and "What changed" shows "Removed by the dispatcher".
+  - **Approved workshop shown as an option.** A browser test showed an approved row's workshop in "What changed" as "W6 (option only)", because the table counted only draft outcomes as selected. Review again compares approved plans, so "approved" now counts as selected too (`frontend/components/ChangesTable.tsx`).
+- **Verification:**
+  - Route tests on a paused run of the supplied chat:
+    - Before approval, both endpoints answer 404.
+    - After approving T8 at W6 and one added batch, a refused set and a preview leave every file byte-identical.
+    - Finalize then saves exactly the preview, approved, at revision 2. T8 stays at W6, ADD-1 is removed and T11 goes to W1.
+    - "changes" lists ADD-1 and T11 but not the unchanged T8, and `plan-history/` holds both versions.
+    - The saved rows and queues equal one calculation of the remaining choices from the first review, so nothing was reserved twice.
+  - Sending T11 to W1 also moved the W1 options of T12, T24 and T30, which are in review. The changes list shows those moves, as decided.
+  - Test counts:
+    - 141 offline backend tests pass (137 before, plus 4).
+    - Frontend typecheck, lint and build are clean.
+    - 49 browser tests pass (47 before, plus 2). They check the exact requests, the undo and removal choices, a refusal and closing without saving.
+  - Screenshots were checked in both themes. `backend/output/runs` currently holds no approved plan, so no older saved file was affected. No Git command, installation or model call was used.
+- **Limits:**
+  - Two browser tabs reviewing the same run again are not locked against each other. The later save wins, and `plan-history/` keeps both.
+  - The root README's status table and diagrams still list Review again as pending.
+
+## 2026-10-22: Dispatcher completion plan, step 4: check workshop options
+
+- **Decision:** Aditya approved an explicit preview: the dispatcher's unfinished choices may reach Python, but only when the dispatcher clicks **Check workshop options**, and nothing is saved. There is still one Approve all, no autosave and no calculation on ordinary clicks. Claude Code implemented it.
+- **Change:**
+  - New endpoint `POST /reviews/{thread_id}/preview` (`backend/fastapi_routes/dispatcher.py`). It reads the paused review from the checkpoint and calls `apply_answer` with `"finalize"`, which is finalize's own calculation, outside the graph. It returns `{"review": the draft with its "changes", "refused": None}`, or the shown review with the refusal. It writes no file, adds no checkpoint and does not resume the review.
+  - Frontend: a **Check workshop options** button beside Approve all (`frontend/components/ReviewBar.tsx`, `frontend/lib/api.ts`, `frontend/lib/types.ts`). The preview replaces the review in the worklist and details and is labelled "Preview, not saved", with a "What would change" table (`frontend/components/ChangesTable.tsx`). The choice form still reads the review. Changing any choice or added batch hides the preview, and a preview that answers after such a change is dropped (`frontend/app/dispatcher/page.tsx`).
+  - The preview is scrolled into view. **Evidence:** a full-page screenshot showed the button about 1,500 pixels below the preview, and the browser test failed with "viewport ratio 0" before the change.
+  - Small fix from step 3b: an added batch's task carries `added: true`, so its details read "Added by the dispatcher: order_id ORD-001; quantity 300" and "no chat message" instead of corrections of empty values (`backend/dispatcher_review/dispatcher_plan.py`, `frontend/components/TaskDetails.tsx`).
+- **Verification:**
+  - A route test shows the preview refusing an invalid set with finalize's own message, and returning a draft for a valid one. Every file in the temporary folder, including the SQLite checkpoint, stays byte-identical, and the same review still waits. Finalize with the same choices then saves exactly the preview, approved (only `created_at` and `decisions_revision` differ). A scratch check confirmed that this folder comparison does notice a real checkpoint write.
+  - Browser tests check the exact preview request, the label, the hiding on a changed choice, a late answer being dropped, and a refusal shown without a preview. The hint "Nothing has been sent yet." became "Nothing has been saved yet.", because a check does send the choices; the old test was updated to match.
+  - 137 offline backend tests pass (136 before, plus 1). Frontend typecheck, lint and build are clean, and 47 browser tests pass (43 before, plus 4). Screenshots were checked in both themes. No Git command, installation or model call was used.
+
+## 2026-10-22: Dispatcher completion plan, step 3b: add a batch
+
+- **Decision:** at Aditya's suggestion, the dispatcher can add a batch that no row covers: one part of a split, a request processing missed, or a message that never became a task. It replaces the earlier step 6. Claude Code implemented it.
+- **Change:**
+  - New decision `add_batch` (`backend/dispatcher_review/dispatcher_decisions.py`). It takes `facts` (order ID required; quantity, deadline and preference optional, a fact left out being the order's own in `orders.csv`) and an optional `workshop_id`, but no `task_id`. Python names the batches `ADD-1`, `ADD-2` and so on, and stores each in the decisions, so a later Review again starts from it.
+  - `build_dispatcher_plan` (`backend/dispatcher_review/dispatcher_plan.py`) builds each added batch from a new `added_task` record and applies its facts through `derive_task`, so they are checked exactly as a correction is. It routes the batch on its own: it skips the duplicate-order check and never sends another request for its order to review. Its row's reason starts "Added by the dispatcher." and names the other planned batches of the order; nothing is blocked, because the dispatcher decides.
+  - `changed_rows` lists an added batch with `before: null`. Required fields are now listed per decision, so `workshop_id` stays required for `choose_workshop` and optional for `add_batch`.
+  - Frontend: a new `frontend/components/AddBatchForm.tsx` with an **Add a batch** button; the batches stay in page memory until Approve all, and each can be removed. `lib/choices.ts` and `lib/types.ts` send them as `add_batch` decisions, and "What changed" shows "New batch, added by the dispatcher".
+- **Verification:**
+  - On a copy of run `2026-10-14_14-40-08`: an added 300-piece batch of ORD-041 beside the completed `T:L0010:J1` is planned, is reserved once, and names `T:L0010:J1`; neither goes to duplicate-order review. Two added batches of ORD-041 are both planned, the one with a chosen workshop first. An order missing from the batch, or not in `orders.csv`, is refused.
+  - Through `POST /reviews/{thread_id}/finalize`, two added batches were approved and saved as final rows with their history copies.
+  - 136 offline backend tests pass (132 before, plus 4). Frontend typecheck, lint and build are clean, and 43 browser tests pass (42 before, plus 1 that checks the exact decisions sent). Screenshots of the form were checked in both themes. No Git command, installation or model call was used.
+- **Limits:** a saved added batch could not yet be changed or removed; done with Review again in the step 5 entry above. Its details panel showed its facts as corrections of empty values; fixed in the step 4 entry above.
+
+## 2026-10-22: Dispatcher completion plan, step 3: two requests naming one order
+
+- **Root cause, proven first:** on a copy of run `2026-10-14_14-40-08`, `T:L0014:J1` and `T:L0020:J1` both name ORD-103, so `route_tasks` makes both duplicate-order reviews. A finalize with W1 chosen for `T:L0014:J1` was accepted and saved the choice, yet the task was never in the planning order: both rows stayed in review, `changes` was empty and no note told the dispatcher. `build_dispatcher_plan` planned only `routes["allocate"]`, and the duplicate check ran before the dispatcher's decisions were considered. In run 2 of the golden set, three of the five missed allocations were this case.
+- **Change:** in `build_dispatcher_plan`, a request with a chosen workshop, or completed with `complete` (which now records `"complete": true` in its entry), leaves the duplicate-order reviews and is planned. The other requests for that order stay in review. If the dispatcher places or completes two requests for one order, both are planned as separate batches. The frontend needed no change: duplicate-order rows already show the choice form.
+- **Verification:** the new test shows `T:L0014:J1` placed at W1 and reserved, with `T:L0020:J1` still in review; after `T:L0020:J1` is completed, both are planned and no duplicate review remains. 132 offline backend tests pass. No Git command, installation or model call was used.
+- **Docs:** the duplicate rule in `backend/AGENTS.md` and `backend/README.md`. Aditya also added step 3b, "Add a batch", to the [completion plan](dispatcher-completion-plan.md): it covers splits and work that no row covers, and replaces the earlier step 6.
+
+## 2026-10-22: Dispatcher completion plan, step 2: the dispatcher's quantity
+
+- **Decision:** Aditya: "dispatcher is the boss". The dispatcher may give a batch quantity; processing and the model still never replace the `orders.csv` quantity. This supersedes, for the dispatcher only, the decisions of 18 and 19 October 2026 that a quantity is never typed in or replaced. Claude Code implemented it.
+- **Change:**
+  - `quantity` is a correctable fact (`CORRECTABLE` in `backend/dispatcher_review/dispatcher_plan.py`). `derive_task` refuses anything but a whole number above 0 and stores it as a number.
+  - New `batch_pieces(task)` in `backend/task_allocation_to_workshops/recommend_one_task.py` returns that quantity, otherwise the order's pieces. `recommend`, `batch_of` and `reserve` use it, so the quantity applies to delivery estimates, batch caps and reservations alike. Verified tasks carry no `quantity`, so plans without one are unchanged.
+  - The form has a Quantity field (empty means the `orders.csv` quantity), and the task details say whether the pieces come from `orders.csv` or the dispatcher.
+- **Verification:**
+  - On a copy of run `2026-10-14_14-40-08`, T9's 150-piece order set to 301 rules out W8 ("exceeds_batch_cap=301>300"), and each workshop's reserved pieces equal its reserved batch sizes. "0", "-5", "2.5", "300 pieces" and "" are not applied, and the row says why.
+  - The form's exact payload (`complete` with order ORD-041 and quantity "250") is accepted by finalize and places a 250-piece batch at W4.
+  - 131 offline backend tests pass, including the unchanged comparisons with notebooks 05 and 06. Frontend typecheck and lint are clean, and 42 browser tests pass.
+  - No Git command, installation or model call was used.
+- **Docs:** `backend/AGENTS.md`, `backend/README.md`, `docs/system-design.md` and `PROJECT_HANDOFF.md` now record the dispatcher-only quantity and the approved plan.
+
+## 2026-10-22: Dispatcher completion plan, step 1: complete a request
+
+- **Decision:** Aditya chose the review sequence "correct missing information, show workshop suggestions, keep the dispatcher's workshops fixed, approve all, optionally review again". When the dispatcher picks no workshop, Python places the request itself from the order ID, quantity and deadline, without the model. Aditya rejected a hold or "do not dispatch" action. Steps 1 to 5 are in the [completion plan](dispatcher-completion-plan.md); step 6, rows that never became tasks, comes later. Claude Code implemented step 1.
+- **Root cause, proven first:** on a copy of run `2026-10-14_14-40-08`, the exact payload the frontend sent for a typed order ID (`correct` with `facts` only) was accepted by finalize with no refusal, yet `T:L0010:J1` stayed `needs_clarification` with its original questions. `derive_task` marks a task ready only when its missing details and doubts are empty, and the frontend never sent `resolves`. A dispatcher's correction therefore could not place a blocked request.
+- **Change:** a new decision `complete` (`backend/dispatcher_review/dispatcher_decisions.py`) records the dispatcher's facts, sets the intent to allocation and resolves every blocker of the source task through the existing `correct`. It needs an order ID, given or already on the task; an empty deadline means the order's due date in `orders.csv`. What processing recorded stays on record. In the form (`frontend/components/ChoiceForm.tsx`, `frontend/lib/choices.ts`, `frontend/lib/types.ts`), a checkbox "The request is complete: plan it with these facts" sends `complete` instead of `correct`, and the preference "quality" is labelled "quality (expensive or delicate item)".
+- **Verification:** with ORD-041, the completed `T:L0010:J1` becomes a W6 recommendation for the CSV due date 2026-04-21; `T:L0007:J1` (intent unclear) completed with a deadline becomes an allocation; a request without an order is refused. 129 offline backend tests pass (127 before, plus 2). Frontend typecheck, lint and build are clean, and 42 browser tests pass (41 before, plus 1 that checks the exact decision sent). Screenshots of the form were checked in both themes. No Git command, installation or model call was used.
+- **Limits:** a request that asks for a split stays unsupported. Quantity is still the CSV quantity until step 2.
+
+## 2026-10-22: Record the final review sequence and assess complete task handling
+
+- **Owner's decision:** Aditya approved finishing choices locally, submitting once, applying structured human corrections without AI, planning flexible work once around fixed manual destinations, saving immediately and showing the table/change report. Review again after reallocation is optional and follows that save. Further edits stay local until another submission. Recorded the [final decision](system-design.md#final-workflow-decision-22-october-2026) and linked it from the project plan and handoff. Corrected their stale statements that batch approval was not implemented.
+- **Evidence:** inspected `build_dispatcher_plan`, `apply_answer` and `finalize_review`. The batch path exists; finalization can retain unresolved rows. Notebook 07's saved example has ORD-081 losing an on-time placement after other choices add workload. This proves that a workshop selected before submission does not establish completion after recalculation. No notebook or paid run was executed for this review.
+- **Recovery limits:** the existing structured path starts from verified tasks; intake, linking, duplicate and failed-verification reviews do not all have equivalent recovery actions. The golden report's five eligible misses in run 2 include three duplicate-order cases, one rejected evidence ID and one date ambiguity. They are not all missing-field form fixes. CASE-097 also shows that having a plausible allocation row does not prove the request should be dispatched.
+- **Proposals assessed, not adopted:** structured clarification forms, more workshop comparisons, source-message accounting and an explicit disposition for each dispatch request would help the core workflow. A strict completion check would need to inspect the post-planning result. Whether newly unresolved work blocks saving or only prevents marking a batch complete remains undecided. A read-only calculation on each edit would still change the agreed interaction. Quantity overrides and a new hold action are not approved by this discussion.
+- **Attribution and limits:** Aditya chose the workflow and proposed easier human recovery; an externally supplied Opus opinion suggested the completion gate and forms. Codex checked those suggestions against the source and recorded the distinctions. An accounting rule can cover known requests; it cannot guarantee physical feasibility, correct interpretation of every message or that a person supplies missing information. Human-assisted completion must remain separate from automatic allocation scores.
+- **Verification:** checked the workflow links and Markdown fences and compared the four edited documents against the pre-edit file hashes. Runtime code, original notebooks, README, diagrams, model settings and ignore rules are unchanged. No Git command, package installation or model call was used. A text scan checks publication files and the handoff for credential patterns without printing matched values; this is a pattern check, not proof that every possible secret is absent.
+
 ## 2026-10-22: Summarize the three core capabilities in the README
 
 - **Request and change:** added a short Core capabilities section between Why this is useful and How it works, using the owner's proposed structure: language-model request interpretation, deterministic verification/planning, and dispatcher decisions.

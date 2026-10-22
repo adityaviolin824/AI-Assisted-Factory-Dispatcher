@@ -43,6 +43,10 @@ export type Task = {
   doubts_to_clarify: string[];
   unhandled_constraints: string[];
   information_sufficient: boolean;
+  // Only a dispatcher's correction sets a quantity; without one, orders.csv gives it.
+  quantity?: number;
+  // Only a batch the dispatcher added (ADD-1, ...) has added: true. No chat message covers it.
+  added?: boolean;
   source_evidence?: Evidence[];
   dispatcher?: {
     facts: Record<string, string>;
@@ -140,9 +144,12 @@ export type Plan = {
   workshop_profiles?: Record<string, WorkshopProfile>;
 };
 
-// What the dispatcher has decided for one task (dispatcher_decisions.py).
+// What the dispatcher has decided for one task (dispatcher_decisions.py). "added" marks a batch the
+// dispatcher added (ADD-1, ADD-2, ...), which no chat message covers.
 export type DispatcherEntry = {
   source_version: number;
+  added?: boolean;
+  complete?: boolean;
   workshop?: string;
   facts?: Record<string, string>;
   resolves?: string[];
@@ -153,8 +160,10 @@ export type DispatcherEntry = {
 // One side of a changed row (dispatcher_decisions.changed_rows).
 export type RowState = { outcome: string; workshop: string | null; delivery_days: number | null; reason: string };
 
-// A row whose outcome, workshop or delivery estimate the dispatcher's batch changed.
-export type RowChange = { id: string; order_id: string | null; before: RowState; after: RowState };
+// A row whose outcome, workshop or delivery estimate the dispatcher's batch changed. A batch the
+// dispatcher added has no earlier row, so before is null; an added batch removed in Review again has
+// no later row, so after is null.
+export type RowChange = { id: string; order_id: string | null; before: RowState | null; after: RowState | null };
 
 // A dispatcher review: a draft while the thread waits, or the final approved plan.
 // changes is only in a final plan approved together with the dispatcher's choices.
@@ -172,10 +181,18 @@ export type RunDetails = { run_id: string; plan: Plan | null; dispatcher_plan: R
 
 export type ReviewEnvelope = { status: "waiting" | "finished"; review: Review; refused: string | null };
 
+// A preview of the dispatcher's choices (POST /reviews/{thread_id}/preview): the draft that finalize
+// would approve, with its changes, or the shown review and why the choices would be refused. Nothing is saved.
+// Review again answers in the same form: POST /runs/{run_id}/preview, and /finalize with the saved new version.
+export type PreviewEnvelope = { review: Review; refused: string | null };
+
 // One decision of a dispatcher's answer, named after its backend helper.
 export type Decision =
   | { decision: "choose_workshop"; task_id: string; workshop_id: string }
   | { decision: "correct"; task_id: string; facts: Record<string, string> }
+  | { decision: "complete"; task_id: string; facts: Record<string, string> }
+  // Python names an added batch, so it has no task_id.
+  | { decision: "add_batch"; facts: Record<string, string>; workshop_id?: string }
   | { decision: "accept_late"; task_id: string; max_days?: number }
   | { decision: "warnings_checked"; task_id: string; row_ids: string[] }
   | { decision: "clear"; task_id: string };

@@ -6,6 +6,7 @@ import type {
   ChatMessage,
   Decision,
   NewMessage,
+  PreviewEnvelope,
   ReviewEnvelope,
   RunDetails,
   RunSummary,
@@ -61,6 +62,34 @@ export function sendAnswer(threadId: string, answer: Answer) {
 // and saves at once, or refuses the whole batch and saves nothing.
 export function finalize(threadId: string, decisions: Decision[]) {
   return request<ReviewEnvelope>(`/reviews/${encodeURIComponent(threadId)}/finalize`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ decisions }),
+  });
+}
+
+// Calculates the dispatcher's choices as finalize would, without saving or approving anything: the
+// review stays paused and the run folder is unchanged. Sent only when the dispatcher asks for it.
+export function previewReview(threadId: string, decisions: Decision[]) {
+  return request<PreviewEnvelope>(`/reviews/${encodeURIComponent(threadId)}/preview`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ decisions }),
+  });
+}
+
+// Review again, on a run's approved plan: the backend adds these choices to the saved ones and plans once.
+// previewRun saves nothing; finalizeRun saves a new version, or refuses the whole set and saves nothing.
+export function previewRun(runId: string, decisions: Decision[]) {
+  return request<PreviewEnvelope>(`/runs/${encodeURIComponent(runId)}/preview`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ decisions }),
+  });
+}
+
+export function finalizeRun(runId: string, decisions: Decision[]) {
+  return request<PreviewEnvelope>(`/runs/${encodeURIComponent(runId)}/finalize`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ decisions }),

@@ -10,7 +10,8 @@
 #              new. The dispatcher decides (later on 20 October): a workshop the dispatcher chose is
 #              fixed first and always used, even when it is late, the deadline has passed or it breaks
 #              a hard rule, and the other ready tasks are planned around it, earliest deadline first as
-#              in plan.json.
+#              in plan.json. added_task is new (22 October 2026): a batch the dispatcher added is
+#              planned like any other batch, with a row of its own.
 # Reads:       the run folder's manifest.json and state.json, orders.csv and workshops.csv.
 # Writes:      nothing. A review is a preview: it commits no assignment and changes no queue outside
 #              its own copy. No model is called.
@@ -27,14 +28,14 @@ from order_processing_into_tasks.verify_tasks import possibly_affected_tasks
 from task_allocation_to_workshops.allocation_plan import inputs_without_outcome, summarize_plan
 from task_allocation_to_workshops.allocation_settings_and_data import (
     DISPATCH_DATE, INITIAL_QUEUES, ORDERS, WORKSHOPS)
-from task_allocation_to_workshops.recommend_one_task import recommend, task_deadline
+from task_allocation_to_workshops.recommend_one_task import batch_pieces, recommend, task_deadline
 from task_allocation_to_workshops.workshop_rules_and_estimates import candidate_metrics, rejection_reason
-from task_routing.route_verified_tasks import route_tasks
+from task_routing.route_verified_tasks import route_task, route_tasks
 
 # The facts a dispatcher may correct, with their allowed values (None: checked on their own). A
-# quantity is never typed in: the dispatcher names the order, and orders.csv gives its quantity
-# (decision of 18 October 2026).
-CORRECTABLE = {"order_id": None, "due_date": None,
+# quantity is a whole number of pieces; without one, orders.csv gives the order's quantity. Only the
+# dispatcher may replace that quantity, never processing (decision of 22 October 2026).
+CORRECTABLE = {"order_id": None, "due_date": None, "quantity": None,
                "preference": {"none", "fastest", "cheapest", "quality"}, "intent": {"allocation", "question"}}
 # The outcomes that reserve queue time.
 RESERVING = ("recommendation", "dispatcher_choice", "accepted_late")
@@ -68,6 +69,8 @@ def derive_task(task, entry):
             date.fromisoformat(facts["due_date"])
         except ValueError:
             problems.append(f"{facts['due_date']!r} is not a date written YYYY-MM-DD")
+    if "quantity" in facts and not (facts["quantity"].isdecimal() and int(facts["quantity"]) > 0):
+        problems.append(f"{facts['quantity']!r} is not a whole number of pieces above 0")
     problems += [f"not a blocker of this task: {text}" for text in resolved if text not in blockers(task)]
     if entry.get("workshop") is not None and entry["workshop"] not in WORKSHOPS:
         problems.append(f"{entry['workshop']} is not a workshop")
@@ -78,9 +81,12 @@ def derive_task(task, entry):
         return task, problems
     # What processing recorded stays on record next to what the dispatcher supplied.
     deadline = task_deadline(task)
-    task["dispatcher"] = {"facts": facts, "resolved": resolved, "recorded": {name: task[name] for name in facts},
+    # Processing records no quantity, so its recorded value is None: orders.csv applied.
+    task["dispatcher"] = {"facts": facts, "resolved": resolved, "recorded": {name: task.get(name) for name in facts},
                           "recorded_deadline": deadline.isoformat() if deadline else None}
     task.update(facts)
+    if "quantity" in facts:
+        task["quantity"] = int(facts["quantity"])
     if facts:
         task["version"] += entry["decision_version"]
     for field in ("missing_details", "doubts_to_clarify", "unhandled_constraints"):
@@ -90,10 +96,22 @@ def derive_task(task, entry):
     return task, problems
 
 
+def added_task(task_id):
+    """Return the starting record of a batch the dispatcher added: an allocation with no order, no
+    chat message and version 0, marked "added". derive_task then applies the dispatcher's facts, so
+    they are checked exactly as a correction is.
+    """
+    return {"task_id": task_id, "version": 0, "added": True, "description": "Added by the dispatcher",
+            "source_message_ids": [], "intent": "allocation", "order_id": None, "due_date": None, "urgency_phrase": None,
+            "deadline_phrase": None, "preference": "none", "requested_workshop": None, "excluded_workshops": [],
+            "workshop_rules": [], "wants_split": False, "missing_details": [], "doubts_to_clarify": [],
+            "unhandled_constraints": [], "information_sufficient": False}
+
+
 def batch_of(task):
     """Return the batch of a ready task, built exactly as recommend builds it."""
     order = ORDERS[task["order_id"]]
-    return {"order_id": task["order_id"], "category": order["category"], "pieces": order["pieces"],
+    return {"order_id": task["order_id"], "category": order["category"], "pieces": batch_pieces(task),
             "sent_date": DISPATCH_DATE, "due_date": task_deadline(task)}
 
 
@@ -128,7 +146,7 @@ def reserve(decision, queues, pieces, reserved):
         return
     workshop_id, chosen = decision["selected_workshop"], decision["selected_metrics"]
     queues[workshop_id] += chosen["processing_days"] + chosen["expected_rework_days"]
-    pieces[workshop_id] = pieces.get(workshop_id, 0) + ORDERS[decision["order_id"]]["pieces"]
+    pieces[workshop_id] = pieces.get(workshop_id, 0) + batch_pieces(decision["task"])
     reserved.append(decision["task_id"])
 
 
@@ -196,8 +214,9 @@ def build_dispatcher_plan(run_folder, decisions):
 
     From the original queues, the tasks with a workshop the dispatcher chose are planned first, then
     every other ready task around them, each group earliest deadline first, so reviewing again never
-    reserves the same work twice. Every input keeps exactly one row, as in plan.json. Nothing is final
-    in a draft: finalize_review approves the review the dispatcher saw.
+    reserves the same work twice. Every input keeps exactly one row, as in plan.json, and every batch
+    the dispatcher added has one more. Nothing is final in a draft: finalize_review approves the review
+    the dispatcher saw.
     """
     manifest = json.loads((run_folder / "manifest.json").read_text(encoding="utf-8"))
     state = json.loads((run_folder / "state.json").read_text(encoding="utf-8"))
@@ -210,8 +229,21 @@ def build_dispatcher_plan(run_folder, decisions):
         if issues:
             problems[task["task_id"]] = issues
     routes = route_tasks(tasks)
-    usable = {task_id: entry for task_id, entry in entries.items() if task_id not in problems}
+    # A batch the dispatcher added is routed on its own: it skips the duplicate-order check and never
+    # sends another request for its order to review (22 October 2026).
+    for task_id, entry in entries.items():
+        if entry.get("added"):
+            task, issues = derive_task(added_task(task_id), entry)
+            routes[route_task(task)].append(task)
+            if issues:
+                problems[task_id] = issues
+    usable ={task_id: entry for task_id, entry in entries.items() if task_id not in problems}
     chosen = {task_id for task_id, entry in usable.items() if entry.get("workshop")}
+    # A request the dispatcher placed (a chosen workshop) or completed is a batch of its own, so it skips
+    # the duplicate-order check; the other requests for that order stay in review (22 October 2026).
+    decided = chosen | {task_id for task_id, entry in usable.items() if entry.get("complete")}
+    routes["allocate"] += [review["task"] for review in routes["duplicate_order"] if review["task_id"] in decided]
+    routes["duplicate_order"] = [review for review in routes["duplicate_order"] if review["task_id"] not in decided]
     planning_order = sorted(routes["allocate"],
                             key=lambda task: (task["task_id"] not in chosen, task_deadline(task) or date.max))
 
@@ -247,8 +279,17 @@ def build_dispatcher_plan(run_folder, decisions):
     with contextlib.redirect_stdout(io.StringIO()):  # summarize_plan also prints its own table
         result["summary_rows"] = summarize_plan(result)
 
-    # 4. Show each decision that was not applied. Every row is unresolved until finalize_review.
+    # 4. Label each batch the dispatcher added, naming the other planned batches of its order, and show
+    #    each decision that was not applied. Every row is unresolved until finalize_review.
+    planned = {}
+    for decision in made:
+        if decision["status"] in RESERVING:
+            planned.setdefault(decision["order_id"], []).append(decision["task_id"])
     for row in result["summary_rows"]:
+        if entries.get(row["id"], {}).get("added"):
+            others = [task_id for task_id in planned.get(row["order_id"], []) if task_id != row["id"]]
+            also = f" Other planned batches of {row['order_id']}: {', '.join(others)}." if others else ""
+            row["reason"] = f"Added by the dispatcher.{also} {row['reason']}"
         if row["id"] in problems:
             row["reason"] += f" Dispatcher decision not applied: {'; '.join(problems[row['id']])}."
         row["final"] = False

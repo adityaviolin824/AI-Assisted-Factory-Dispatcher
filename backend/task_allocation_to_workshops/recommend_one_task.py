@@ -28,6 +28,13 @@ def task_deadline(task):
     return order["due_date"] if order else None
 
 
+def batch_pieces(task):
+    """Return a task's batch size: the quantity the dispatcher gave, otherwise the order's pieces in
+    orders.csv. Processing never sets a quantity; only the dispatcher's review does (22 October 2026).
+    """
+    return task.get("quantity") or ORDERS[task["order_id"]]["pieces"]
+
+
 def review_decision(task, reason):
     """Return a decision record with status "review_required": the task's identity and wording,
     and empty result fields, so every decision has the same fields.
@@ -79,12 +86,13 @@ def recommend(task, queues, pieces_so_far, objective=None, require_on_time=True)
         result["reason"] = f"Not supported by this plan, so the dispatcher must decide: {'; '.join(unsupported)}."
         return result
 
-    # 2. Order facts from orders.csv. The deadline comes from task_deadline, the same date
-    #    plan_tasks sorts by.
+    # 2. Order facts from orders.csv, with the dispatcher's quantity if one was given. The deadline
+    #    comes from task_deadline, the same date plan_tasks sorts by.
     order = ORDERS[task["order_id"]]
-    if order["pieces"] <= 0:
+    pieces = batch_pieces(task)
+    if pieces <= 0:
         raise ValueError("Batch pieces must be a positive integer.")
-    batch = {"order_id": task["order_id"], "category": order["category"], "pieces": order["pieces"],
+    batch = {"order_id": task["order_id"], "category": order["category"], "pieces": pieces,
              "sent_date": DISPATCH_DATE, "due_date": task_deadline(task)}
     if objective is None:
         objective = PREFERENCE_OBJECTIVES[task["preference"]]

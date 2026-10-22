@@ -3,10 +3,14 @@
 # They do what resume_dispatcher_review.py does: paused_review and resume_graph
 # (app_full_pipeline/pipeline_graph.py) on the same SQLite checkpoint file. The thread ID is the one
 # run_full_pipeline.py printed; it is not a run ID. Resuming calculates in Python: no model call.
+# preview is new (22 October 2026): it calculates as finalize does but saves and resumes nothing.
+from pathlib import Path
+
 from fastapi import APIRouter, HTTPException
 from langgraph.checkpoint.sqlite import SqliteSaver
 
 from app_full_pipeline.pipeline_graph import CHECKPOINT_FILE, paused_review, resume_graph
+from dispatcher_review.dispatcher_decisions import apply_answer
 
 router = APIRouter(tags=["dispatcher review"])
 
@@ -62,3 +66,22 @@ def finalize(thread_id: str, body: dict):
     unchanged review with the reason the whole batch was refused.
     """
     return answer_review(thread_id, {"decisions": body.get("decisions"), "then": "finalize"})
+
+
+@router.post("/reviews/{thread_id}/preview")
+def preview(thread_id: str, body: dict):
+    """Show what finalize would approve for the dispatcher's choices, {"decisions": [...]}, without saving.
+
+    It runs finalize's calculation (apply_answer with "finalize") on the paused review, outside the
+    graph: no file is written, the review is not resumed and no checkpoint is added. Returns
+    {"review": the draft with its "changes", "refused": None}, or the shown review with the reason the
+    whole set would be refused. Only finalize approves and saves.
+    """
+    require_checkpoint_file()
+    with SqliteSaver.from_conn_string(str(CHECKPOINT_FILE)) as checkpointer:
+        graph_state, paused = paused_review(thread_id, checkpointer)
+    if paused is None:
+        raise HTTPException(status_code=404, detail=f"Thread {thread_id} has no paused dispatcher review.")
+    _, review, _, refusal = apply_answer(Path(graph_state["run_dir"]), graph_state["decisions"], graph_state["review"],
+                                         {"decisions": body.get("decisions"), "then": "finalize"})
+    return {"review": review, "refused": refusal}

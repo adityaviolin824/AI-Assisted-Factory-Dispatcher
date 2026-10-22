@@ -17,6 +17,15 @@ What they prove:
 - finalize_review approves the shown allocations without planning again;
 - apply_answer applies a valid answer and refuses an invalid one with nothing changed, including when
   the order or workshop data or the dispatch date changed;
+- a dispatcher's quantity is the batch size in every estimate, batch cap and reservation, and must be
+  a whole number of pieces above 0;
+- complete resolves every blocker of a request, so Python plans it with the order and deadline the
+  dispatcher gave, and refuses a request without an order;
+- a request the dispatcher placed or completed skips the duplicate-order check and is planned, while
+  the other requests for that order stay in review;
+- a batch the dispatcher added is a row of its own, planned like any other batch and reserved once,
+  even beside other batches of its order, and is refused without a valid order; a later answer can
+  change or remove it, and a removed batch is listed in what changed;
 - "finalize" applies a whole batch with one calculation, lists what changed and goes on to approval,
   and refuses the batch when a decision is not applied or an accepted lateness grew;
 - every name the modules use is defined or imported.
@@ -41,8 +50,8 @@ from test_processing_modules import logic, module_definitions, undefined_names
 
 from dispatcher_review import dispatcher_decisions, dispatcher_plan
 from dispatcher_review.dispatcher_decisions import (
-    CHANGED_INPUTS, accept_late, apply_answer, choose_workshop, clear, correct, save_dispatcher_files,
-    verified_tasks_by_id, warnings_checked)
+    CHANGED_INPUTS, accept_late, add_batch, apply_answer, choose_workshop, clear, complete, correct,
+    save_dispatcher_files, verified_tasks_by_id, warnings_checked)
 from dispatcher_review.dispatcher_plan import blockers, build_dispatcher_plan, finalize_review
 from order_processing_into_tasks.settings_and_data import RUNS_DIR
 from task_allocation_to_workshops.allocation_plan import plan_saved_run
@@ -50,7 +59,7 @@ from task_allocation_to_workshops.allocation_plan import plan_saved_run
 # The definitions each module copies unchanged from notebook 06 (Parts 1, 4a, 8a and 8b).
 MOVED = {
     "dispatcher_review.dispatcher_plan": [
-        "CORRECTABLE", "blockers", "derive_task", "batch_of", "option_text", "reserve"],
+        "blockers", "option_text"],
     "dispatcher_review.dispatcher_decisions": ["PRINT_WIDTH", "show", "save_dispatcher_files"],
 }
 # Moved from notebook 06, then changed on purpose (20 October 2026). One final approval replaces
@@ -63,27 +72,32 @@ MOVED = {
 # tasks as arguments instead of notebook globals; correct takes its facts as a dict and refuses a
 # blocker number outside the list (the notebook's -1 silently took the last blocker); entry_for and
 # accept_late refuse with ValueError, not KeyError; warnings_checked takes a list; print_review takes
-# the tasks and has no "after approved work" queue column.
+# the tasks and has no "after approved work" queue column. The dispatcher may give a quantity (22 October
+# 2026): CORRECTABLE takes it, derive_task checks it and keeps it as a number, and batch_of and reserve
+# use it through batch_pieces.
 CHANGED = {
-    "dispatcher_review.dispatcher_plan": ["RESERVING", "named_option", "flexible_decision", "build_dispatcher_plan"],
+    "dispatcher_review.dispatcher_plan": [
+        "CORRECTABLE", "RESERVING", "derive_task", "batch_of", "named_option", "reserve", "flexible_decision",
+        "build_dispatcher_plan"],
     "dispatcher_review.dispatcher_decisions": [
         "entry_for", "correct", "choose_workshop", "accept_late", "warnings_checked", "clear",
         "open_blockers", "print_review"],
 }
 # Definitions that are new in the modules.
 NEW = {
-    "dispatcher_review.dispatcher_plan": ["input_signature", "finalize_review"],
+    "dispatcher_review.dispatcher_plan": ["added_task", "input_signature", "finalize_review"],
     "dispatcher_review.dispatcher_decisions": [
         "DECISION_FIELDS", "REQUIRED_FIELDS", "FIELD_FORMS", "CHANGED_INPUTS", "CHANGE_MARKERS", "verified_tasks_by_id",
-        "valid_field", "answer_problem", "apply_decision", "apply_answer", "changed_rows"],
+        "complete", "add_batch",
+        "valid_field", "answer_problem", "apply_decision", "apply_answer", "changed_rows", "review_saved_plan"],
 }
 # Notebook 06's per-row approval code, which the modules leave out.
 DROPPED = ["approved_decision", "approve", "release"]
 
 DECISIONS_RUN = "2026-10-14_14-40-08"  # the 30-request run of check_notebook_06.py
-T4, T5, T8, T9, T10, T11, T12, T21, T25 = (
-    "T:L0004:J1", "T:L0005:J1", "T:L0008:J1", "T:L0009:J1", "T:L0010:J1", "T:L0011:J1", "T:L0012:J1",
-    "T:L0021:J1", "T:L0025:J1")
+T4, T5, T7, T8, T9, T10, T11, T12, T14, T20, T21, T25 = (
+    "T:L0004:J1", "T:L0005:J1", "T:L0007:J1", "T:L0008:J1", "T:L0009:J1", "T:L0010:J1", "T:L0011:J1", "T:L0012:J1",
+    "T:L0014:J1", "T:L0020:J1", "T:L0021:J1", "T:L0025:J1")
 
 
 def refuse_network(*args, **kwargs):
@@ -283,6 +297,125 @@ class ControlledDecisions(unittest.TestCase):
             "facts": {"due_date": "2026-04-20"}, "resolved": blockers(self.tasks[T5]),
             "recorded": {"due_date": self.tasks[T5]["due_date"]}, "recorded_deadline": "2026-04-26"})
 
+    def test_a_completed_request_is_planned_with_the_dispatchers_facts(self):
+        # A corrected order ID alone leaves T10's questions open (what the frontend sent before 22 October 2026).
+        correct(self.decisions, self.tasks, T10, {"order_id": "ORD-041"}, [])
+        self.assertEqual(row(self.build(), T10)["outcome"], "needs_clarification")
+        # Completed, every blocker is resolved: ORD-041 is planned with its due date in orders.csv.
+        complete(self.decisions, self.tasks, T10, {"order_id": "ORD-041"})
+        planned = record(self.build(), T10)
+        self.assertEqual((planned["status"], planned["order_snapshot"]["due_date"]), ("recommendation", "2026-04-21"))
+        self.assertEqual(planned["task"]["dispatcher"]["resolved"], blockers(self.tasks[T10]))
+        # T7 names its order but its intent is unclear: completing it with a deadline makes it an allocation.
+        complete(self.decisions, self.tasks, T7, {"due_date": "2026-04-20"})
+        planned = record(self.build(), T7)
+        self.assertEqual((planned["status"], planned["task"]["intent"]), ("recommendation", "allocation"))
+
+    def test_completing_a_request_needs_its_order(self):
+        with self.assertRaisesRegex(ValueError, f"complete {T10}: give the order ID."):
+            complete(self.decisions, self.tasks, T10, {"due_date": "2026-04-20"})
+
+    def test_completing_a_request_uses_its_saved_corrections(self):
+        # Review again: an earlier, saved correction gave T10 its order, so completing it needs no order again.
+        correct(self.decisions, self.tasks, T10, {"order_id": "ORD-041"}, [])
+        complete(self.decisions, self.tasks, T10, {})
+        self.assertEqual(record(self.build(), T10)["status"], "recommendation")
+        # T8 was corrected to a question; completing it makes it an allocation again, back in its first outcome.
+        first_outcome = row(build_dispatcher_plan(self.run_dir, no_decisions(self.run_dir)), T8)["outcome"]
+        correct(self.decisions, self.tasks, T8, {"intent": "question"}, [])
+        self.assertEqual(row(self.build(), T8)["outcome"], "reference")
+        complete(self.decisions, self.tasks, T8, {})
+        completed = self.build()
+        self.assertEqual((row(completed, T8)["outcome"], record(completed, T8)["task"]["intent"]),
+                         (first_outcome, "allocation"))
+
+    def test_a_dispatchers_quantity_is_the_batch_size(self):
+        # T9's order has 150 pieces in orders.csv, within W8's 300-piece cap.
+        self.assertIn("W8", record(self.build(), T9)["candidate_metrics"])
+        correct(self.decisions, self.tasks, T9, {"quantity": "301"}, [])
+        review = self.build()
+        planned = record(review, T9)
+        self.assertEqual((planned["status"], planned["order_snapshot"]["pieces"]), ("recommendation", 301))
+        self.assertIn("exceeds_batch_cap=301>300",
+                      [rejected["reason"] for rejected in planned["rejected_candidates"] if rejected["workshop_id"] == "W8"])
+        self.assertEqual(planned["task"]["dispatcher"]["recorded"], {"quantity": None})  # orders.csv applied before
+        # Each workshop's reserved pieces are the batch sizes reserved there, T9's 301 among them.
+        workshop = planned["selected_workshop"]
+        reserved_here = [record(review, task_id) for task_id in review["reservation_order"]
+                         if record(review, task_id)["selected_workshop"] == workshop]
+        self.assertIn(planned, reserved_here)
+        self.assertEqual(review["pieces_after_plan"][workshop],
+                         sum(decision["order_snapshot"]["pieces"] for decision in reserved_here))
+
+    def test_a_quantity_must_be_a_whole_number_above_0(self):
+        for quantity in ("0", "-5", "2.5", "300 pieces", ""):
+            with self.subTest(quantity=quantity):
+                decisions = no_decisions(self.run_dir)
+                correct(decisions, self.tasks, T9, {"quantity": quantity}, [])
+                result = build_dispatcher_plan(self.run_dir, decisions)
+                self.assertIn(f"{quantity!r} is not a whole number of pieces above 0", row(result, T9)["reason"])
+                self.assertEqual(record(result, T9)["order_snapshot"]["pieces"], 150)
+
+    def test_a_placed_or_completed_request_skips_the_duplicate_order_check(self):
+        # T14 and T20 both name ORD-103, so both are duplicate-order reviews.
+        self.assertEqual([review["task_id"] for review in self.build()["duplicate_order_reviews"]], [T14, T20])
+        # Before 22 October 2026 a workshop chosen for T14 was saved but never used.
+        choose_workshop(self.decisions, self.tasks, T14, "W1")
+        review = self.build()
+        placed = record(review, T14)
+        self.assertEqual((placed["status"] in ("dispatcher_choice", "accepted_late"), placed["selected_workshop"]),
+                         (True, "W1"))
+        self.assertIn(T14, review["reservation_order"])
+        self.assertEqual([review["task_id"] for review in review["duplicate_order_reviews"]], [T20])
+        # Completing T20 too makes it a second batch of ORD-103: both are planned, none is in review.
+        complete(self.decisions, self.tasks, T20, {})
+        review = self.build()
+        self.assertEqual(review["duplicate_order_reviews"], [])
+        self.assertEqual([task_id for task_id in review["planning_order"] if task_id in (T14, T20)], [T14, T20])
+
+    def test_an_added_batch_is_planned_and_reserved_once(self):
+        # T10 is completed as 300 pieces of ORD-041; the dispatcher adds the other 300 as a batch of its own.
+        complete(self.decisions, self.tasks, T10, {"order_id": "ORD-041", "quantity": "300"})
+        self.assertEqual(add_batch(self.decisions, {"order_id": "ORD-041", "quantity": "300"}), "ADD-1")
+        review = self.build()
+        added = record(review, "ADD-1")
+        self.assertEqual((added["status"], added["order_snapshot"]["pieces"], added["order_snapshot"]["due_date"]),
+                         ("recommendation", 300, "2026-04-21"))  # no deadline given: orders.csv's
+        self.assertEqual((added["task"]["added"], added["task"]["source_message_ids"]), (True, []))
+        self.assertEqual(review["reservation_order"].count("ADD-1"), 1)
+        workshop = added["selected_workshop"]
+        reserved_here = [record(review, task_id) for task_id in review["reservation_order"]
+                         if record(review, task_id)["selected_workshop"] == workshop]
+        self.assertEqual(review["pieces_after_plan"][workshop],
+                         sum(decision["order_snapshot"]["pieces"] for decision in reserved_here))
+        # The other batch of ORD-041 is named, and neither is sent to the duplicate-order review.
+        self.assertTrue(row(review, "ADD-1")["reason"].startswith(
+            f"Added by the dispatcher. Other planned batches of ORD-041: {T10}. "))
+        self.assertEqual(record(review, T10)["status"], "recommendation")
+        self.assertNotIn("ORD-041", [review["order_id"] for review in review["duplicate_order_reviews"]])
+
+    def test_two_added_batches_of_one_order_are_both_planned(self):
+        # A split: ORD-041 sent as two batches, the second to a workshop the dispatcher chose.
+        add_batch(self.decisions, {"order_id": "ORD-041", "quantity": "300", "preference": "quality"})
+        self.assertEqual(add_batch(self.decisions, {"order_id": "ORD-041", "quantity": "300"}, "W2"), "ADD-2")
+        review = self.build()
+        first, second = record(review, "ADD-1"), record(review, "ADD-2")
+        self.assertEqual((first["status"], first["objective"]), ("recommendation", "minimize_defects"))
+        self.assertEqual((second["status"] in ("dispatcher_choice", "accepted_late"), second["selected_workshop"]),
+                         (True, "W2"))
+        self.assertEqual([task_id for task_id in review["reservation_order"] if task_id.startswith("ADD-")],
+                         ["ADD-2", "ADD-1"])  # the chosen workshop is planned first
+        self.assertIn("Other planned batches of ORD-041: ADD-2.", row(review, "ADD-1")["reason"])
+
+    def test_an_added_batch_needs_a_valid_order(self):
+        with self.assertRaisesRegex(ValueError, "add_batch: give the order ID."):
+            add_batch(self.decisions, {"quantity": "100"})
+        self.assertEqual(self.decisions, no_decisions(self.run_dir))
+        add_batch(self.decisions, {"order_id": "ORD-999"})
+        review = self.build()
+        self.assertEqual(review["decision_problems"], {"ADD-1": ["ORD-999 is not in orders.csv"]})
+        self.assertNotIn("ADD-1", review["reservation_order"])
+
     def test_a_wrong_blocker_number_is_refused(self):
         for number in (-1, len(blockers(self.tasks[T5]))):
             with self.subTest(number=number):
@@ -444,6 +577,10 @@ class ApplyAnswer(unittest.TestCase):
         cases = [
             ({"decision": "correct", "task_id": T5, "facts": {"due_date": "2026-04-20"}, "resolves": [0, 1]},
              lambda decisions: correct(decisions, self.tasks, T5, {"due_date": "2026-04-20"}, [0, 1])),
+            ({"decision": "complete", "task_id": T10, "facts": {"order_id": "ORD-041"}},
+             lambda decisions: complete(decisions, self.tasks, T10, {"order_id": "ORD-041"})),
+            ({"decision": "add_batch", "facts": {"order_id": "ORD-041"}, "workshop_id": "W8"},
+             lambda decisions: add_batch(decisions, {"order_id": "ORD-041"}, "W8")),
             ({"decision": "choose_workshop", "task_id": T8, "workshop_id": "W1"},
              lambda decisions: choose_workshop(decisions, self.tasks, T8, "W1")),
             ({"decision": "accept_late", "task_id": T12},
@@ -508,6 +645,34 @@ class ApplyAnswer(unittest.TestCase):
                          ("review_required", "accepted_late"))
         self.assertEqual(changes[T12]["after"]["reason"], next(row for row in review["summary_rows"] if row["id"] == T12)["reason"])
 
+    def test_finalize_lists_an_added_batch_as_a_new_row(self):
+        entry = {"decision": "add_batch", "facts": {"order_id": "ORD-041", "quantity": "250"}}
+        _, review, then, refusal = apply_answer(self.run_dir, no_decisions(self.run_dir), self.review,
+                                                answer(entry, then="finalize"))
+        self.assertEqual((then, refusal), ("approve_all", None))
+        added = next(change for change in review["changes"] if change["id"] == "ADD-1")
+        self.assertEqual((added["before"], added["after"]["outcome"]), (None, "recommendation"))
+        self.assertEqual(finalize_review(review)["final_ids"].count("ADD-1"), 1)
+
+    def test_an_added_batch_can_be_changed_or_removed_later(self):
+        # The decisions already hold ADD-1, as after an approval, so a later answer can name it.
+        decisions = no_decisions(self.run_dir)
+        add_batch(decisions, {"order_id": "ORD-041", "quantity": "250"})
+        review = build_dispatcher_plan(self.run_dir, decisions)
+        _, moved, _, refusal = apply_answer(self.run_dir, decisions, review, answer(
+            {"decision": "choose_workshop", "task_id": "ADD-1", "workshop_id": "W2"}))
+        self.assertEqual((refusal, row(moved, "ADD-1")["workshop"]), (None, "W2"))
+        removed, after, then, refusal = apply_answer(self.run_dir, decisions, review, answer(
+            {"decision": "clear", "task_id": "ADD-1"}, then="finalize"))
+        self.assertEqual((then, refusal), ("approve_all", None))
+        self.assertEqual(removed, no_decisions(self.run_dir))
+        self.assertNotIn("ADD-1", [summary_row["id"] for summary_row in after["summary_rows"]])
+        # The removed batch comes last in what changed, with its earlier row and no later one.
+        earlier = row(review, "ADD-1")
+        self.assertEqual(after["changes"][-1], {
+            "id": "ADD-1", "order_id": "ORD-041", "after": None,
+            "before": {field: earlier[field] for field in ("outcome", "workshop", "delivery_days", "reason")}})
+
     def test_finalize_refuses_lateness_that_grew(self):
         # T12's late W5 option is accepted, but choosing W5 for T11 in the same batch makes T12 later.
         entries = [{"decision": "accept_late", "task_id": T12},
@@ -529,6 +694,8 @@ class ApplyAnswer(unittest.TestCase):
             (answer({"decision": "release", "task_id": T9}), "Unknown decision 'release'"),
             (answer({"decision": ["clear"], "task_id": T9}), "Unknown decision ['clear']"),
             (answer({"decision": "clear", "task_id": "T:L0999:J1"}), "'T:L0999:J1' is not a verified task"),
+            # No batch was added, so ADD-1 names nothing.
+            (answer({"decision": "clear", "task_id": "ADD-1"}), "'ADD-1' is not a verified task or added batch"),
             (answer({"decision": "clear", "task_id": ["T:L0009:J1"]}), "is not a verified task"),
             (answer({"decision": "choose_workshop", "task_id": T8, "workshop": "W1"}), "unknown field workshop"),
             (answer({"decision": "choose_workshop", "task_id": T8}), "workshop_id is missing"),
@@ -558,6 +725,17 @@ class ApplyAnswer(unittest.TestCase):
              "pieces cannot be corrected here"),
             (answer({"decision": "correct", "task_id": T5, "facts": {"preference": "soon"}}),
              "'soon' is not a valid preference"),
+            (answer({"decision": "add_batch", "task_id": T8, "facts": {"order_id": "ORD-041"}}),
+             "add_batch: Python names the added batch, so give no task_id."),
+            (answer({"decision": "add_batch", "facts": {"quantity": "100"}}), "add_batch: give the order ID."),
+            (answer({"decision": "add_batch", "facts": {"order_id": "ORD-041"}, "workshop": "W1"}),
+             "add_batch: unknown field workshop"),
+            (answer({"decision": "add_batch", "facts": {"order_id": "ORD-041"}, "workshop_id": 1}),
+             "add_batch: workshop_id must be"),
+            (answer({"decision": "add_batch", "facts": {"order_id": "ORD-999"}}),
+             "Not applied: ADD-1: ORD-999 is not in orders.csv."),
+            (answer({"decision": "add_batch", "facts": {"order_id": "ORD-041", "quantity": "0"}}),
+             "Not applied: ADD-1: '0' is not a whole number of pieces above 0."),
             # A valid decision followed by an invalid one: the whole answer is refused.
             (answer(choose, {"decision": "correct", "task_id": T5, "resolves": [5]}), f"{T5} has no blocker [5]"),
         ]

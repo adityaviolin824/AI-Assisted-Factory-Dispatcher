@@ -101,6 +101,35 @@ test("editing a draft after a failed send makes it a new submission", async ({ p
   expect(bodies[1].submission_id).not.toBe(bodies[0].submission_id);
 });
 
+test("while a message sends, its text box cannot change", async ({ page }) => {
+  // The saved answer clears the box, so a new draft typed during the send would be lost.
+  await serveMessages(page, MESSAGES);
+  let release = () => {};
+  const held = new Promise<void>((resolve) => (release = resolve));
+  await page.route("**/api/backend/chat/messages", async (route) => {
+    if (route.request().method() !== "POST") {
+      return route.fallback();
+    }
+    await held;
+    await route.fulfill(saved(route.request().postDataJSON() as NewMessage, 3));
+  });
+  await page.goto("/operations");
+  await page.getByLabel("Your name").fill("Priya");
+  const box = page.getByRole("textbox", { name: "Message", exact: true });
+  await box.fill("Please allocate ORD-061.");
+  await box.press("Control+Enter");
+  await expect(page.getByRole("button", { name: "Sending..." })).toBeVisible();
+  // The box keeps its focus but takes no typing until the message is saved.
+  await expect(box).not.toBeEditable();
+  await expect(box).toBeFocused();
+  await page.keyboard.type(" Also ORD-062.");
+  await expect(box).toHaveValue("Please allocate ORD-061.");
+  release();
+  await expect(page.getByRole("list", { name: "Messages" }).getByRole("listitem")).toHaveCount(3);
+  await expect(box).toHaveValue("");
+  await expect(box).toBeEditable();
+});
+
 test("the name is remembered in this tab", async ({ page }) => {
   await serveMessages(page, MESSAGES);
   await page.goto("/operations");

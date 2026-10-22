@@ -7,7 +7,8 @@ const NAME_KEY = "chat-name";
 type Props = { onSent: (message: ChatMessage) => void };
 
 // Writes one message. Send only saves it for everyone: it makes no model call. When saving fails,
-// the draft stays so it can be sent again.
+// the draft stays so it can be sent again. While it sends, the text box is read-only: the saved
+// answer clears the box, which would also erase anything typed in the meantime.
 // The page renders it in the browser only (next/dynamic, ssr: false), because it reads sessionStorage.
 export default function Composer({ onSent }: Props) {
   // The name is remembered for this browser tab only, as in the mock chat. It is not an account.
@@ -67,6 +68,7 @@ export default function Composer({ onSent }: Props) {
         <textarea
           rows={3}
           value={text}
+          readOnly={sending}
           onChange={(event) => changeText(event.target.value)}
           onKeyDown={sendOnShortcut}
           placeholder="For example: Can someone place ORD-107? 2000 cardigans, due Mar 16."

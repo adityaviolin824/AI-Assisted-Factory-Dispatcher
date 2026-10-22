@@ -392,7 +392,9 @@ button:hover {
   border-color: var(--text);
 }
 
-button:disabled {
+button:disabled,
+input:disabled,
+select:disabled {
   opacity: 0.45;
   cursor: not-allowed;
 }
@@ -571,6 +573,12 @@ select {
   border-left: 3px dashed var(--gold);
 }
 
+/* A preview is unsaved too, so it is basted like the choices it shows. */
+.preview {
+  padding-left: 16px;
+  border-left: 3px dashed var(--gold);
+}
+
 .choices h3 {
   margin-top: 12px;
 }
@@ -583,6 +591,14 @@ select {
 .unsaved.block {
   display: block;
   white-space: nowrap;
+}
+
+/* An invisible wrapper: disabling it locks every choice inside while Approve all saves. */
+fieldset.lock {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
 }
 
 .choices fieldset {

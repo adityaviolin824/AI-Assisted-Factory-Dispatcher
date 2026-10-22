@@ -15,6 +15,21 @@
   color-scheme: dark;
 }
 
+/* Light mode, set by the app bar's switch: indigo ink on undyed ecru. Gold and red are darker so
+   they stay readable on a pale page (text at least 4.5:1, lines and control borders at least 3:1). */
+:root[data-theme="light"] {
+  --page: #f4efe2;
+  --surface: #e9e2ce;
+  --raised: #ddd3b9;
+  --seam: #b6a886;
+  --control: #6c7391;
+  --text: #121a30;
+  --muted: #4a5473;
+  --gold: #7a5000;
+  --red: #b23b2a;
+  color-scheme: light;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -125,6 +140,44 @@ p {
 .about-link {
   margin-left: auto;
   color: var(--muted);
+}
+
+/* The light mode switch. The knob follows <html>'s data-theme, so it is right from the first paint. */
+.theme-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  border: none;
+  color: var(--muted);
+}
+
+.theme-switch:hover {
+  color: var(--text);
+}
+
+.theme-switch .track {
+  position: relative;
+  width: 30px;
+  height: 16px;
+  border: 1px solid var(--control);
+  border-radius: 8px;
+}
+
+.theme-switch .track::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+
+:root[data-theme="light"] .theme-switch .track::after {
+  left: 16px;
+  background: var(--text);
 }
 
 /* Page title with its controls on one line, wrapping on narrow screens. */

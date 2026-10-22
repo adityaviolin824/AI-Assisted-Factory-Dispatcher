@@ -2,13 +2,13 @@
 
 Last checked: 20 October 2026, after adding the dispatcher review pause to the graph. The current application path uses the Python modules, `run_full_pipeline.py` and `resume_dispatcher_review.py`; the first FastAPI endpoints (`main.py`) serve saved runs and the paused review. Notebooks 05 and 06 are the experimental references; intentional differences are declared in the module tests.
 
-**Latest approved product behavior, 21 October; not implemented yet:** the dispatcher completes all choices locally, with no per-click mutation, recalculation or persisted edits. One **Approve all** submits the set; Python keeps the dispatcher's destinations, rearranges flexible work, saves immediately and returns the final dispatch table plus what changed and why. This supersedes the current per-edit checkpoint/empty-approval interaction described below. A small batch-finalization API change and its tests are still needed; do not simulate it by sending intermediate edit requests. See [the root handoff](../PROJECT_HANDOFF.md). This is an assignment decision-table MVP, not operational factory deployment. Docker comes at the absolute end.
+**Latest approved product behavior, 21 October; not implemented yet:** the dispatcher completes all choices locally, with no per-click mutation, recalculation or persisted edits. One **Approve all** submits the set; Python keeps the dispatcher's destinations, rearranges flexible work, saves immediately and returns the final dispatch table plus what changed and why. This supersedes the current per-edit checkpoint/empty-approval interaction described below. A small batch-finalization API change and its tests are still needed; do not simulate it by sending intermediate edit requests. See the root handoff. This is an assignment decision-table MVP, not operational factory deployment. Docker comes at the absolute end.
 
 The backend turns factory chat into checked tasks and deterministic workshop allocation previews. It answers whether a workshop can make a batch, can take it given capacity and queue, and is allowed to take it. For most requests, avoiding lateness and reducing delivery time come first; explicit quality and cost preferences select their recorded policies. A general rule for delicate or expensive work still needs defined inputs and evaluation.
 
-Reallocation, committed assignments and the product frontend remain future work. The first API routes read saved runs and show or answer a paused review; see the [FastAPI build record](FASTAPI_BUILD.md). The existing [mock group chat](experimentation_notebooks/mock_frontend/README.md) stores shared messages in SQLite and exports TXT snapshots; it does not invoke processing automatically.
+Reallocation, committed assignments and the product frontend remain future work. The first API routes read saved runs and show or answer a paused review. The existing mock group chat stores shared messages in SQLite and exports TXT snapshots; it does not invoke processing automatically.
 
-[Notebook 06](experimentation_notebooks/06-dispatcher-workflow.ipynb) now provides read-only dispatcher views of a saved plan, cached explanations for allocation/review items and a TXT export. Information questions stay outside allocation and make no explanation-model call. Parts 1-7 only read the plan. Part 8 (19 October 2026) prototypes the dispatcher review loop with no model call: typed decisions correct a deadline or order ID, choose an eligible workshop, accept lateness or approve rows, and every review recalculates from the original queues with approved work placed first. It writes only `dispatcher-decisions.json` and `dispatcher-plan.json` in the run folder, and only once a decision is entered. Part 9 (19 October) shows both views on one Gradio screen inside Jupyter: each decision goes into Part 8's decisions, so the latest decision counts, and recalculates the plan and queues at once with Part 8's calculation; it makes no model call, and Parts 8d to 8f save the decisions. Gradio is a `dev` dependency, installed by `uv sync`. Its [implementation notes](experimentation_notebooks/06-dispatcher-workflow.md) record the scope, original paid run and offline checks. The notebook stays unchanged as the reference: its Part 8 per-row approval is the earlier prototype, and the [dispatcher review modules](#dispatcher-review-modules) replace it with one final approval.
+Notebook 06 now provides read-only dispatcher views of a saved plan, cached explanations for allocation/review items and a TXT export. Information questions stay outside allocation and make no explanation-model call. Parts 1-7 only read the plan. Part 8 (19 October 2026) prototypes the dispatcher review loop with no model call: typed decisions correct a deadline or order ID, choose an eligible workshop, accept lateness or approve rows, and every review recalculates from the original queues with approved work placed first. It writes only `dispatcher-decisions.json` and `dispatcher-plan.json` in the run folder, and only once a decision is entered. Part 9 (19 October) shows both views on one Gradio screen inside Jupyter: each decision goes into Part 8's decisions, so the latest decision counts, and recalculates the plan and queues at once with Part 8's calculation; it makes no model call, and Parts 8d to 8f save the decisions. Gradio is a `dev` dependency, installed by `uv sync`. Its implementation notes record the scope, original paid run and offline checks. The notebook stays unchanged as the reference: its Part 8 per-row approval is the earlier prototype, and the [dispatcher review modules](#dispatcher-review-modules) replace it with one final approval.
 
 ## Which script to use
 
@@ -18,7 +18,7 @@ Run commands from `backend/`, using the project-local `uv` environment.
 |---|---|---|
 | `uv run python run_full_pipeline.py` | Configured chat file to processing, allocation and a paused dispatcher review in one LangGraph run; prints the review and its thread ID. | Cache misses can make paid calls. |
 | `uv run python resume_dispatcher_review.py <thread ID> [<answer.json>]` | Show a paused review again, or send it one answer. | None. |
-| `uv run fastapi dev main.py` | Local HTTP API: list and read saved runs, show and answer a paused review by thread ID; open `http://127.0.0.1:8000/docs`. See [FASTAPI_BUILD.md](FASTAPI_BUILD.md). | None. |
+| `uv run fastapi dev main.py` | Local HTTP API: list and read saved runs, show and answer a paused review by thread ID; open `http://127.0.0.1:8000/docs`. | None. |
 | `uv run python run_intake_and_processing.py` | Processing only, for prompt/model experiments. | Cache misses can make paid calls. |
 | `uv run python run_allocation.py output/runs/<start time>` | Replan one explicitly named saved processing run. Without a folder, list available runs. | None. |
 | `uv run python -m eval_harness.run_harness_evaluation` | Historical scheduler comparison beside the unchanged course simulator. | None. |
@@ -101,7 +101,7 @@ An exception in the full graph stops it before allocation; it does not automatic
 | `dispatcher_review/dispatcher_plan.py` | Apply the dispatcher's decisions to copies of the verified tasks, route and plan them as allocation does, and list every input with its outcome (`build_dispatcher_plan`). Label a copy of the shown review as final (`finalize_review`). Record the dispatch date and the order and workshop data a review was calculated from (`input_signature`). |
 | `dispatcher_review/dispatcher_decisions.py` | Check one answer, apply it to a copy of the decisions and calculate the review again (`apply_answer`); the decision helpers; print a review; save the approved result. |
 
-These are notebook 06's Part 8 cells, with the differences declared in `tests/test_dispatcher_review.py` (decided 20 October 2026, [plan](DISPATCHER_REVIEW_GRAPH_PLAN.md)). The main ones: the dispatcher approves the whole shown review once, so per-row approve and release are gone; and the dispatcher decides, so every review plans the tasks with a chosen workshop first and the other ready tasks around them, each group earliest deadline first from the original queues. A review is a preview; no model is called.
+These are notebook 06's Part 8 cells, with the differences declared in `tests/test_dispatcher_review.py` (decided 20 October 2026, plan). The main ones: the dispatcher approves the whole shown review once, so per-row approve and release are gone; and the dispatcher decides, so every review plans the tasks with a chosen workshop first and the other ready tasks around them, each group earliest deadline first from the original queues. A review is a preview; no model is called.
 
 An answer is one JSON object. Decisions are named after their helpers, and use the task IDs of this run's review:
 
@@ -178,18 +178,18 @@ Recorded normal replay: the default policy has 8.1 mean delivery days and 2% lat
 
 `make_run_report.py <run folder>` writes `run_report.md` into the run folder from the files the run saved: settings from `manifest.json`, processing counts from `state.json`, every plan row with its reason from `plan.json`, and each stage's calls, tokens, cost and model time from `calls/`. It makes no model call and changes no other file, so it can be repeated. "Cost in this run" counts only calls not answered from the saved-answer cache; "cost of a fresh run" prices every call. Prices are the table in `eval_run_report/run_summary.py` (checked 14 Oct 2026). On Test 8's run it reproduces the recorded $0.0705 for 37 verification calls.
 
-With `--key <key.json> --data <data folder>`, the report adds a score against a JSON answer key in the format of `docs/evaluation/extended_dispatch_100_expected.json`, following [How the score works](docs/evaluation/NEW_TEST_SETS_PLAN.md#how-the-score-works-fixed-before-the-run):
+With `--key <key.json> --data <data folder>`, the report adds a score against a JSON answer key in the format of `docs/evaluation/extended_dispatch_100_human_team_golden.json`, following [How the score works](docs/evaluation/NEW_TEST_SETS_PLAN.md#how-the-score-works-fixed-before-the-run):
 - each case is matched to the task created from its first message, by order ID when that message holds two jobs;
 - decisions: correct allocation (obeying the key's requested and excluded workshops), correct non-allocation (by any route), unsafe allocation and missed allocation;
 - each missed allocation, and each allocation to another workshop than the key's own plan, gets one cause: intake, link, verification or allocation;
 - the key's own plan is calculated by the app's routing and allocation rules from the given data folder;
 - the allocator fields of verified matched tasks, the message labels and the follow-up links.
 
-The data folder is named on the command line because a run's manifest does not record it and `config.toml` is restored after each test run. A run needs its `plan.json`; for a plan made before 15 October 2026 the review-warning count is reported as not recorded. The script refuses a key whose messages differ from the run's chat, a data folder that lacks the key's orders, and workshops that differ from those the run was planned with. The report gives the key's hash, not who labelled it; that is recorded with the key.
+The data folder is named on the command line because a run's manifest does not record it and `config.toml` is restored after each test run. A run needs its `plan.json`; for a plan made before 15 October 2026 the review-warning count is reported as not recorded. The script refuses a key whose messages differ from the run's chat, a data folder that lacks the key's orders, and workshops that differ from those the run was planned with. The report gives the key's hash and, when present, its recorded human-review provenance. For the 100-case golden key this credits the comprehensive manual, line-by-line review by three team members and preserves the AI-authored draft origin. The script reproduces the recorded provenance; it does not perform or certify that human review.
 
 ## Verification
 
-The current baseline is **123 offline tests** (20 October 2026): 23 processing, 25 routing/allocation, 15 harness, 23 graph, 22 dispatcher review, 11 run-report and 4 API tests. Run from `backend/`:
+The current baseline is **127 offline tests** (22 October 2026): 23 processing, 25 routing/allocation, 15 harness, 23 graph, 24 dispatcher review, 11 run-report and 6 API tests. Run from `backend/`:
 
 ```text
 uv run python -m unittest discover -s tests -v
@@ -201,31 +201,21 @@ The latest independent review replayed all 14 saved runs without changing their 
 
 ## Current notebook: 05
 
-[Notebook 05](experimentation_notebooks/05-order-pipeline-mvp.ipynb) remains unchanged as the experimental reference. Its [explanation](experimentation_notebooks/05-order-pipeline-mvp-explanation.md), [implementation record](experimentation_notebooks/05-order-pipeline-mvp-implementation.md) and [offline checks](experimentation_notebooks/testing/README.md) describe that notebook. Its older hold behaviour differs from the current modules; the module tests explicitly declare intentional changes.
+Notebook 05 remains unchanged as the experimental reference. Its explanation, implementation record and offline checks describe that notebook. Its older hold behaviour differs from the current modules; the module tests explicitly declare intentional changes.
 
 ## The earlier pair: processing v3 and allocation v4
 
-These are historical references, not the current storage or resume contract. The [processing walkthrough](experimentation_notebooks/order-processing-v3-walkthrough.md), [v4 review](experimentation_notebooks/old_notebooks_and_files/order-allocation-v4-review-and-improvements.md) and [engineering log](../docs/engineering-log.md) preserve their handoff schemas, fingerprints, matching resume, source-order planning and recorded checks. Do not apply those older contracts to the current modules, which use in-memory graph state, EDD planning and the run-folder files described above.
+These are historical references, not the current storage or resume contract. The processing walkthrough, v4 review and [engineering log](../docs/engineering-log.md) preserve their handoff schemas, fingerprints, matching resume, source-order planning and recorded checks. Do not apply those older contracts to the current modules, which use in-memory graph state, EDD planning and the run-folder files described above.
 
 ## What to read next
 
 | Document | Purpose |
 |---|---|
-| [Backend instructions](AGENTS.md) | Rules for changing the implementation. |
-| [Pending improvements](docs/Pending_Improvements.md) | Current known issues and how to evaluate a change. |
 | [Prompt and model experiments](docs/evaluation/PROMPT_TESTING_RESULTS.md) | Historical scoring keys, model/prompt comparisons, costs and failures; add future approved paid runs here. |
-| [Extended-chat report](docs/evaluation/EXTENDED_RUN_REPORT.md) | Detailed evaluation and failure analysis for Test 4. |
 | [Project plan](../docs/project-plan.md) | Product priorities, open decisions and evaluation requirements. |
-| [Dispatcher review plan](DISPATCHER_REVIEW_PLAN.md) | Notebook 06 plan: structured human corrections, acknowledged late choices, protected queues/piece counts and final JSON first; AI, Excel and interface later. Its first increment is notebook 06 Part 8; Part 9 adds a Gradio screen. |
-| [FastAPI build record](FASTAPI_BUILD.md) | The first HTTP endpoints: what was built, each decision with its reason and alternatives, tests and verification. |
-| [Dispatcher review graph plan](DISPATCHER_REVIEW_GRAPH_PLAN.md) | The implemented review modules and graph pause: one final approval, answer contract, SQLite persistence and verification. |
 | [System design](../docs/system-design.md) | Current rules and planned dispatcher, storage, graph waits and frontend. |
 | [Presentation explanation](../docs/project-explanation.md) | A plain explanation of the current implementation and evidence. |
 | [Project highlights](../FEATURES.md) | Supported strengths and measured results. |
 | [Engineering log](../docs/engineering-log.md) | Debugging, verification and attribution. |
-| [Interview preparation](Interview-Preparation.md) | Learning and discussion rules, mirrored at the project root. |
-| [Historical modularization instructions](docs/legacy/MODULARIZATION_INSTRUCTIONS.md) | Original responsibilities and completed move record. |
-| [Allocation implementation record](docs/legacy/ALLOCATION_MODULARIZATION_PLAN.md) | Decisions, alternatives and verification for routing, allocation and the harness adapter. |
-| [LangGraph implementation record](docs/legacy/LANGGRAPH_MODULARIZATION_PLAN.md) | Decisions and verification for the six-node batch graph. |
 
 `review_tasks_processing/` is a future handler. The product frontend and operational assignment database are not implemented. The mock chat's SQLite database stores messages; it is not an assignment ledger.

@@ -30,7 +30,7 @@ The conversation suggests order 52, but the application still requires confirmat
 
 ## What happened before the fix
 
-Saved run: [2026-10-14_11-16-34](../output/runs/2026-10-14_11-16-34/state.json), with intake on `gpt-4.1-mini`.
+Saved run: 2026-10-14_11-16-34, with intake on `gpt-4.1-mini`.
 
 | Message | Expected label | Recorded label |
 |---|---|---|
@@ -59,7 +59,7 @@ In the comparison run, only intake's model configuration changed; linking and ve
 
 ## Verification and observed result
 
-Saved run: [2026-10-14_13-10-07](../output/runs/2026-10-14_13-10-07/state.json).
+Saved run: 2026-10-14_13-10-07.
 
 | Measure | Before: mini intake | After: Luna intake, high |
 |---|---|---|
@@ -82,7 +82,7 @@ The original 30-request file provided a separate check. With the current prompt,
 
 ## Supporting records
 
-- [Original diagnosis and the controlled intake comparison, section 13](../../docs/follow-up-linking-diagnosis-2026-10-14.md#13-result-of-test-1-gpt-56-luna-high-on-intake).
+- Original diagnosis and the controlled intake comparison, section 13.
 - [Prompt and model testing results: Tests 1, 2 and 3](../docs/evaluation/PROMPT_TESTING_RESULTS.md).
 - [Request and follow-up routing](../order_processing_into_tasks/create_and_link_tasks.py).
 - [Current unresolved hold and linking problem](held_tasks_and_unresolved_followups.md).

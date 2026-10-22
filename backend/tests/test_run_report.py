@@ -16,7 +16,7 @@ from eval_run_report.score_against_key import check_key_matches_run, message_lab
 from order_processing_into_tasks.settings_and_data import BACKEND_DIR
 from task_allocation_to_workshops import recommend_one_task
 
-KEY_FILE = BACKEND_DIR / "docs/evaluation/extended_dispatch_100_expected.json"
+KEY_FILE = BACKEND_DIR / "docs/evaluation/extended_dispatch_100_human_team_golden.json"
 DATA_FOLDER = BACKEND_DIR / "data/extended_dispatch_100"
 
 
@@ -193,7 +193,15 @@ class KeyScore(unittest.TestCase):
         self.assertIn("Workshop choice: 85 of 85 correct allocations", text)
         self.assertIn("149 of 149 messages have the key's label.", text)
         self.assertIn("45 of 45 follow-ups joined their case's task.", text)
+        self.assertIn("Reviewers: 3 human team members.", text)
+        self.assertIn("Comprehensive manual, line-by-line review by human team members, not AI.", text)
         self.assertNotIn(str(BACKEND_DIR), text)
+        # An older key with no review provenance must not acquire a human-review claim.
+        draft_key = copy.deepcopy(self.key)
+        del draft_key["provenance"]
+        draft_text = score_section("draft.json", "0" * 64, draft_key, "data/extended_dispatch_100",
+                                   scores, message_labels(self.key, run["state"]))
+        self.assertNotIn("Reviewers:", draft_text)
 
 
 if __name__ == "__main__":

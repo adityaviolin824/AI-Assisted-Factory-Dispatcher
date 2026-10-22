@@ -6,7 +6,7 @@ This file records the paid test runs of the processing pipeline (`run_intake_and
 - what it cost;
 - what it shows.
 
-Tests are listed newest first, and each scoring key was written before the runs it scores. Earlier runs appear only as baselines; they are described in the [engineering log](../../../docs/engineering-log.md) and the [follow-up linking diagnosis](../../../docs/follow-up-linking-diagnosis-2026-10-14.md). Run folders are kept in `output/runs/`, which is not committed, so the important facts are copied here. Every new paid run is added to this file (see `AGENTS.md`).
+Tests are listed newest first, and each scoring key was written before the runs it scores. Earlier runs appear only as baselines; they are described in the [engineering log](../../../docs/engineering-log.md) and the follow-up linking diagnosis. Run folders are kept in `output/runs/`, which is not committed, so the important facts are copied here. Every new paid run is added to this file (see `AGENTS.md`).
 
 ## Summary
 
@@ -21,7 +21,7 @@ Tests are listed newest first, and each scoring key was written before the runs 
 - Labels scored 162/222 strict.
 - Linking attached 33 follow-ups correctly and 8 wrongly, and sent 40 to review.
 - The run cost $0.076.
-- Full report: [extended run report](EXTENDED_RUN_REPORT.md).
+- Full report: extended run report.
 
 **Blocker cases (Test 5):** a 26-line chat with only Test 4's blocker types, now the default `chat_file`, run once as a baseline before the hold change below.
 - 1 of the 9 expected-ready tasks was ready, and nothing unsafe; 13 of 14 tasks were held. It cost $0.008 and took 72 s.
@@ -49,7 +49,14 @@ Tests are listed newest first, and each scoring key was written before the runs 
 **Full run with the API review (Test 9):** one fresh run of the whole pipeline on `dispatch_requests.txt` (Test 7's settings), then the dispatcher's review done through the new FastAPI endpoints.
 - Every step worked: the pause; a workshop choice, used and planned first; a refused answer, with its own message; final approval, which saved the shown review. It cost $0.016 and took 134 s of model time.
 - Readiness was 29/30, with no silent error. R19 was labelled a follow-up and went to link review, so labels were 29/30. There were 2 judgment-call field errors; R25's `quality` reading moved it from W1 to W2.
-- Full write-up: [full run with the API](FULL_RUN_WITH_API_2026-10-20.md).
+- Full write-up: full run with the API.
+
+**Human-team golden set (Test 10):** two fresh runs of the whole pipeline on the 100-case set, scored after allocation against the human-reviewed key. Each cost about $0.07 and took 10-11 minutes.
+- Correct allocations were 73/85 and 80/85. 14 of the 15 exceptions were not allocated in both runs.
+- **CASE-097, a cancellation, was allocated to W1 in both runs**, so the 0-unsafe condition fails. Verification read it as an allocation, and no Python check covers cancellations.
+- The allocator made no error: every recommendation was on time and obeyed its workshop rules. The failures started in intake (8 and 3 follow-ups read as new requests), linking (all 7 "For that batch" follow-ups in both runs), verification (CASE-049, CASE-032) and Python's written-date check (CASE-070).
+- 6 failing cases repeat in both runs and 7 failed in run 1 only, so run-to-run variation alone moved the score by 7 cases.
+- Full report: [golden-set run report](GOLDEN_100_RUN_REPORT.md).
 
 | Run (`output/runs/`) | Intake | Link and verify | Intake prompt | Labels | Readiness | Field errors | Wrong merges | Cost of a fresh run | Model time |
 |---|---|---|---|---|---|---|---|---|---|
@@ -102,6 +109,9 @@ Prices per million tokens, from OpenAI's model pages (checked 14 Oct 2026). Reas
 - **The narrower hold rule releases unrelated tasks and exposes the short-reply failures (Test 6).**
   - 5 of the 9 expected-ready tasks became ready (1 in Test 5), with 0 unsafe.
   - R14 is ready without R15's QuickStitch exclusion, because intake made R15 a task of its own. Test 5's holds had hidden this error.
+- **A repeat run separates stable failures from random ones (Test 10).**
+  - On identical inputs and settings, intake read 8 of 9 context-only "ORD-x: Choose the fastest/cheapest..." follow-ups as new requests in one run and 3 of 9 in the other. Same-batch follow-ups were right 24 of 24 times in both.
+  - The cancellation miss (CASE-097), the "For that batch" link reviews, the malformed evidence ID (CASE-049) and the date-check false positive (CASE-070) repeated exactly.
 
 ## Scoring keys
 
@@ -202,7 +212,7 @@ The intake labels are the demo key above. The saved Luna intake answers will be 
 
 ### Extended chat key (written before Test 4)
 
-The key for `data/dispatch_requests_extended.txt` covers 222 lines and 94 expected tasks. It is kept unchanged in the [extended run report](EXTENDED_RUN_REPORT.md), Appendix B, with SHA-256 `0f82ac908d51092acbc0ba75513a7fe0ed2c4c734a96a0bf5e4e34e8c07a5e44`.
+The key for `data/dispatch_requests_extended.txt` covers 222 lines and 94 expected tasks. It is kept unchanged in the extended run report, Appendix B, with SHA-256 `0f82ac908d51092acbc0ba75513a7fe0ed2c4c734a96a0bf5e4e34e8c07a5e44`.
 
 ### Blocker cases key (written 14 Oct 2026, before any run on the file)
 
@@ -365,6 +375,132 @@ A `deadline_passed` row reserves nothing, so R07 or R22 becoming ready changes n
 - every blocked task carries a stated reason;
 - no execution failure.
 
+### Human-team golden set (written 21 Oct 2026, before Test 10)
+
+**Question (Aditya):** on the 100-case set, how many cases are allocated correctly, what goes wrong, and where can the pipeline improve? At most 2 paid runs, scored after allocation; the dispatcher review is not scored.
+
+**Key and rules, fixed before the run:**
+- The key is `docs/evaluation/extended_dispatch_100_human_team_golden.json`, version 2, SHA-256 `e8d861875b08cd9a...`, unchanged since its freeze. The inputs match their frozen hashes (chat `942e2bc8...`, orders `7ecfe4a1...`, workshops `d7e1c97d...`), and the offline check passed again before the run (85 + 15).
+- The score rules are "How the score works" in [NEW_TEST_SETS_PLAN.md](NEW_TEST_SETS_PLAN.md), unchanged. `make_run_report.py --key --data` applies them.
+- **Run 1** uses the set's README settings, with an empty cache, so every call is paid. **Run 2** repeats it with a second empty cache (`output/extended_dispatch_100_repeat`) to separate stable failures from run-to-run variation. If run 1 stops on an API error, run 2 instead resumes it from its saved answers, and there is no repeat.
+
+**Expected:**
+1. **Exceptions:** all 15 are not allocated. CASE-094 (1,250 stated pieces, 250 recorded) is blocked by the piece-count check, the only line of this set it flags. The others reach their key outcome or an equivalent explicit non-allocation: a cancellation or pause may come out as an intake or link review, and the history question as a clarification.
+2. **Main risks to the 85:**
+   - the 8 follow-ups that rely on context alone, "For that batch" (CASE-017, 019, 021, 023, 025, 027 and 029) and "Yes" (CASE-085), the pattern that failed linking in Test 3;
+   - the correction threads (CASE-031 to 045), which depend on linking and on verification reading the latest version;
+   - the interleaved threads (CASE-046 to 059);
+   - the two-job messages L0130 and L0131;
+   - cascades: the key's plan has 4 cases with under 1 day of slack and 16 under 3 days, so one misread preference or date can move later tasks.
+3. **Relative dates (CASE-061 to 069) and dispatch timing (CASE-070)** are read by Python, so they should match unless the model selects the wrong words.
+4. **Cost and time:** about 130 calls (50 intake, up to 45 link, about 34 verification), roughly $0.10-0.20 and 12-15 minutes per run.
+
+**"Decent", proposed before the run:**
+- 0 unsafe allocations;
+- at least 75 of the 85 correct allocations;
+- every non-allocation carries a stated reason;
+- no execution failure.
+
+This set's wording is templated and every chat deadline equals its CSV date, so the score is a best case for clean chat; see "What this set does and does not test" in the test-set plan.
+
+## Test 10: two fresh runs on the human-team golden set (21 Oct 2026)
+
+**Question:** see the expectation above. Aditya authorized at most 2 paid runs, stopping after allocation, and chose a variance repeat as the second run. Claude Code ran both and wrote the report.
+
+### Setup
+
+- **Runs:** `output/extended_dispatch_100/runs/2026-10-21_23-32-41` (run 1) and `output/extended_dispatch_100_repeat/runs/2026-10-21_23-43-53` (run 2), each one run of `uv run python run_full_pipeline.py` from `backend/`. Both stopped at the dispatcher review pause, and no answer was sent. Both were traced to LangSmith, because `.env` enables tracing.
+- **Config:** for run 1, `config.toml` had:
+  - `chat_file = "data/extended_dispatch_100/dispatch_requests_extended_conversation_and_edge_cases_100.txt"`;
+  - `data_folder = "data/extended_dispatch_100"`;
+  - `[output] folder = "output/extended_dispatch_100"`.
+
+  Run 2 changed only the folder, to `output/extended_dispatch_100_repeat`. Both folders were new, so both caches were empty and every call was paid. The backup was copied back afterwards, and its SHA-256 matches (`920d4f7f...`).
+- **Settings:** Test 7's settings, checked in each run's printout. Every stage is on `gpt-5.6-luna`, with intake at `high` and linking and verification at `medium`. Batches are 3 target and 2 context messages, and 3 tasks per verification call. The message and dispatch dates are both 2026-04-01.
+- **Scoring:**
+  - The expectation above was hashed before run 1 (SHA-256 `b922554e...`, unchanged after this entry was added).
+  - The key's SHA-256 (`e8d861875b08cd9a...`) and the input hashes were unchanged after both runs.
+  - `make_run_report.py <run> --key docs/evaluation/extended_dispatch_100_human_team_golden.json --data data/extended_dispatch_100` wrote `run_report.md` into each run folder.
+  - A read-only script outside the repository traced each failing case through the saved records.
+- **Checks:** the 127 offline tests passed before the runs and again after the restore. The offline check of the set passed before the runs (85 + 15).
+
+### Results
+
+| Measure | Run 1 | Run 2 |
+|---|---|---|
+| Correct allocations (of 85) | 73 | 80 |
+| - with every allocator field matching the key | 71 | 77 |
+| Missed | 12 | 5 |
+| Exceptions not allocated (of 15) | 14 | 14 |
+| Unsafe allocations | 1 (CASE-097) | 1 (CASE-097) |
+| Labels | 140/149 | 145/149 |
+| Follow-ups joined | 30/45 | 35/45 |
+| Order, due date, requested and excluded workshops, split | 99/99 | 99/99 |
+| Preference | 88/99 | 93/99 |
+| Recommendations at the key's own workshop | 61/73 | 61/80 |
+| Late recommendations; rows with an empty reason | 0; 0 | 0; 0 |
+
+**Plan rows:**
+
+| Outcome | Run 1 | Run 2 |
+|---|---|---|
+| Recommendation | 64 | 66 |
+| Provisional recommendation | 10 | 15 |
+| Dispatcher review | 20 | 11 |
+| Needs clarification | 11 | 8 |
+| `deadline_passed` | 2 | 2 |
+| Processing review | 1 | 1 |
+| Link review | 8 | 8 |
+| Non-task | 5 | 5 |
+
+**What went wrong, from the saved records:**
+- **CASE-097 (both runs, unsafe):** "The customer has cancelled ORD-297. Do not allocate or reserve workshop capacity for this order."
+  - Verification returned `intent: allocation` with no blocker, so the CSV due date applied and W1 was recommended.
+  - The verify prompt names no cancellation rule, and no Python check covers it.
+  - The pause in CASE-098 was blocked in both runs.
+- **Intake (CASE-046, 047 and 051 in both runs; CASE-018, 022, 026, 058 and 059 in run 1):**
+  - Each failure is a follow-up of the form "ORD-x: Choose the fastest/cheapest eligible workshop that meets delivery." whose request sat in the context window only. Intake labelled it a new request, so two tasks named one order and both went to duplicate-order review.
+  - Such follow-ups failed 8 of 9 times in run 1 and 3 of 9 in run 2. The other 36 follow-ups were labelled correctly in both runs, including all 24 that shared a batch with their request.
+- **Linking:** the same 8 messages went to link review in both runs: the 7 "For that batch, ..." follow-ups and "Thanks. That instruction is confirmed." (L0109). As a result:
+  - CASE-019 was missed in run 1;
+  - CASE-023 and 027 (both runs) and CASE-019 (run 2) were allocated without their "cheapest" preference;
+  - every provisional recommendation traces to one of these 8 reviews.
+- **CASE-049 (both runs):** verification returned the evidence ID `T:L0085:J1:J1:E1` (run 2: `...:J1:J1:E2`), which is not in the task's catalog. The payload was clean, so Python sent the task to processing review.
+- **CASE-070 (both runs):** Python's written-date check splits clauses at commas.
+  - "Send out ORD-270, 360 vest pieces for Cotton Club today" became "Send out ORD-270" and "... for Cotton Club today", so "today" was flagged as a possible deadline.
+  - Calling `possible_deadline_words` on the text returns `['today']`, so the result repeats in every run.
+- **CASE-032 (run 1):** verification turned "Prioritize the lowest defect rate among eligible on-time workshops." into an unhandled constraint.
+- **Exceptions:** 14 of 15 reached the key's outcome or an equivalent non-allocation. CASE-094 was blocked by the model and by the piece-count check, and CASE-100 became a clarification.
+- **A different workshop from the key's plan** (12 cases in run 1, 19 in run 2) is a queue cascade, not an error: each was on time and obeyed its workshop rules.
+
+### Cost and time
+
+| Stage | Calls, run 1 / 2 (all paid) | Cost, run 1 / 2 | Seconds per call, mean and p90: run 1; run 2 |
+|---|---|---|---|
+| Intake, Luna `high` | 50 / 50 | $0.0238 / $0.0243 | 4.0, 4.8; 3.9, 4.8 |
+| Linking, Luna `medium` | 38 / 43 | $0.0103 / $0.0118 | 2.6, 3.1; 2.5, 3.0 |
+| Verification, Luna `medium` | 36 / 35 | $0.0387 / $0.0339 | 9.7, 13.7; 8.3, 10.8 |
+| **Total** | 124 / 128 | **$0.0728 / $0.0700** | |
+
+- **Time:** 649 s and 597 s of model time; 10 min 52 s and 10 min 1 s of wall time.
+- **Against the estimate:** below the expected $0.10-0.20 and 12-15 minutes per run. Both runs together cost $0.1428.
+
+### Verdict
+
+Three of the four "decent" conditions were met in run 2, and two in run 1:
+- **0 unsafe allocations: failed in both runs** (CASE-097);
+- at least 75 of 85 correct: failed in run 1 (73), met in run 2 (80);
+- every non-allocation carries a stated reason: met;
+- no execution failure: met.
+
+The allocation rules made no error. The most important fix is a Python cancellation and pause guard. That guard and the written-date fix are pure Python, so they can be proven free by replaying these runs' saved answers. The intake and link fixes change cached requests and need paid runs, including the 30-request chat as a regression check. Ranked proposals with their risks: [golden-set run report](GOLDEN_100_RUN_REPORT.md).
+
+### Limits
+
+- Two runs show that variation exists, not how large it is.
+- The wording is templated, and every chat deadline equals its CSV date, so this is a best case for clean chat.
+- Several documents still say no paid run has been made on this set: the [set's README](../../data/extended_dispatch_100/README.md), [NEW_TEST_SETS_PLAN.md](NEW_TEST_SETS_PLAN.md), `CLAUDE_HANDOFF.md` and the key's `evaluation_boundary`. They were left unchanged.
+
 ## Test 9: a full run with the dispatcher's review through the API (20 Oct 2026)
 
 **Question.** Does the whole application work on a fresh paid run of the original chat: processing, allocation, the pause, and the dispatcher's review through the new FastAPI endpoints? Aditya asked for at most 2 paid runs. 1 was used, because nothing failed.
@@ -392,7 +528,7 @@ A `deadline_passed` row reserves nothing, so R07 or R22 becoming ready changes n
   - linking 1 call, $0.0003;
   - verification 10 calls, $0.0111.
   - Wall time 2 min 16 s.
-- **Verdict:** everything ran as designed. The open issues are model field choices (R25, R23), run-to-run variation in R19's label, cluttered blockers (repeated order-ID blockers and a note listed as a blocker), and the outdated `deadline_passed` wording. One run cannot show whether the readiness gain over Test 7 is real. Details: [full run with the API](FULL_RUN_WITH_API_2026-10-20.md).
+- **Verdict:** everything ran as designed. The open issues are model field choices (R25, R23), run-to-run variation in R19's label, cluttered blockers (repeated order-ID blockers and a note listed as a blocker), and the outdated `deadline_passed` wording. One run cannot show whether the readiness gain over Test 7 is real. Details: full run with the API.
 
 ## Test 8: the extended chat on the current code (19 Oct 2026)
 
@@ -404,7 +540,7 @@ A `deadline_passed` row reserves nothing, so R07 or R22 becoming ready changes n
 - **Settings:** every stage on `gpt-5.6-luna`, with intake at `high` and linking and verification at `medium`. Prompts and code are current: the 18 October verification lines, warnings instead of holds, the 19 October date fixes and `deadline_passed`.
 - **Calls:** 192 in total. All 155 intake and link answers were reused from Test 4; the 37 verification calls were new and paid.
 - **Config:** `config.toml` named the extended chat for this run only, and the backup was copied back; the hashes match.
-- **Scoring:** the expectation above, hashed before the run (SHA-256 `b4a72536...`, unchanged after this section was added), and the Test 4 key (Appendix B of the [extended report](EXTENDED_RUN_REPORT.md), unchanged).
+- **Scoring:** the expectation above, hashed before the run (SHA-256 `b4a72536...`, unchanged after this section was added), and the Test 4 key (Appendix B of the extended report, unchanged).
   - A read-only script outside the repository scored the run. It reproduces Test 4's recorded figures on Test 4's run: 4 verified, 0 ready, 61/94.
 
 ### Results
@@ -703,7 +839,7 @@ The prediction was $0.01-0.02. The run cost less because the holds left only one
 
 ## Test 4: the extended chat with the semi-final settings (14 Oct 2026)
 
-**Question.** Aditya kept linking at `medium`, called the settings semi-final and asked for exactly one run on `data/dispatch_requests_extended.txt`, with a full report. The full report has the exact configuration and prompts, per-line tables and the key: [extended run report](EXTENDED_RUN_REPORT.md).
+**Question.** Aditya kept linking at `medium`, called the settings semi-final and asked for exactly one run on `data/dispatch_requests_extended.txt`, with a full report. The full report has the exact configuration and prompts, per-line tables and the key: extended run report.
 
 ### Setup
 
@@ -918,7 +1054,7 @@ The stage costs are rounded separately, so they add up to $0.0179.
 
 ## Test 1: two rewritten intake prompts (14 Oct 2026)
 
-**Question.** Aditya supplied two rewritten intake prompts, Prompt 1 and Prompt 2 (exact text in Appendices A and B), and asked whether either improves intake, especially the labelling of follow-ups. For background, see the [follow-up linking diagnosis](../../../docs/follow-up-linking-diagnosis-2026-10-14.md).
+**Question.** Aditya supplied two rewritten intake prompts, Prompt 1 and Prompt 2 (exact text in Appendices A and B), and asked whether either improves intake, especially the labelling of follow-ups. For background, see the follow-up linking diagnosis.
 
 **Answer.** Prompt 2 is the better of the two, and Prompt 1 should not be used as written. Neither was shown to beat the current prompt, and Test 2 later confirmed this on `dispatch_requests.txt`.
 
@@ -1086,7 +1222,7 @@ Prompt 1 should not be used as written.
    - Should a bare order line with a deadline count as an allocation request?
    - Should verification ask about order status or stage, which this experiment does not check? A deterministic status check in code, part of the future live flow, is an alternative to asking the model.
    - Any change to the verification prompt makes every verification request new and paid. Verification at `high` was not tried; at `high`, linking became stricter.
-3. **Ordinal dates (no API cost), after step 1.** Let the date reader accept "30th October", with tests. This was found in section 13 of the [diagnosis](../../../docs/follow-up-linking-diagnosis-2026-10-14.md) and confirmed offline in Test 3.
+3. **Ordinal dates (no API cost), after step 1.** Let the date reader accept "30th October", with tests. This was found in section 13 of the diagnosis and confirmed offline in Test 3.
 4. **Measure Luna's variation.** Set `[output] folder` to a new folder, so no saved answer is reused, and repeat the `dispatch_requests.txt` run, about 2 cents per run. One run cannot show how stable the labels and readiness answers are.
 5. **Scope the holds (from Test 4; code only). Done in the modules on 15 Oct 2026 and measured in Test 6.**
    - Aditya chose the two-message rule after Test 5: a review naming no order or message ID holds only the tasks of the two messages before it (`HOLD_WINDOW = 2`). Named orders and message IDs, the same-order spread and task reviews are unchanged. Notebook 05 keeps the old rule. The architecture note is in the [system design](../../../docs/system-design.md).

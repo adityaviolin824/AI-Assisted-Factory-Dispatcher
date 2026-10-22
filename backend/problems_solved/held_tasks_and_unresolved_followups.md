@@ -4,7 +4,7 @@ Recorded: 15 October 2026.
 
 **Status: solution implemented on 15 October 2026 and verified offline; no paid run yet.** See the solution section at the end. No prompt change or new model experiment is recorded here.
 
-Related backlog entries: [Pending Improvements, issues 1, 4, 5 and 12](../docs/Pending_Improvements.md).
+Related backlog entries: Pending Improvements, issues 1, 4, 5 and 12.
 
 ## The historical problem in simple words
 
@@ -42,7 +42,7 @@ The original request remains saved. The problem is not deletion of its evidence:
 - In a copy of the saved state, removing only R09's unresolved-link record and calling the current hold calculation left ORD-108's `related_review` in place. The verification batch builder still skipped it.
 - This diagnostic changed no saved state, plan or application code. It did not simulate an implemented dispatcher resolution flow; that flow does not exist yet.
 
-Sources: [saved state](../output/runs/2026-10-15_21-19-26/state.json), [saved plan](../output/runs/2026-10-15_21-19-26/plan.json), [verification and holds](../order_processing_into_tasks/verify_tasks.py).
+Sources: saved state, saved plan, [verification and holds](../order_processing_into_tasks/verify_tasks.py).
 
 ## Example 2: ORD-024 proceeds without its exclusion
 

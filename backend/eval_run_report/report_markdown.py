@@ -124,11 +124,19 @@ def score_section(key_name, key_hash, key, data_name, scores, labels):
     count = Counter(score["decision"] for score in scores)
     should = [s for s in scores if s["expected_outcome"] == "recommendation"]
     should_not = [s for s in scores if s["expected_outcome"] != "recommendation"]
+    provenance = key.get("provenance", {})
+    review = provenance.get("human_review", {})
+    review_note = "- Who wrote and reviewed the key is recorded with the key, not by this script."
+    if review.get("status") == "completed":
+        review_note = (f"- Review recorded with the key: {review['method']} "
+                       f"Reviewers: {review['reviewer_count']} human team members. "
+                       f"Draft author: {provenance['draft_author']}. "
+                       f"Confirmation source: {review['confirmation_source']}.")
     lines = ["## Score against the key", "",
              f"- Key: `{key_name}`, version {key.get('version')}, SHA-256 `{key_hash[:16]}...`; "
              f"{len(scores)} cases in {len(labels)} messages.",
              f"- Key's own description: {key.get('dataset')}. {key.get('evaluation_boundary', '')}".rstrip(),
-             "- Who wrote and reviewed the key is recorded with the key, not by this script.",
+             review_note,
              f"- The key's own plan is calculated by the app's routing and allocation rules from `{data_name}`.",
              "- A case is matched to the app task created from its first message; with two jobs in that message, "
              "to the task whose excerpts name its order. Not allocating an exception is correct, whatever the route.",

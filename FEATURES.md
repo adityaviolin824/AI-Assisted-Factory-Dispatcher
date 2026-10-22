@@ -207,7 +207,7 @@ The chat exports inputs for processing; automatic pipeline execution, clarificat
 
 ## 9. Dispatcher views, decisions and optional re-review
 
-[Notebook 06](backend/experimentation_notebooks/06-dispatcher-workflow.ipynb) now prototypes the dispatcher's next step after an allocation preview.
+Notebook 06 now prototypes the dispatcher's next step after an allocation preview.
 
 **Two views make each case inspectable.** Suggested allocations show the original request, order facts, selected workshop, calculated comparisons and rejected alternatives. Needs attention groups unresolved cases by their actual problem. Cached AI notes sit beside the recorded reasons; unsupported history/pricing questions receive a plain limitation notice and make no explanation-model call. Views can also be saved as text.
 
@@ -232,21 +232,21 @@ AI explanation text has been generated in one recorded run, but faithfulness has
 
 ## 10. A matching synthetic dataset for extended testing
 
-We created a [separate 100-case test set](backend/data/extended_dispatch_100/README.md) with new order IDs, matching conversational requests and a byte-identical snapshot of the supplied workshop profiles. Source CSVs and the professor's simulator are unchanged.
+We created a [separate 100-case test set](backend/data/extended_dispatch_100/README.md) with new order IDs, matching conversational requests and a byte-identical snapshot of the supplied workshop profiles. AI custom-created its questions and dispatch requests after repeated project experiments, with several difficulty levels to emulate real-life situations and target weaknesses found in intake, linking, verification and allocation. Source CSVs and the professor's simulator are unchanged.
 
 The conversation includes **149 messages, 45 follow-ups, interleaved requests, confirmed corrections and two messages that each contain two jobs**. The expected relationships and final fields are recorded in a separate answer key, outside application inputs.
 
 **With the authored correct interpretations, 85 cases receive valid on-time recommendations together in one earliest-deadline-first plan.** Validation uses the existing routing/allocation code, includes every earlier production/rework reservation and confirms that rerunning does not double-count workload. All seven active workshops receive work; suspended W7 receives none. The 15 exceptions exercise expired dates, an impossible future deadline, status/capability/cap restrictions, splits, budgets, conflicting quantities, uncertain dates, unknown/missing identity, cancellation/pause and unsupported history.
 
-This is **85% designed and verified feasibility**, not an 85% observed AI success rate. No processing model has been run on the new dataset. The separate test makes it possible to measure avoidable reviews on feasible work while retaining known exception cases, without confusing contradictory source data with successful-request throughput.
+This is **85% designed and verified feasibility**, not an 85% observed AI success rate. In the better of two full runs on 21 October 2026 (Test 10), 80 of 85 cases were allocated correctly, 14 of 15 exceptions were held and one cancelled order (CASE-097) was allocated unsafely; see [evaluation/](evaluation/README.md). The separate test makes it possible to measure avoidable reviews on feasible work while retaining known exception cases, without confusing contradictory source data with successful-request throughput.
 
-An [editable team-review workbook](backend/docs/evaluation/extended_dispatch_100_team_review.xlsx) puts the 100 case answers and 149 message labels/links beside their original text and source order/workshop facts. The review workflow divides the checks among teammates, records actual reviewer names and dates, and consolidates agreed corrections before the key is frozen. The draft was authored by AI; completed human review and the rename to `extended_dispatch_100_human_team_golden.json` remain pending until the reviewed file is returned and validated.
+**Three members of our team divided the work and comprehensively hand-reviewed the complete set, line by line. This review was performed by humans, not AI.** The [returned workbook](backend/docs/evaluation/extended_dispatch_100_human_team_review.xlsx) preserves their notes unchanged. The [human-team golden key](backend/docs/evaluation/extended_dispatch_100_human_team_golden.json), version 2, applies 12 preference corrections following those notes and the owner's clarification: without an explicit preference, the default is to minimize lateness. Outcomes and message links are unchanged, and the offline check still confirms 85 feasible cases and 15 exceptions. The [review record](backend/docs/evaluation/extended_dispatch_100_REVIEW.md) records the owner-confirmed three-member review, reconciliation and hashes; individual names and dates were not supplied or invented. AI drafted the original material and assisted with reconciliation, which is separate from the human review.
 
 ---
 
 ## A presentation-ready description
 
-> We turn informal factory chat into evidence-backed dispatch previews. Language models interpret requests; Python checks workshop eligibility and calculates delivery, cost and queue effects. Our notebook now lets a dispatcher correct facts, choose an eligible workshop, protect approvals and review a recalculated plan, also on a simple screen that recalculates after every decision. We also built a matching synthetic test set of 100 task cases across 149 messages, with 85 verified as jointly feasible before any model run. In the unchanged supplied historical simulator, our default policy reduced mean delivery time from 21.5 to 8.1 days against random, with the reported late percentage falling from 34% to 2%. Saved responses, decision history and LangSmith traces let us inspect and reproduce recorded results.
+> We turn informal factory chat into evidence-backed dispatch previews. Language models interpret requests; Python checks workshop eligibility and calculates delivery, cost and queue effects. Our notebook now lets a dispatcher correct facts, choose an eligible workshop, protect approvals and review a recalculated plan, also on a simple screen that recalculates after every decision. We also built a matching synthetic test set of 100 task cases across 149 messages, with 85 verified as jointly feasible before any model run. AI custom-created its varied scenarios after repeated experiments, and three team members divided the work and hand-reviewed the set line by line. In the unchanged supplied historical simulator, our default policy reduced mean delivery time from 21.5 to 8.1 days against random, with the reported late percentage falling from 34% to 2%. Saved responses, decision history and LangSmith traces let us inspect and reproduce recorded results.
 
 **Scope of the evidence:** the application produces previews. Dispatcher actions are a notebook prototype and a terminal-driven pause in the pipeline; a final approval is saved JSON, not a committed assignment. Historical simulator gains, development-key interpretation scores, controlled dispatcher checks and synthetic-data feasibility are separate results. Test 8 exposed an unflagged quantity-conflict recommendation, now blocked by a Python piece-count check in a no-cost replay; conversational linking and explanation faithfulness still need improvement/evaluation. Live commitments, a connected dispatcher frontend, repeated fresh-model reliability and unseen generalisation are not established by the current work.
 
@@ -254,12 +254,12 @@ An [editable team-review workbook](backend/docs/evaluation/extended_dispatch_100
 
 - [Current implementation, test coverage and harness results](backend/README.md)
 - [Prompt, model, reasoning-effort and cost experiments](backend/docs/evaluation/PROMPT_TESTING_RESULTS.md)
-- [Extended-chat evaluation and failure analysis](backend/docs/evaluation/EXTENDED_RUN_REPORT.md)
-- [Dispatcher prototype, implemented actions and offline checks](backend/experimentation_notebooks/06-dispatcher-workflow.md)
-- [Shared chat and reproducible snapshot exports](backend/experimentation_notebooks/mock_frontend/README.md)
+- Extended-chat evaluation and failure analysis
+- Dispatcher prototype, implemented actions and offline checks
+- Shared chat and reproducible snapshot exports
 - [Synthetic extended dataset, expected outcomes and verification](backend/data/extended_dispatch_100/README.md)
 - [Current processing walkthroughs: linking](backend/code-section-demos-explanations/01-task-linking-demo.md), [verification](backend/code-section-demos-explanations/02-task-verification-demo.md) and [saved files](backend/code-section-demos-explanations/03-order-processing-files-explanation.md)
-- [Allocation modularization and verification record](backend/docs/legacy/ALLOCATION_MODULARIZATION_PLAN.md)
-- [LangGraph integration and equivalence checks](backend/docs/legacy/LANGGRAPH_MODULARIZATION_PLAN.md)
+- Allocation modularization and verification record
+- LangGraph integration and equivalence checks
 - [Engineering decisions and verification evidence](docs/engineering-log.md)
-- [Known interpretation issues and pending improvements](backend/docs/Pending_Improvements.md)
+- Known interpretation issues and pending improvements

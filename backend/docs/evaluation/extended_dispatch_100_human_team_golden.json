@@ -1,6 +1,6 @@
 {
-  "dataset": "Synthetic extended dispatch: conversation and edge cases, 100 tasks",
-  "version": 1,
+  "dataset": "Human team golden set: extended dispatch conversation and edge cases, 100 tasks",
+  "version": 2,
   "created_date": "2026-10-19",
   "message_date": "2026-04-01",
   "dispatch_date": "2026-04-01",
@@ -10,7 +10,7 @@
     "exception_cases": 15
   },
   "source": "New synthetic order rows; supplied workshop profiles reused unchanged.",
-  "evaluation_boundary": "Authored expected interpretations and offline feasibility; no model accuracy or paid processing result.",
+  "evaluation_boundary": "Human-reviewed expected interpretations and offline allocation feasibility; no model-accuracy measurement or paid processing result on this set.",
   "cases": [
     {
       "case_id": "CASE-001",
@@ -2349,7 +2349,7 @@
         "intent": "allocation",
         "order_id": "ORD-286",
         "due_date": "2026-03-31",
-        "preference": "fastest",
+        "preference": "none",
         "requested_workshop": null,
         "excluded_workshops": [],
         "wants_split": false,
@@ -2374,7 +2374,7 @@
         "intent": "allocation",
         "order_id": "ORD-287",
         "due_date": "2026-04-01",
-        "preference": "cheapest",
+        "preference": "none",
         "requested_workshop": null,
         "excluded_workshops": [],
         "wants_split": false,
@@ -2399,7 +2399,7 @@
         "intent": "allocation",
         "order_id": "ORD-288",
         "due_date": "2026-04-02",
-        "preference": "quality",
+        "preference": "none",
         "requested_workshop": null,
         "excluded_workshops": [],
         "wants_split": false,
@@ -2449,7 +2449,7 @@
         "intent": "allocation",
         "order_id": "ORD-290",
         "due_date": "2026-04-29",
-        "preference": "fastest",
+        "preference": "none",
         "requested_workshop": "W4",
         "excluded_workshops": [],
         "wants_split": false,
@@ -2474,7 +2474,7 @@
         "intent": "allocation",
         "order_id": "ORD-291",
         "due_date": "2026-05-02",
-        "preference": "cheapest",
+        "preference": "none",
         "requested_workshop": "W8",
         "excluded_workshops": [],
         "wants_split": false,
@@ -2499,7 +2499,7 @@
         "intent": "allocation",
         "order_id": "ORD-292",
         "due_date": "2026-05-03",
-        "preference": "quality",
+        "preference": "none",
         "requested_workshop": null,
         "excluded_workshops": [],
         "wants_split": true,
@@ -2553,7 +2553,7 @@
         "intent": "allocation",
         "order_id": "ORD-294",
         "due_date": "2026-05-02",
-        "preference": "fastest",
+        "preference": "none",
         "requested_workshop": null,
         "excluded_workshops": [],
         "wants_split": false,
@@ -2582,7 +2582,7 @@
         "intent": "allocation",
         "order_id": "ORD-295",
         "due_date": null,
-        "preference": "cheapest",
+        "preference": "none",
         "requested_workshop": null,
         "excluded_workshops": [],
         "wants_split": false,
@@ -2609,7 +2609,7 @@
         "intent": "allocation",
         "order_id": "ORD-9999",
         "due_date": "2026-04-20",
-        "preference": "quality",
+        "preference": "none",
         "requested_workshop": null,
         "excluded_workshops": [],
         "wants_split": false,
@@ -2663,7 +2663,7 @@
         "intent": "unclear",
         "order_id": "ORD-298",
         "due_date": null,
-        "preference": "fastest",
+        "preference": "none",
         "requested_workshop": null,
         "excluded_workshops": [],
         "wants_split": false,
@@ -2690,7 +2690,7 @@
         "intent": "allocation",
         "order_id": null,
         "due_date": null,
-        "preference": "cheapest",
+        "preference": "none",
         "requested_workshop": null,
         "excluded_workshops": [],
         "wants_split": false,
@@ -2717,7 +2717,7 @@
         "intent": "question",
         "order_id": "ORD-300",
         "due_date": null,
-        "preference": "quality",
+        "preference": "none",
         "requested_workshop": null,
         "excluded_workshops": [],
         "wants_split": false,
@@ -3911,5 +3911,201 @@
       "expected_kind": "non_task",
       "case_ids": []
     }
-  ]
+  ],
+  "provenance": {
+    "draft_author": "Codex (AI assistant)",
+    "design": "Custom-created by AI after extensive project experimentation to emulate real-life dispatch situations and address weaknesses observed in intake, follow-up linking, verification and allocation.",
+    "difficulty_levels": [
+      "straightforward complete requests",
+      "contextual follow-ups and corrections",
+      "interleaved threads and multiple jobs per message",
+      "ambiguous inputs and deliberate exception cases"
+    ],
+    "human_review": {
+      "status": "completed",
+      "reviewer_count": 3,
+      "method": "Comprehensive manual, line-by-line review by human team members, not AI.",
+      "division_of_work": "Case and message review work was divided among three team members and consolidated in the returned workbook.",
+      "scope": {
+        "task_cases": 100,
+        "messages": 149
+      },
+      "confirmation_source": "Project owner confirmation in chat",
+      "confirmation_date": "2026-10-21",
+      "reviewer_names": [],
+      "individual_review_dates": [],
+      "signoff_record": "Reviewer-name and date columns in the workbook are blank. The project owner confirmed the three-person manual review; no names, individual dates or row signatures were invented.",
+      "source_workbook": "extended_dispatch_100_human_team_review.xlsx",
+      "source_workbook_sha256": "8f9c9ad7af67370e730461a97faec0bdacbd9eb6109d09e7a9ad91b8ad62b2ba",
+      "returned_case_statuses": {
+        "Approved": 91,
+        "Discuss": 9
+      },
+      "returned_message_statuses": {
+        "Approved": 147,
+        "Discuss": 2
+      }
+    },
+    "reconciliation": {
+      "status": "completed",
+      "date": "2026-10-21",
+      "performed_by": "Codex applied human notes and project-owner decisions; automated checks validate consistency, not the human review.",
+      "source_key": "archive/extended_dispatch_100_ai_draft_v1.json",
+      "source_key_version": 1,
+      "source_key_sha256": "f4b2e9e9163f70360deb1c8deffba89184e32a5059acc989f5a491baa332579b",
+      "default_preference_rule": "No explicitly stated preference is none. Default scheduling minimizes lateness.",
+      "case_088_resolution": "Owner chose none: a delivery deadline is not an explicit fastest preference.",
+      "case_091_resolution": "Keep the identified order; a customer name need not be repeated in the request. Preference becomes none.",
+      "case_096_resolution": "Keep the deliberate unknown order ORD-9999, written Apr 20 deadline and clarification outcome; do not substitute reserved CSV row ORD-296.",
+      "case_100_resolution": "Keep intent question and outcome reference; request means a new task, not necessarily a new allocation order. Preference becomes none.",
+      "multi_job_messages_resolution": "L0130 and L0131 remain request messages linked to their existing two cases each; the human notes confirm these links.",
+      "expectation_changes": [
+        {
+          "case_id": "CASE-086",
+          "field": "preference",
+          "before": "fastest",
+          "after": "none",
+          "basis": "Project owner clarification: unstated preference is none; default scheduling minimizes lateness."
+        },
+        {
+          "case_id": "CASE-087",
+          "field": "preference",
+          "before": "cheapest",
+          "after": "none",
+          "basis": "Explicit human review note, confirmed by the project owner."
+        },
+        {
+          "case_id": "CASE-088",
+          "field": "preference",
+          "before": "quality",
+          "after": "none",
+          "basis": "Project owner clarification: unstated preference is none; default scheduling minimizes lateness."
+        },
+        {
+          "case_id": "CASE-090",
+          "field": "preference",
+          "before": "fastest",
+          "after": "none",
+          "basis": "Explicit human review note, confirmed by the project owner."
+        },
+        {
+          "case_id": "CASE-091",
+          "field": "preference",
+          "before": "cheapest",
+          "after": "none",
+          "basis": "Explicit human review note, confirmed by the project owner."
+        },
+        {
+          "case_id": "CASE-092",
+          "field": "preference",
+          "before": "quality",
+          "after": "none",
+          "basis": "Explicit human review note, confirmed by the project owner."
+        },
+        {
+          "case_id": "CASE-094",
+          "field": "preference",
+          "before": "fastest",
+          "after": "none",
+          "basis": "Explicit human review note, confirmed by the project owner."
+        },
+        {
+          "case_id": "CASE-095",
+          "field": "preference",
+          "before": "cheapest",
+          "after": "none",
+          "basis": "Explicit human review note, confirmed by the project owner."
+        },
+        {
+          "case_id": "CASE-096",
+          "field": "preference",
+          "before": "quality",
+          "after": "none",
+          "basis": "Explicit human review note, confirmed by the project owner."
+        },
+        {
+          "case_id": "CASE-098",
+          "field": "preference",
+          "before": "fastest",
+          "after": "none",
+          "basis": "Project owner clarification: unstated preference is none; default scheduling minimizes lateness."
+        },
+        {
+          "case_id": "CASE-099",
+          "field": "preference",
+          "before": "cheapest",
+          "after": "none",
+          "basis": "Project owner clarification: unstated preference is none; default scheduling minimizes lateness."
+        },
+        {
+          "case_id": "CASE-100",
+          "field": "preference",
+          "before": "quality",
+          "after": "none",
+          "basis": "Project owner clarification: unstated preference is none; default scheduling minimizes lateness."
+        }
+      ],
+      "source_review_notes": [
+        {
+          "record_id": "CASE-087",
+          "source_status": "Discuss",
+          "human_note": "prefrerence should be none."
+        },
+        {
+          "record_id": "CASE-088",
+          "source_status": "Discuss",
+          "human_note": "No late delivery has been authorized. So preference should be fasted rather than quality."
+        },
+        {
+          "record_id": "CASE-090",
+          "source_status": "Discuss",
+          "human_note": "preference should be none."
+        },
+        {
+          "record_id": "CASE-091",
+          "source_status": "Discuss",
+          "human_note": "customer name is not mentioned as Harbor Knits. Preference should be none."
+        },
+        {
+          "record_id": "CASE-092",
+          "source_status": "Discuss",
+          "human_note": "preference should be none."
+        },
+        {
+          "record_id": "CASE-094",
+          "source_status": "Discuss",
+          "human_note": "preference should be none."
+        },
+        {
+          "record_id": "CASE-095",
+          "source_status": "Discuss",
+          "human_note": "preference should be none."
+        },
+        {
+          "record_id": "CASE-096",
+          "source_status": "Discuss",
+          "human_note": "preference is not mentioned should be noen. product and quantity is wrong,Due dae 05.01 is not mentioned."
+        },
+        {
+          "record_id": "CASE-100",
+          "source_status": "Discuss",
+          "human_note": "This is not a new order."
+        },
+        {
+          "record_id": "L0130",
+          "source_status": "Discuss",
+          "human_note": "Contains two separate allocation requests, correctly linked to CASE-081 and CASE-082."
+        },
+        {
+          "record_id": "L0131",
+          "source_status": "Discuss",
+          "human_note": "Contains two separate allocation requests, correctly linked to CASE-083 and CASE-084."
+        }
+      ],
+      "message_labels_or_links_changed": false,
+      "expected_outcomes_changed": false,
+      "unresolved_items": [],
+      "review_record": "extended_dispatch_100_REVIEW.md"
+    }
+  }
 }

@@ -21,6 +21,7 @@ build/
 .turbo/
 .vercel/
 *.tsbuildinfo
+next-env.d.ts
 
 # Generated browser reports and local logs.
 playwright-report/

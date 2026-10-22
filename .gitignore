@@ -87,6 +87,7 @@ build/
 .turbo/
 .vercel/
 *.tsbuildinfo
+next-env.d.ts
 
 # Local run outputs, model response caches and generated documents.
 output/
@@ -143,11 +144,36 @@ docs/codebase-review-2026-10-19.md
 docs/deduplication-audit-2026-10-06.md
 docs/follow-up-linking-diagnosis-2026-10-14.md
 docs/archive
+backend/CLAUDE_HANDOFF.md
 
 # Local architecture working copies; the public diagrams live in README.md.
 /docs/product-workflow-architecture.md
 /docs/backend-architecture.md
 /docs/architecture-preview.html
+/docs/architecture/
+/docs/project-architecture.md
+
+# Local AI-agent instructions and handoffs (next dev also rewrites frontend/AGENTS.md).
+AGENTS.md
+/PROJECT_HANDOFF.md
+
+# Local build plans and proposals; the public record is in the READMEs and docs/.
+/backend/DISPATCHER_REVIEW_PLAN.md
+/backend/DISPATCHER_REVIEW_GRAPH_PLAN.md
+/backend/FASTAPI_BUILD.md
+/backend/FASTAPI_STRUCTURE_GUIDE.md
+/backend/docs/Pending_Improvements.md
+/backend/docs/legacy/
+/frontend/BACKEND_PROPOSAL.md
+/frontend/BUILD_STEPS.md
+/frontend/DESIGN.md
+/frontend/FRONTEND_PLAN.md
+
+# Older evaluation reports, the superseded draft key and saved run copies.
+/backend/docs/evaluation/EXTENDED_RUN_REPORT.md
+/backend/docs/evaluation/FULL_RUN_WITH_API_2026-10-20.md
+/backend/docs/evaluation/archive/
+/backend/testing_runs/
 
 
 # Source code, documentation, shared Git configuration, dependency lockfiles,

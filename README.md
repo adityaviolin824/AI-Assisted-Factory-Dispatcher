@@ -6,7 +6,7 @@ It is designed for dispatchers who assign the work, operations staff who send re
 
 The original messages are kept with the recommendations, so the dispatcher can check where an instruction came from. Missing or conflicting information is flagged for review. Previously saved AI answers can be reused when the same request is processed again.
 
-[How it works](#how-it-works) · [Product architecture](#product-architecture) · [Backend architecture](#backend-architecture) · [Run locally](#run-locally)
+Learn [how it works](#how-it-works), explore the [architecture](#product-architecture), or [run it locally](#run-locally).
 
 ## How it works
 
@@ -25,11 +25,11 @@ The output is a dispatch table for the team to use. It does not yet book work wi
 
 Suppose a dispatcher adds work to a workshop and increases its queue by two days. Another order may now miss its deadline. Reallocation will try to place that order elsewhere, then check the remaining orders using the updated queues. The dispatcher's own workshop choices will stay fixed.
 
-The resulting table will show which orders moved, their previous and new workshops, the delivery estimates and the reasons for the changes. The dispatcher will also have the option to **review again after reallocation**. This feature is still to be implemented.
+The resulting table will show which orders moved, their previous and new workshops, the delivery estimates and the reasons for the changes. The dispatcher will also have the option to **review again after reallocation**. Reallocation and any subsequent review or approval of that revised table are not implemented yet.
 
 ## Product architecture
 
-This diagram shows the full workflow, from Chat to the final dispatch table. It was drawn before the final approval API was added, so some approval steps are still marked as planned. The current status is listed below the diagrams. Reallocation is still planned.
+This planning view shows the workflow from Chat to the dispatch table. The [implementation status](#what-is-available-now) below distinguishes working features from planned ones.
 
 ```mermaid
 ---
@@ -102,9 +102,9 @@ flowchart TB
 
 ## Backend architecture
 
-This diagram shows the processing steps, LangGraph loops, saved records and API connections. The eight named LangGraph steps are implemented. The recently added `POST /reviews/{thread_id}/finalize` endpoint uses those same steps to apply and save all choices together. The separate reallocation loop is still planned.
+This planning view shows the processing steps, LangGraph loops, saved records and API connections. The separate reallocation loop and approval of a reallocated table remain pending.
 
-During reallocation, each remaining batch is checked in deadline order. If no suitable workshop can finish it on time, it stays in Needs attention. The system does not repeatedly move orders in an attempt to make an impossible deadline work.
+The planned reallocation pass will check each flexible batch in deadline order. If no suitable workshop can finish it on time, the batch will remain in Needs attention rather than being moved repeatedly.
 
 ```mermaid
 ---
@@ -221,10 +221,10 @@ flowchart TB
 | Part | Status |
 |---|---|
 | Processing and allocation | The backend reads saved chat files, checks requests and produces workshop recommendations with reasons and queue estimates. |
-| Dispatcher review | The backend pauses for review. The dispatcher can submit all choices in one final approval request, after which Python recalculates the plan, saves the result and returns a list of changes. |
+| Dispatcher review | The backend pauses for the initial review. The dispatcher can submit all choices in one approval request, after which Python recalculates the plan, saves the result and returns a list of changes. |
 | Web interface | Chat and Dispatcher screens exist. Reading saved runs works. The Chat screen has been tested with simulated responses; its real backend endpoints are not implemented yet. |
 | Saved AI responses | Identical requests can reuse earlier answers. Changes to the input, model, prompt or settings may require new paid calls. |
-| Reallocation | The separate reallocation action, change report and optional second review are planned. |
+| Reallocation | Redistribution, review again after reallocation, and approval of the revised table are all pending. |
 
 ## How it is built
 
@@ -254,11 +254,30 @@ The allocation rules were tested on 120 historical orders using the supplied sim
 | Random eligible workshop | 21.5 | 45.6 | 34% | 4% | 111,780 | 23% |
 | Default policy: reduce lateness | 8.1 | 13.7 | 2% | 6% | 115,360 | 25% |
 
-The default policy delivered sooner and had fewer late batches in this test, but cost more and had more defective batches. The simulator requires a workshop for every batch, so the evaluation adapter chooses the least-late option when all options are late. The app instead asks the dispatcher to review the case. See the [full comparison](backend/eval_harness/results/harness_results_2026-10-15.md) for the other policies and assumptions.
+The default policy delivered sooner and had fewer late batches in this test, but cost more and had more defective batches. The simulator requires a workshop for every batch, so the evaluation adapter chooses the least-late option when all options are late. The app instead asks the dispatcher to review the case. The [scheduling benchmark report](backend/eval_harness/results/harness_results_2026-10-15.md) includes the other policies and assumptions.
 
-These results measure the scheduling rules, not the accuracy of AI's reading of a conversation. A recorded backend test run passed **123 offline tests on 20 October 2026**; later changes have their own checks in the engineering log. A separate synthetic dataset has **100 cases across 149 messages**; an offline check confirms that 85 cases can be scheduled on time together. That establishes the dataset's feasibility, not an 85% AI success rate. The draft answer key is awaiting completed team review.
+These results measure the scheduling rules, not the accuracy of AI's reading of a conversation. The backend's **127 offline tests passed on 21 October 2026**; later changes have their own checks in the engineering log.
 
-See [FEATURES.md](FEATURES.md) for the recorded capabilities and evidence, or the [backend README](backend/README.md) for implementation details.
+### Chat-to-allocation results
+
+The chat-to-allocation pipeline was tested on **100 synthetic cases in 149 messages**, scored before dispatcher review against a human-reviewed answer key. An offline check confirms that 85 cases can be allocated on time together. The other 15 are deliberate exceptions, including a cancelled order and a suspended workshop. The [evaluation guide](evaluation/README.md) explains the test data and scoring rules.
+
+| Recorded run 2, 21 October 2026 | Result |
+|---|---|
+| Eligible, on-time recommendations | **80 of 85** |
+| Recommendations with all allocation fields matching the key | 77 of 85 |
+| Recommendations that lost a stated preference | 3 |
+| Exceptions correctly held | **14 of 15** |
+| Unsafe recommendations | **1** (a cancelled order was recommended) |
+| Workshop-rule or deadline violations among recommendations | 0 |
+| Follow-ups joined to their task | 35 of 45 |
+| Model calls, cost, time | 128 calls, $0.0700, 10 min 1 s |
+
+The cancelled order passed verification and reached allocation. This remains an unsafe result, even though the chosen workshop met the capacity and deadline rules. Missed follow-ups and a Python date check also caused requests to be left unresolved. The [evaluation report](backend/docs/evaluation/GOLDEN_100_RUN_REPORT.md) compares both recorded runs and documents the failures and proposed fixes.
+
+AI custom-created this test set after repeated project experiments. Its questions and dispatch requests span several difficulty levels, designed to resemble real-life situations and target weaknesses in our system. **Three team members divided the work and comprehensively hand-reviewed the entire set, line by line. This review was done by humans, not AI.** Their comments and the owner's final clarifications were reconciled into the [human-team golden key](backend/docs/evaluation/extended_dispatch_100_human_team_golden.json). The [review record](backend/docs/evaluation/extended_dispatch_100_REVIEW.md) preserves the source workbook, corrections and provenance.
+
+The [feature overview](FEATURES.md) describes the recorded capabilities and evidence. The [backend guide](backend/README.md) covers implementation details.
 
 ## Run locally
 
@@ -282,22 +301,26 @@ npm run dev
 
 Open `http://127.0.0.1:3000`. The API documentation is at `http://127.0.0.1:8000/docs`.
 
-Starting these servers does not process a conversation or call an AI model. A fresh clone has no saved runs or review checkpoints, so the run list will be empty. Processing is a separate action that can make paid calls; read the [backend guide](backend/README.md) before starting a run.
+Starting these servers does not process a conversation or call an AI model. A fresh clone has no local run output or review checkpoints, so its run list starts empty. The [published results](evaluation/README.md) can be read without running the pipeline. Processing a new conversation is a separate action that can make paid calls; read the [backend guide](backend/README.md) before starting a run.
 
-The public repository excludes the local experiment notebooks and reference documents. Some notebook-comparison tests need those files.
+The public repository excludes local experiment notebooks, reference documents and saved test snapshots. Some comparison tests require those local files.
 
 ## Repository layout
 
 | Location | Contents |
 |---|---|
+| `evaluation/` | Public guide to the datasets, answer key, recorded results and scoring method. |
 | `frontend/` | Web screens, API calls and browser tests. |
 | `backend/` | Chat processing, allocation, dispatcher review and API code. |
 | `backend/config.toml` | Input paths, model settings, batch sizes and dispatch date. |
 | `backend/data/` | Orders, workshops, example conversations and the extended test dataset. |
+| `backend/data/extended_dispatch_100/` | The 100-case test set: chat, orders and workshops. |
+| `backend/docs/evaluation/` | Answer key, team review, run reports, charts and the log of paid test runs. |
+| `backend/eval_harness/` | Harness evaluation of the allocation rules, and its results. |
 | `backend/output/` | Local runs, cached answers and checkpoints; excluded from Git. |
 | `harness/` | The supplied simulator, kept unchanged. |
-| `docs/` | Architecture, plans and engineering notes. |
+| `docs/` | System design, project plan, presentation notes and the engineering log. |
 
-API keys belong in the backend environment, never in browser code. Environment files, databases, saved conversations, run output and backups are excluded from Git. Optional LangSmith tracing sends run data to its external service when enabled.
+API keys belong in the backend environment, never in browser code. Local environment files, application databases, generated run output and backups are excluded from version control. Selected synthetic test data is included. Optional LangSmith tracing sends run data to its external service when enabled.
 
 Current work is focused on connecting the web screens to the API and testing the complete review workflow. Further model evaluation and reallocation will follow. Docker and deployment are left until the end.

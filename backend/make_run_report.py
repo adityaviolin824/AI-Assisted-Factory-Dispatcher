@@ -5,7 +5,7 @@
 #   uv run python make_run_report.py output/runs/<start time>
 #   uv run python make_run_report.py output/runs/<start time> --key <key.json> --data <data folder>
 # --key and --data go together: the key is a JSON answer key for the run's chat, such as
-# docs/evaluation/extended_dispatch_100_expected.json, and the data folder holds the orders.csv and
+# docs/evaluation/extended_dispatch_100_human_team_golden.json, and the data folder holds the orders.csv and
 # workshops.csv the run used, such as data/extended_dispatch_100. config.toml is not read for them,
 # because it is restored to the supplied files after every test run.
 #

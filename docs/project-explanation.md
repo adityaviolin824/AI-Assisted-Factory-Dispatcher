@@ -2,7 +2,7 @@
 
 Current implementation status updated: 13 October 2026; the graph's dispatcher review pause added 20 October 2026. The historical debugging and run evidence below retains its 10 October processing v3/allocation v4 baseline. Use this to explain the project to the professor. The [backend README](../backend/README.md) explains the implementation in more detail, and the [project plan](project-plan.md) distinguishes completed work from what comes next.
 
-**MVP goal and latest decision, 21 October 2026:** produce an explainable dispatch table that the dispatcher controls. He finishes the whole choice set locally, then one **Approve all** authorizes Python to apply it, rearrange other work, save immediately and show the final table with what changed and why. No per-click database/draft writes or mandatory second approval. This is the approved target, not current runtime behavior: the implemented per-edit checkpoint workflow below still needs a batch-contract change. We are building an assignment demonstration with evidence, not a factory execution system; dedicated backend evaluation follows separately and Docker/deployment come at the absolute end. See [Project handoff](../PROJECT_HANDOFF.md).
+**MVP goal and latest decision, 21 October 2026:** produce an explainable dispatch table that the dispatcher controls. He finishes the whole choice set locally, then one **Approve all** authorizes Python to apply it, rearrange other work, save immediately and show the final table with what changed and why. No per-click database/draft writes or mandatory second approval. This is the approved target, not current runtime behavior: the implemented per-edit checkpoint workflow below still needs a batch-contract change. We are building an assignment demonstration with evidence, not a factory execution system; dedicated backend evaluation follows separately and Docker/deployment come at the absolute end. See Project handoff.
 
 ## The problem we are solving
 
@@ -26,7 +26,7 @@ The current backend uses Python modules, run together by `run_full_pipeline.py` 
 
 An unresolved follow-up no longer automatically stops the original task. A usable recommendation can be shown as provisional, with the unresolved message retained for dispatcher review. Missing essential facts and genuine verification failures still prevent allocation. A recommendation is a preview, not a committed assignment.
 
-[Notebook 05](../backend/experimentation_notebooks/05-order-pipeline-mvp.ipynb) remains an unchanged experimental reference. The current modules deliberately differ in model settings, provisional warnings, partial previews and plan history; the tests declare these differences. They do not use the earlier v3/v4 disk handoff or resume contract. The mock SQLite chat exports input manually and is not connected to the pipeline or an assignment database.
+Notebook 05 remains an unchanged experimental reference. The current modules deliberately differ in model settings, provisional warnings, partial previews and plan history; the tests declare these differences. They do not use the earlier v3/v4 disk handoff or resume contract. The mock SQLite chat exports input manually and is not connected to the pipeline or an assignment database.
 
 The model handles language interpretation. Python validates evidence and computes eligibility, dates, queues, cost, rankings and allocation. A well-formed model response can still misunderstand a request.
 
@@ -40,11 +40,11 @@ V3 prevents the same source message from being accepted again just because it ap
 
 An order ID is not a safe deduplication key. A status question and an allocation request can mention the same order and remain different tasks. Likewise, two jobs inside one message must not collapse into one just because they share a source line. Message, item, task and order counts describe different things.
 
-The detailed [historical audit](deduplication-audit-2026-10-06.md) records the failure and its limits. It is not a claim about today's model accuracy.
+The detailed historical audit records the failure and its limits. It is not a claim about today's model accuracy.
 
 ## What the latest fixes show
 
-Two observed processing failures were addressed: context-only messages in the model's non-task list caused valid intake batches to be rejected (P1), and equivalent date wording such as `Mar 23` / `March 23, 2026` failed an exact-text deadline check (P5). The current date check still requires the selected source to support the same calendar date, including any written year. The [issues record](../backend/experimentation_notebooks/old_notebooks_and_files/order-allocation-issues-and-resolution-plan.md) preserves the causes, changes and recorded verification.
+Two observed processing failures were addressed: context-only messages in the model's non-task list caused valid intake batches to be rejected (P1), and equivalent date wording such as `Mar 23` / `March 23, 2026` failed an exact-text deadline check (P5). The current date check still requires the selected source to support the same calendar date, including any written year. The issues record preserves the causes, changes and recorded verification.
 
 Expected interpretation failures are preserved as review records while other work continues. The latest change replaced automatic holds with provisional allocation previews: the original request can be checked and planned, and a warning asks whether an unresolved input changes it. Warnings are saved in `review_warnings`; provisional labels appear in `summary_rows`. Review records reserve no capacity, while provisional recommendations reserve tentative workload like other recommendations. No candidate relationship is presented as a confirmed link.
 
@@ -117,4 +117,4 @@ Before presenting, be ready to answer:
 - Why should voice enter the same pipeline, and how will the operations page differ from the dispatcher console?
 - What did you personally investigate or change, what did the AI assist with, and how would you verify the result again?
 
-The [interview preparation rules](../Interview-Preparation.md) describe how to practise these explanations one question at a time.
+The interview preparation rules describe how to practise these explanations one question at a time.

@@ -1,8 +1,12 @@
-# Synthetic extended dispatch test: 100 tasks
+# Human team golden set: 100 dispatch tasks
 
 Created 19 October 2026 for the SweaterCo Track 2 project. This is an additional synthetic development test set. It is separate from the professor's supplied data and the official historical harness benchmark.
 
-There are **100 intended task cases across 149 messages**. With the authored correct interpretations, the existing deterministic allocator produces **85 on-time recommendations in one cumulative plan**. The other 15 are explicit exceptions. This establishes input feasibility; model extraction, linking and end-to-end accuracy have not been measured on this set. No paid model call was made to create or validate it.
+AI custom-created the questions and dispatch requests after repeated project experiments, with several difficulty levels to emulate real-life dispatch situations and address weaknesses found in our intake, linking, verification and allocation. These are synthetic scenarios, not captured factory conversations.
+
+**Three team members divided the work and comprehensively hand-reviewed the complete set, line by line. The review was performed by humans, not AI.** The returned workbook and the project owner's final clarifications were reconciled into the version 2 golden key on 21 October 2026. The initial questions and draft answers remain AI-authored; see the [review record](../../docs/evaluation/extended_dispatch_100_REVIEW.md) for the evidence and agreed changes.
+
+There are **100 intended task cases across 149 messages**. With the reviewed correct interpretations, the existing deterministic allocator produces **85 on-time recommendations in one cumulative plan**. The other 15 are explicit exceptions. This establishes input feasibility. Model extraction, linking and end-to-end accuracy were measured later, in two paid runs on 21 October 2026 (Test 10); see the [evaluation summary](../../../evaluation/README.md). No paid model call was made to create or validate it.
 
 ## Files
 
@@ -11,8 +15,10 @@ There are **100 intended task cases across 149 messages**. With the authored cor
 | [orders.csv](orders.csv) | 100 new synthetic order rows, ORD-201 to ORD-300, using the existing application schema. All are IN_PROGRESS at ASSEMBLY; completion fields are empty. |
 | [workshops.csv](workshops.csv) | Byte-identical snapshot of the supplied eight workshop profiles. Existing capacity, queues, status, categories and batch caps are retained. |
 | [dispatch_requests_extended_conversation_and_edge_cases_100.txt](dispatch_requests_extended_conversation_and_edge_cases_100.txt) | Matching conversational requests, corrections, short replies, interleaving and exception cases. |
-| [Expected cases](../../docs/evaluation/extended_dispatch_100_expected.json) | Authored case-to-message relationships, final interpretation fields and expected outcomes. Kept outside application inputs. |
-| [Offline check](../../experimentation_notebooks/testing/check_extended_dispatch_100.py) | Checks source coverage, schemas, routing, eligibility, cumulative queues and repeatable previews without model calls. |
+| [Human-team golden key](../../docs/evaluation/extended_dispatch_100_human_team_golden.json) | Reviewed case-to-message relationships, final interpretation fields, expected outcomes and review provenance. Kept outside application inputs. |
+| [Returned review workbook](../../docs/evaluation/extended_dispatch_100_human_team_review.xlsx) | The team's submitted review, preserved unchanged. |
+| [Review record](../../docs/evaluation/extended_dispatch_100_REVIEW.md) | Three-member manual-review credit, reconciled notes and frozen file hashes. |
+| Offline check (kept with the local notebooks, not published) | Checks source coverage, schemas, routing, eligibility, cumulative queues and repeatable previews without model calls. |
 
 The application expects the names `orders.csv` and `workshops.csv` inside its configured data folder. The descriptive folder identifies this test set without changing application loaders. In this project, order rows are trusted source facts; tasks are the separate requests interpreted from chat.
 
@@ -60,23 +66,11 @@ The 85% is a deliberate composition of this dataset. It is not an observed AI su
 
 ## Team review of the answer key
 
-Use the [editable team review workbook](../../docs/evaluation/extended_dispatch_100_team_review.xlsx) in Excel or import it into Google Sheets. It includes the original messages, all expected case fields, both source CSVs, and instructions. Share one working copy and divide the cases among reviewers.
+Review is complete for the 100 cases and 149 messages. The [submitted workbook](../../docs/evaluation/extended_dispatch_100_human_team_review.xlsx) records approval/discussion statuses and human notes. The owner confirmed that three members divided the work and reviewed it manually, line by line. Individual reviewer-name and date columns were left blank; no names, dates or signatures have been invented.
 
-1. In **Case review**, read each conversation and source order facts. Check the expected outcome and the fields to the right, including the deadline, preference and workshop restrictions.
-2. In **Message review**, check each message's label and linked case IDs. Read neighbouring messages for contextual replies. Keep source text and stable IDs unchanged.
-3. Edit the amber expectation cells directly and explain corrections in **Review notes**. Twelve exception cases have an unstated preference in the original key; these are flagged for review. Deliberate input conflicts, including CASE-094's quantity mismatch, must remain in the source data.
-4. Choose **Approved** only after reviewing and correcting the row, and enter the reviewer's actual name and date. Use **Discuss** for unresolved questions. The workbook counts only approvals with a name and date.
-5. Return the completed workbook so agreed edits can be applied to the JSON. It does not auto-sync. Resolve disagreements, validate case/message links, rerun the offline check, and record the reviewed key's hash, reviewers and date before scoring a model run.
+The agreed reconciliation corrects 12 unstated preferences to `none`. No preference means the existing default, **minimize lateness**, unless another preference is explicitly stated. The owner explicitly confirmed that a delivery deadline alone is not a fastest preference. Message labels, case links, expected outcomes and intentional input traps remain unchanged. The nine case discussion flags and two message discussion flags are resolved in the [review record](../../docs/evaluation/extended_dispatch_100_REVIEW.md).
 
-Aditya's requested naming step: once the team-reviewed file is returned and its agreed corrections are applied and validated, rename the reviewed answer key to `extended_dispatch_100_human_team_golden.json` in `backend/docs/evaluation/`. Update the checker and documentation references together, retaining the AI-authored provenance and actual human review record. This is a pending step; the current draft key keeps its existing name.
-
-The workbook starts with zero human sign-offs and preserves the original JSON values. Until review and reconciliation are complete, describe the labels as AI-authored draft expectations. Afterwards, use wording such as "AI-authored, reviewed and corrected by [actual names] on [actual date]" for the scope actually reviewed.
-
-Record the division of review work through each row's reviewer name and date, covering the assigned cases and message links. Consolidate agreed corrections in one working copy. Once that review is complete, the presentation can say:
-
-"We prepared the golden set by dividing review of an AI-authored draft among team members. Each reviewer checked assigned cases and message links, and the team consolidated the agreed corrections into a signed-off evaluation key before testing."
-
-Use this completed-work wording only for the review actually performed, and retain the reviewer names, scope and dates as its evidence.
+The active key is now `extended_dispatch_100_human_team_golden.json`, version 2. The original AI draft and blank-review template are preserved in the evaluation archive. Codex applied the human notes and owner decisions and ran consistency checks; those automated checks do not replace or constitute the team's human review.
 
 ## Settings for a future model test
 
@@ -103,6 +97,6 @@ The snapshot date is **1 April 2026**, regardless of the computer's date. The al
 
 ## Presentation wording
 
-“We created an additional synthetic test set with 100 task cases and 149 conversational messages. We verified offline that 85 cases can receive valid on-time recommendations after accounting for shared queues. Fifteen cases test explicit exceptions. Model interpretation accuracy on this set has not yet been measured.”
+“AI custom-created our 100-case, 149-message test set after repeated project experiments. It contains questions and dispatch requests at several difficulty levels, designed to emulate real-life situations and target weaknesses in our system. Three members of our team divided the work and comprehensively hand-reviewed the set, line by line; this review was done by humans, not AI. We reconciled their comments into a golden answer key. Offline checks confirm that 85 cases can be allocated on time together and 15 test exceptions. In our better of two full runs, the app allocated 80 of the 85 correctly and held 14 of the 15 exceptions; one cancelled order was allocated, and a check for that is our top-ranked proposed fix.”
 
-After an authorized model run, report the observed results separately. Preserve this dataset and its prewritten answer key so those results can be reproduced. The professor's `harness/simulate.py`, supplied data and official metrics are unchanged. Aditya requested the test composition; Codex authored the synthetic inputs, expected interpretations and offline validation.
+The observed results are reported separately, in the [evaluation summary](../../../evaluation/README.md) and the [full run report](../../docs/evaluation/GOLDEN_100_RUN_REPORT.md). Preserve this dataset and its prewritten answer key so those results can be reproduced. The professor's `harness/simulate.py`, supplied data and official metrics are unchanged. Aditya requested the test composition; Codex authored the synthetic inputs, expected interpretations and offline validation.

@@ -1,9 +1,9 @@
 # Held tasks are never verified, and some restrictions are missed
 
-Status: completed historical investigation. The final plan was agreed with Aditya on 15 October 2026, and steps 1-6 were implemented and documented that day (see Progress). No paid run on the blocker file has measured the change since; Test 7 (19 October) ran the original 30 requests, which have no follow-ups. The interpretation limits in the [backlog](../docs/Pending_Improvements.md) remain open.
+Status: completed historical investigation. The final plan was agreed with Aditya on 15 October 2026, and steps 1-6 were implemented and documented that day (see Progress). No paid run on the blocker file has measured the change since; Test 7 (19 October) ran the original 30 requests, which have no follow-ups. The interpretation limits in the backlog remain open.
 
 - **Problem write-up:** [Held tasks and unresolved follow-ups](../problems_solved/held_tasks_and_unresolved_followups.md).
-- **Backlog:** [Pending improvements](../docs/Pending_Improvements.md), issues 1, 4, 5 and 12.
+- **Backlog:** Pending improvements, issues 1, 4, 5 and 12.
 
 ## Problem
 

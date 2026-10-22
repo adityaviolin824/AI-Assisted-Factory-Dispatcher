@@ -1,5 +1,5 @@
 # score_against_key.py: score one run against a JSON answer key, such as
-# docs/evaluation/extended_dispatch_100_expected.json, by the rules fixed before any paid run in
+# docs/evaluation/extended_dispatch_100_human_team_golden.json, by the rules fixed before any paid run in
 # docs/evaluation/NEW_TEST_SETS_PLAN.md ("How the score works").
 #
 # Report flow: make_run_report.py --key --data -> check_key_matches_run -> score_cases, message_labels

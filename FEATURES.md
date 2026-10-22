@@ -8,6 +8,8 @@
 
 Our backend turns informal factory messages into checked tasks and an explainable workshop allocation preview. It helps answer the dispatcher's three practical questions: **can this workshop make the batch, can it take the workload, and is it allowed to take it?**
 
+The [experiment guide](experiments/README.md) links the earlier notebooks. The [development notes](experiments/development-notes.md) and [timeline](experiments/timeline.md) explain the problems found, changes tried and checks recorded along the way.
+
 | Engineering evidence | What we have demonstrated |
 |---|---|
 | **123 backend tests, plus dedicated prototype checks** | Processing, routing, allocation, harness integration, the complete LangGraph flow with its dispatcher review pause, dispatcher decisions and synthetic-data feasibility; latest suite status is stated below |
@@ -262,4 +264,5 @@ This is **85% designed and verified feasibility**, not an 85% observed AI succes
 - Allocation modularization and verification record
 - LangGraph integration and equivalence checks
 - [Engineering decisions and verification evidence](docs/engineering-log.md)
+- [Experiment notebooks, selected investigations and development timeline](experiments/README.md)
 - Known interpretation issues and pending improvements

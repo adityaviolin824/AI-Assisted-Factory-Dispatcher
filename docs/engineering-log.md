@@ -2,6 +2,61 @@
 
 Entries describe the code and evidence available at the time of each investigation. Older notebook names, settings, output paths and test files may have changed or been removed. For current behavior, read the [backend README](../backend/README.md); for remaining work, read the [project plan](project-plan.md). Do not treat a historical passing test count as a newly rerun result.
 
+## 2026-10-22: Explain model roles, practical value and total spending in the README
+
+- **Request:** make the root README clear about which models handle each task, why the product helps the dispatch team, and the team's reported total project spending of 70 cents.
+- **Changes:** added a practical-value section covering manual checks, routine planning, reuse of model answers and shared source/reason records. Added the current intake/link/verification model and reasoning settings from `backend/config.toml`. Listed notebook 06's optional explanation models separately from the API's model-free structured review. Retained historical model settings and run results as history.
+- **Evidence boundaries:** recorded the owner-provided 70-cent total as team-reported spending on 22 October, without deriving it from the per-run reports or assuming a currency. Stated that manual staff-time savings have not been measured. Kept workshop production cost separate from AI running cost; the historical default policy delivered sooner but cost more to manufacture.
+- **Verification:** compared the model table with the config and notebook 06 settings, checked new local links/anchors and Markdown fences, and verified both inline Mermaid diagrams and their working copies are unchanged. No model call, Git command, dependency change or runtime-code edit was needed.
+
+## 2026-10-22: Notebook 07, the dispatcher review run through the backend modules
+
+- **Request:** Aditya asked for a version 07 of notebook 06 that uses the current modular code, with comments that explain every step to a reader returning months later. It is the starting point for the planned reallocation procedure.
+- **What it is:** `backend/experimentation_notebooks/07-dispatcher-workflow.ipynb`, 26 cells (14 code), saved with its outputs. It imports `build_dispatcher_plan`, `finalize_review`, `apply_answer`, `changed_rows`, `open_blockers` and `save_dispatcher_files` from `dispatcher_review/` instead of defining its own planner, so it shows what the pipeline graph and the API calculate. Its own definitions (Parts 4a-4c) only read and print reviews; they calculate no dates, queues or rankings.
+- **Flow:**
+  - settings, then a saved run is loaded; the notebook stops if a ready task's order is missing from the configured `orders.csv`;
+  - the first review and its difference from the run's `plan.json`;
+  - the Suggested allocations, Needs attention (grouped by problem type, with what the dispatcher can do) and No action lists;
+  - example choices in the dispatcher page's format, applied in one `apply_answer(..., then="finalize")` call, followed by the queues and every changed row with its reason;
+  - `finalize_review` and an optional save;
+  - Part 9 lists reallocation's open decisions, and Part 9a prints the table reallocation would start from: fixed, accepted-late and flexible work, with spare days.
+- **Decisions:**
+  - Notebook 06's AI notes (its Parts 5-7, paid calls) and Gradio screen (its Part 9) were left out; notebook 06 keeps them unchanged.
+  - Per-row approve and release were dropped, because one Approve all replaced them (decisions of 20-21 October).
+  - The notebook does not load `.env` and calls no model. `SAVE_RESULT = False` by default, and saving goes only through `save_dispatcher_files`.
+  - The choices in Part 6 are labelled as examples, not as dispatcher decisions.
+  - Notebook 06 remains the reference that `tests/test_dispatcher_review.py` reads.
+- **Example result (run `2026-10-14_14-40-08`):** three choices change 7 rows. The choices are ORD-008 to W1, the confirmed ORD-066 due date, and accepting ORD-053's 0.06 days of lateness at W5.
+  - ORD-081 loses W5 and needs review, because the accepted-late batch is now planned on W5 before it (W5's queue for it: 3.00 -> 5.06 days).
+  - ORD-109 moves from W1 to W6, although W1 would still deliver on time (8.89 of 12 days), because the chosen ORD-008 is now planned first on W1. This is the "keep or move" question reallocation must settle.
+  - The final table has 5 approved rows and 25 unresolved.
+- **Observed module behaviour, not changed:** `apply_answer` accepts a `choose_workshop` for a task that is not ready for allocation without a refusal, and the plan does not use the choice. This was seen for a split request, a duplicate order and a task needing clarification. A choice for a past-deadline task is used as `accepted_late`. A hard-rule override (W4 for tops) is used, and its reason records the rule, as decided on 20 October. Whether to refuse the first case belongs to the dispatcher-review contract update.
+- **Verification:** each check ran every cell in a fresh kernel, offline, with a blank API key. The checks covered:
+  - the example choices;
+  - no choices;
+  - the blocker-cases run with `warnings_checked` (its provisional allocation became a recommendation);
+  - the 181-row extended run and the 13 October run;
+  - a refused choice;
+  - `SAVE_RESULT = True` on a temporary copy of a run folder (both files and their plan-history copies were written there only);
+  - a golden-set run with the default `config.toml` (Part 2 stops with the missing orders and the settings to change).
+
+  All 266 files in `output/runs/` hash the same before and after. The modules, notebook 06, `config.toml` and the tests were not changed. No Git command, installation or paid call was made.
+- **Publication:** the root ignore rules exclude `experimentation_notebooks/`, so notebook 07 is local only. `experiments/`, whose README says no notebook 07 is included, was not changed.
+- **Attribution:** Aditya set the request and the reallocation goal. Claude Code wrote and checked the notebook.
+
+## 2026-10-22: Add public experiment copies and a short development history
+
+- **Scope:** create `experiments/` with a reading guide, timeline, selected issue notes and copies of notebooks 02, 03, 05 and 06. Preserve the original notebooks and records. Leave notebook 07 and reallocation implementation to the project owner.
+- **Copies:** shortened introductions and repeated function-comment headings, replaced notebook 06's free-form design comments with technical descriptions, removed empty cells, and cleared saved output, execution counts and local metadata. Kept prompts, validation, ranking, calculations and decision functions. Recorded each source path and SHA-256 in notebook metadata. Adjusted paths so 02, 03 and 05 use the public copies and their own ignored output folder, and 06 finds the existing backend from its new location.
+- **History:** documented duplicate extraction, the date parser losing a written year, follow-up detection comparisons and tasks skipped by persistent holds. Used the existing dated evidence, including failed alternatives and remaining limitations. Historical rules, controlled checks, cached replays, fresh model runs and current application behavior remain distinct. AI assistance and the team's decisions/review are stated without assigning unsupported individual contributions.
+- **Navigation:** linked the guide from the root and backend READMEs, `FEATURES.md`, `docs/project-explanation.md` and `evaluation/README.md`. Corrected two stale introductory statements that still described batch finalization as unimplemented. Reallocation and its optional review/approval flow remain pending. No diagrams were edited.
+- **Validation issue:** the first isolated allocator check stopped with `NameError: check_task`. Static inspection located the unchanged helper in the Section 5 example cell, tagged `run`, in both source and copy. The temporary checker had selected definitions cells only. Loading that helper explicitly corrected the checker; no notebook function was changed. C1-C14 then passed in copies 03 and 05 with network/model access blocked.
+- **Environment finding:** the installed `jupyter` console launcher still points to a previous project location whose interpreter no longer exists. The project Python can import JupyterLab and nbconvert; their module-based help commands succeed. The guide therefore uses `uv run python -m jupyterlab`. No environment repair or dependency installation was made, and other console launchers were not audited.
+- **Publication checks:** the ignore-rule inventory includes the seven new experiment files while keeping originals, caches, outputs and environment files excluded. Scanned all 135 eligible files for credential patterns, including workbook XML and all notebook source/metadata; checked Markdown, notebook text and code comments for personal paths, emails, casual wording and emojis. Removed one old temporary recovery path and two informal phrases from this log. No credential finding was detected. The checks cover the current ignore-rule candidates, not Git tracking or history.
+- **Verification:** all four copies validate as notebooks and all 89 code cells compile. Syntax-tree comparisons match the source cells after the declared path changes. The 28 controlled allocation checks pass. Notebook 02's copy/output paths and notebook 06's backend lookup were checked directly. All 46 new or updated local links resolve, including two section anchors. The original notebooks, data, retained runs, supplied simulator, dependency files and diagram working copies were unchanged at the copy-validation checkpoint. No paid call, tracing upload, Git command, package installation or application-code change was made.
+- **Final checks:** all four notebooks convert to HTML without execution; the previews stay in temporary storage. A separate token-based check of 133 frontend comments found no flagged wording or personal paths. The final 830-file baseline comparison has no missing files: 825 are unchanged and five have the intended documentation edits. `evaluation/README.md` also has the new navigation row. Both inline README diagrams match their unchanged working copies. The ignore rules are unchanged and notebook 07 was not created.
+- **Attribution:** the project owner selected the publication scope and requested plain explanations, unchanged originals and a publication review. Codex prepared the copies, notes, navigation edits and offline checks. New historical claims were checked against the existing records rather than inferred from the final code alone.
+
 ## 2026-10-22: Proofread the public README; restore diagrams at the user's direction
 
 - **Request:** remove conversational wording such as "the better of two runs" from the public README, improve hyperlink labels, remove the evaluation callout from the introduction, and assess the directory layout. Aditya subsequently stressed that reallocation and approval after it are pending and explicitly requested that all diagram edits be reversed.
@@ -328,7 +383,7 @@ Entries describe the code and evidence available at the time of each investigati
 - **Recommendation and boundary:** one active run and one shared in-memory draft are sufficient for the current one-dispatcher mock. Separate browser drafts are optional convenience; the global-state swap is avoidable coupling. Removing those together would deliberately make notebook helpers and browser windows share the same draft. Keep actual eligibility checks, accepted-lateness limits, task-version checks and recalculation from original queues. A small wrong-run check remains useful for ordinary notebook reruns, independently of session isolation. Any simplification is still a proposal, not an implemented change.
 - **Attribution:** Aditya raised the unwanted scope and retains the design decision. Codex used the code-simplifier skill for review, traced the existing implementation and verified the simpler calculation path. Only this review record was added; no feature, dependency, source input, cache or saved run was changed.
 
-## 2026-10-19: Reconcile the brag sheet's cache and current-feature coverage
+## 2026-10-19: Reconcile the feature notes' cache and current-feature coverage
 
 - **Request:** Aditya asked whether `FEATURES.md` describes caching in detail and reflects additions, modifications and removed behaviour. Compared the sheet with the current processing cache, notebook-06 explanation cache, run-report implementation, backend notes and team-review workflow.
 - **Exact changes:** clarified that the shared recording/cache layer covers intake, linking and verification; added its persisted JSON location, per-run records, stage-specific invalidation and output-folder boundary. Documented the separate dispatcher-explanation cache, the model-free decision/Gradio path and cache-aware cost/time reporting. Added the run report to the artifact table and explained that generation is a separate command requiring a plan. Added the editable review workbook and pending human-reviewed golden-key status, made the Python quantity gate explicit and linked the refreshed tutorials.
@@ -1055,7 +1110,7 @@ Entries describe the code and evidence available at the time of each investigati
 - **Request and finding:** Aditya requested preserving the detailed comments in the current allocator and deleting the misnamed earlier draft, with v5 renaming only as an alternative to deletion. Compare every draft function's comments, the standalone comments and the Markdown explanations with `03-order-allocation-v4.ipynb`. The draft has 96 code-comment occurrences; the current notebook has 153 and retains 85 of the draft comments verbatim. The remaining 11 have updated equivalents covering the same behavior. The current section explanations retain and expand the useful reasoning; the draft's P1-pending note is obsolete. No extra comment transfer is needed.
 - **Decision and exact changes:** Keep `backend/experimentation/03-order-allocation-v4.ipynb` as the single current allocator with its existing detailed comments. Edit only its Markdown introduction to remove the obsolete draft reference and identify the retained explanations. Delete `backend/experimentation/03-order processing-from-chat-v4.ipynb` after saving a verified recovery copy. Update `backend/README.md`, `docs/project-plan.md`, `backend/experimentation/order-allocation-v4-review-and-improvements.md` and `backend/experimentation/order-allocation-issues-and-resolution-plan.md` to distinguish the removed source from preserved historical outputs. Append this log entry. Keeping the current v4 name avoids needless version churn because executable code and policy behavior are unchanged.
 - **Verification:** Validate notebook format and compile every code cell; compare each full code cell with the recovery copy to establish no code/comment/output/metadata changes. Execute only the seven definition cells and the existing controlled-check cell: C1-C10 pass. The saved plan's allocator code hash still matches. Do not execute the real-plan/run/inspect cells or processing. Check remaining documentation links and compare the protected-file inventory; only the intended allocator/draft and two experiment-review documents differ within that inventory. No API calls, installs, simulator changes or saved-output replacement.
-- **Recovery and remaining limits:** A verified copy of the removed draft and the allocator before the Markdown edit is in the temporary directory `/var/folders/25/v84q1g7122x3mwn67t32plw80000gn/T/dss-allocation-comments-z5a1szzl/`. This is temporary recovery storage, not a permanent project archive. The earlier draft's recorded plan remains in `output/order-allocation-v4-opus/`. The removal resolves notebook duplication and naming confusion; upstream interpretation issues P2/P4/P6 and the other recorded limitations remain. Aditya chose the cleanup; Codex performed the comparison, Markdown edits, controlled verification and requested removal.
+- **Recovery and remaining limits:** A verified copy of the removed draft and the allocator before the Markdown edit was saved in a temporary recovery directory. This was temporary storage, not a permanent project archive. The earlier draft's recorded plan remains in `output/order-allocation-v4-opus/`. The removal resolves notebook duplication and naming confusion; upstream interpretation issues P2/P4/P6 and the other recorded limitations remain. Aditya chose the cleanup; Codex performed the comparison, Markdown edits, controlled verification and requested removal.
 
 ## 2026-10-10: Make processing execution easier to follow
 
@@ -1284,7 +1339,7 @@ Entries describe the code and evidence available at the time of each investigati
 
 ## 2026-10-13: Fix the notebooks' folder paths after the move, with no logic change
 
-- **Request:** after the modules were finished, Aditya asked to "fix the small errors in the notebooks. Just the path and naming fixes. NOT A SINGLE LOGIC CHANGE."
+- **Request:** after the modules were finished, Aditya requested path and naming fixes in the notebooks, with no logic changes.
   - Aditya chose the four current notebooks (02 v4, 03 v5, 04 and 05).
   - Aditya also chose path-only fixes to the old checks.
   - The 10 archived notebooks in `old_notebooks_and_files/` were not changed.

@@ -8,6 +8,17 @@ The original messages are kept with the recommendations, so the dispatcher can c
 
 Learn [how it works](#how-it-works), explore the [architecture](#product-architecture), or [run it locally](#run-locally).
 
+## Why this is useful
+
+- **Less checking by hand.** The dispatcher gets the requests, order details, workshop options and reasons in one table. Python checks restrictions and calculates delivery, cost and queue effects.
+- **Less time on routine planning.** The system compares the eight workshops and builds a shared plan. The dispatcher can focus on missing information, exceptions and final choices.
+- **Low AI running costs.** Models handle the language tasks. Allocation and structured dispatcher review run in Python without model calls. An identical saved AI request can reuse its answer without another paid call.
+- **An easier handover.** Operations staff and managers can read the original messages and recorded reasons instead of relying on one person's memory of the chat.
+
+Our total project spending so far is **70 cents** (22 October 2026, reported by the team). Individual test-run costs are listed in the [recorded results](#testing-and-recorded-results).
+
+Staff time savings have not yet been measured against a manual dispatcher. Workshop production costs are a separate trade-off: the historical test below achieved faster delivery with higher production cost.
+
 ## How it works
 
 The backend already processes saved conversations and supports final approval. The Chat screen still needs its live API connection.
@@ -239,6 +250,27 @@ AI handles the language in the messages. Python checks the facts and calculates 
 | OpenAI models | Extract requests, connect follow-ups and assess the latest instructions for each task. |
 | JSON files and SQLite | Store run records, model responses and paused reviews. The existing chat prototype stores messages separately in SQLite. |
 
+### Models used for each task
+
+The processing models are configured in [backend/config.toml](backend/config.toml). These are the current settings; each saved run records the settings it actually used.
+
+| Task | Model | Reasoning effort |
+|---|---|---|
+| Intake: identify requests and follow-ups in the chat | `gpt-5.6-luna` | High |
+| Linking: attach a follow-up to the right task | `gpt-5.6-luna` | Medium |
+| Verification: assess the latest instructions and their evidence | `gpt-5.6-luna` | Medium |
+
+Python checks the model's proposed facts. Python also calculates dates, workshop eligibility, queues, costs, rankings and allocations. Structured dispatcher review and final approval make no model calls.
+
+The earlier dispatcher experiment in [notebook 06](experiments/notebooks/06-dispatcher-workflow.ipynb) also has optional explanation calls:
+
+| Explanation task | Model | Setting |
+|---|---|---|
+| Summarize why a workshop was recommended | `gpt-4o-mini` | Temperature 0 |
+| Explain why a request needs attention | `gpt-6-luna` | Medium reasoning effort |
+
+These explanation calls belong to the notebook prototype. They are separate from the current API's structured review, and a new explanation request can cost money. The older notebooks retain their historical model settings; [the experiment history](backend/docs/evaluation/PROMPT_TESTING_RESULTS.md) records the comparisons and changes.
+
 ### Reusing AI answers and checking decisions
 
 A saved answer is reused only when the processing stage, model, prompt, settings, input and response format match. The answer is still checked, and the dispatch plan is calculated again. Allocation and structured dispatcher review do not make model calls.
@@ -303,13 +335,14 @@ Open `http://127.0.0.1:3000`. The API documentation is at `http://127.0.0.1:8000
 
 Starting these servers does not process a conversation or call an AI model. A fresh clone has no local run output or review checkpoints, so its run list starts empty. The [published results](evaluation/README.md) can be read without running the pipeline. Processing a new conversation is a separate action that can make paid calls; read the [backend guide](backend/README.md) before starting a run.
 
-The public repository excludes local experiment notebooks, reference documents and saved test snapshots. Some comparison tests require those local files.
+Selected [experiment notebooks and development notes](experiments/README.md) are included for reading through the earlier work. The original working notebooks, supplied reference documents and saved test snapshots remain local. Some comparison tests require those local files.
 
 ## Repository layout
 
 | Location | Contents |
 |---|---|
 | `evaluation/` | Public guide to the datasets, answer key, recorded results and scoring method. |
+| `experiments/` | Earlier notebooks, selected debugging examples and the development timeline. |
 | `frontend/` | Web screens, API calls and browser tests. |
 | `backend/` | Chat processing, allocation, dispatcher review and API code. |
 | `backend/config.toml` | Input paths, model settings, batch sizes and dispatch date. |

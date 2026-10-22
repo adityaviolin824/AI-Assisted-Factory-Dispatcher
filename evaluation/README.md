@@ -19,6 +19,7 @@ Two separate things were evaluated, and their results are kept apart:
 | Full report of both runs, with failure analysis and charts | [Run comparison and findings](../backend/docs/evaluation/GOLDEN_100_RUN_REPORT.md) |
 | Run 2: every plan row with its reason | [Detailed run 2 results](golden_100_run_2_report.md) |
 | Log of every paid test run (Test 10 covers these runs) | [Experiment history](../backend/docs/evaluation/PROMPT_TESTING_RESULTS.md) |
+| Earlier notebooks and selected debugging records | [Development experiments](../experiments/README.md) |
 | Scoring code | [Report command](../backend/make_run_report.py) and [scoring modules](../backend/eval_run_report/) |
 
 The detailed run 2 report is an unchanged copy of the generated report for run `2026-10-21_23-43-53`. The original run folder is excluded from version control; paths inside the report are recorded relative to `backend/`. Its "Key's own description" preserves the key's frozen text from before testing. The offline feasibility checker and saved regression snapshots are kept locally rather than published here.

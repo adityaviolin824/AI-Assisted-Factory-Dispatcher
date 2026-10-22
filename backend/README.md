@@ -2,7 +2,9 @@
 
 Last checked: 20 October 2026, after adding the dispatcher review pause to the graph. The current application path uses the Python modules, `run_full_pipeline.py` and `resume_dispatcher_review.py`; the first FastAPI endpoints (`main.py`) serve saved runs and the paused review. Notebooks 05 and 06 are the experimental references; intentional differences are declared in the module tests.
 
-**Latest approved product behavior, 21 October; not implemented yet:** the dispatcher completes all choices locally, with no per-click mutation, recalculation or persisted edits. One **Approve all** submits the set; Python keeps the dispatcher's destinations, rearranges flexible work, saves immediately and returns the final dispatch table plus what changed and why. This supersedes the current per-edit checkpoint/empty-approval interaction described below. A small batch-finalization API change and its tests are still needed; do not simulate it by sending intermediate edit requests. See the root handoff. This is an assignment decision-table MVP, not operational factory deployment. Docker comes at the absolute end.
+**One-batch final approval, implemented 21 October:** the dispatcher completes all choices locally, with no per-click mutation, recalculation or persisted edits. One **Approve all** submits the set through `POST /reviews/{thread_id}/finalize`; Python keeps the dispatcher's destinations, schedules flexible work, saves immediately and returns the final dispatch table plus changed rows. This supersedes the older per-edit checkpoint/empty-approval interaction described below. Reallocation and its optional review/approval flow remain pending. Docker comes at the absolute end.
+
+For the earlier notebook stages, see the [experiment guide](../experiments/README.md), [development notes](../experiments/development-notes.md) and [timeline](../experiments/timeline.md). The public notebook copies retain the rules of their historical versions; they are not the current application entry points.
 
 The backend turns factory chat into checked tasks and deterministic workshop allocation previews. It answers whether a workshop can make a batch, can take it given capacity and queue, and is allowed to take it. For most requests, avoiding lateness and reducing delivery time come first; explicit quality and cost preferences select their recorded policies. A general rule for delicate or expensive work still needs defined inputs and evaluation.
 
@@ -211,6 +213,7 @@ These are historical references, not the current storage or resume contract. The
 
 | Document | Purpose |
 |---|---|
+| [Experiment notebooks and history](../experiments/README.md) | Processing, allocation, the combined graph and the first dispatcher screen, with selected debugging records. |
 | [Prompt and model experiments](docs/evaluation/PROMPT_TESTING_RESULTS.md) | Historical scoring keys, model/prompt comparisons, costs and failures; add future approved paid runs here. |
 | [Project plan](../docs/project-plan.md) | Product priorities, open decisions and evaluation requirements. |
 | [System design](../docs/system-design.md) | Current rules and planned dispatcher, storage, graph waits and frontend. |

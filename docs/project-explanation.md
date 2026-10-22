@@ -2,7 +2,9 @@
 
 Current implementation status updated: 13 October 2026; the graph's dispatcher review pause added 20 October 2026. The historical debugging and run evidence below retains its 10 October processing v3/allocation v4 baseline. Use this to explain the project to the professor. The [backend README](../backend/README.md) explains the implementation in more detail, and the [project plan](project-plan.md) distinguishes completed work from what comes next.
 
-**MVP goal and latest decision, 21 October 2026:** produce an explainable dispatch table that the dispatcher controls. He finishes the whole choice set locally, then one **Approve all** authorizes Python to apply it, rearrange other work, save immediately and show the final table with what changed and why. No per-click database/draft writes or mandatory second approval. This is the approved target, not current runtime behavior: the implemented per-edit checkpoint workflow below still needs a batch-contract change. We are building an assignment demonstration with evidence, not a factory execution system; dedicated backend evaluation follows separately and Docker/deployment come at the absolute end. See Project handoff.
+The [experiment guide](../experiments/README.md) gives a reading order for the earlier notebooks. Its [development notes](../experiments/development-notes.md) explain four investigations, and the [timeline](../experiments/timeline.md) connects them to the later modules and API.
+
+**MVP goal and latest decision, 21 October 2026:** produce an explainable dispatch table that the dispatcher controls. The dispatcher finishes the whole choice set locally, then one **Approve all** authorizes Python to apply it, schedule flexible work, save immediately and show the final table with changed rows. The batch-finalization endpoint was implemented on 21 October. The older per-edit review description below records the earlier stage. Reallocation and the optional review/approval after it remain pending. Docker and deployment come at the absolute end.
 
 ## The problem we are solving
 

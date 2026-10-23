@@ -50,6 +50,8 @@ export default function DispatcherPage() {
   // The open run's reads (its plan, then any review), aborted when another run is opened so a slow
   // answer cannot replace it.
   const runRequest = useRef<AbortController | null>(null);
+  // The address the page was opened with.
+  const openedAddress = useRef<URLSearchParams | null>(null);
   const desk = useRef<HTMLDivElement>(null);
   const previewPanel = useRef<HTMLDivElement>(null);
   // What Approve all would send: the tray lists it, and discarding asks about it.
@@ -70,14 +72,21 @@ export default function DispatcherPage() {
     }
   }, [preview]);
 
-  // The run named in the address (/dispatcher?run=<id>) opens straight away, as when Chat links here.
+  // The run named in the address (/dispatcher?run=<id>) opens straight away, as when Chat links here;
+  // Chat's link also names the paused review (&thread=<id>), which then opens too. The address is read
+  // once: React's development mode runs this effect twice, and openRun rewrites it without &thread=.
   useEffect(() => {
     listRuns()
       .then(setRuns)
       .catch((caught) => setError(errorText(caught)));
-    const runInUrl = new URLSearchParams(window.location.search).get("run");
+    openedAddress.current ??= new URLSearchParams(window.location.search);
+    const runInUrl = openedAddress.current.get("run");
+    const threadInUrl = openedAddress.current.get("thread");
     if (runInUrl) {
       openRun(runInUrl);
+      if (threadInUrl) {
+        openReview(threadInUrl, runInUrl);
+      }
     }
   }, []);
 
@@ -147,14 +156,15 @@ export default function DispatcherPage() {
     openRun(runId);
   }
 
-  // A review is used only when it belongs to the open run (review.source_run).
-  function openReview(id: string) {
+  // A review is used only when it belongs to the open run (review.source_run). The caller names that
+  // run: openRun's change of runId shows only after the next render.
+  function openReview(id: string, openRunId: string) {
     setReviewNote(null);
     const signal = runRequest.current?.signal;
     readReview(id, signal)
       .then((envelope) => {
-        if (envelope.review.source_run !== runId) {
-          setReviewNote(`Thread ${id} reviews run ${envelope.review.source_run}, not the open run ${runId}.`);
+        if (envelope.review.source_run !== openRunId) {
+          setReviewNote(`Thread ${id} reviews run ${envelope.review.source_run}, not the open run ${openRunId}.`);
           return;
         }
         setThreadId(id);
@@ -284,7 +294,7 @@ export default function DispatcherPage() {
       approving={approving}
       previewing={previewing}
       note={reviewNote}
-      onOpen={openReview}
+      onOpen={(id) => openReview(id, runId)}
       onApprove={again ? approveAgain : approve}
       onPreview={checkOptions}
       onClose={closeAgain}

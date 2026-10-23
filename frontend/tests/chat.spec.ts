@@ -164,7 +164,7 @@ test("processing waits for a confirmation about paid models, then links the run 
   await page.clock.fastForward(5000);
   await expect(page.getByRole("link", { name: "Open in Dispatcher" })).toHaveAttribute(
     "href",
-    "/dispatcher?run=2026-10-21_09-10-00",
+    "/dispatcher?run=2026-10-21_09-10-00&thread=T1",
   );
   expect(processRequests).toHaveLength(1);
 });

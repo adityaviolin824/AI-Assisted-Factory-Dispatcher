@@ -243,7 +243,7 @@ flowchart TB
 |---|---|
 | Processing and allocation | The backend reads saved chat files, checks requests and produces workshop recommendations with reasons and queue estimates. |
 | Dispatcher review | The backend pauses for the initial review. The dispatcher can submit all choices in one approval request, after which Python recalculates the plan, saves the result and returns a list of changes. |
-| Web interface | Chat and Dispatcher screens exist. Reading saved runs works. The Chat screen has been tested with simulated responses; its real backend endpoints are not implemented yet. |
+| Web interface | Chat and Dispatcher screens exist and call the backend. Chat saves messages, captures a fixed snapshot of the conversation and can send that snapshot through the pipeline to a paused dispatcher review (23 October 2026). Processing calls paid AI models, so the API refuses it unless it was started with `ALLOW_PAID_PROCESSING=1`. The browser tests use simulated responses; no real chat-to-review run has been made in the browser yet. |
 | Saved AI responses | Identical requests can reuse earlier answers. Changes to the input, model, prompt or settings may require new paid calls. |
 | Reallocation | Redistribution, review again after reallocation, and approval of the revised table are all pending. |
 

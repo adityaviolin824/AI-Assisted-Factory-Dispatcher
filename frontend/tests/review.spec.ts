@@ -43,6 +43,15 @@ function staged(page: Page) {
   return page.getByRole("list", { name: "What Approve all would send" }).getByRole("listitem");
 }
 
+test("Chat's link opens the run and its paused review", async ({ page }) => {
+  await serve(page, "/runs", [RUN]);
+  await serve(page, `/runs/${RUN.run_id}`, runDetails(makePlan()));
+  await serve(page, "/reviews/TH1", envelope(makeReview()));
+  await page.goto(`/dispatcher?run=${RUN.run_id}&thread=TH1`);
+  await expect(page.getByText("Reviewing thread TH1.")).toBeVisible();
+  expect(posts).toHaveLength(0);
+});
+
 test("a review of another run is not opened", async ({ page }) => {
   await serve(page, "/runs", [RUN]);
   await serve(page, `/runs/${RUN.run_id}`, runDetails(makePlan()));

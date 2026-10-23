@@ -2,6 +2,84 @@
 
 Entries describe the code and evidence available at the time of each investigation. Older notebook names, settings, output paths and test files may have changed or been removed. For current behavior, read the [backend README](../backend/README.md); for remaining work, read the [project plan](project-plan.md). Do not treat a historical passing test count as a newly rerun result.
 
+## 2026-10-23: Chat API bridge (send, history, snapshots, processing)
+
+Aditya asked for the chat bridge agreed on 21 October ([frontend/BACKEND_PROPOSAL.md](../frontend/BACKEND_PROPOSAL.md), section 1). Claude Code built it. The frontend already called all six endpoints.
+- **New `backend/order_intake_from_chat/chat_storage.py`:** the mock chat's storage functions (`initialize_storage`, `save_message`, `read_messages`, `build_export`, `export_conversation`), copied from `experimentation_notebooks/mock_frontend/app.py`. A test checks that their code is identical to the mock's. Messages and snapshots are stored in `backend/output/chat/`, which is gitignored.
+- **New `backend/fastapi_routes/chat.py`**, registered in `main.py`:
+  - `GET`/`POST /chat/messages`: Send saves a message and makes no model call. A repeated `submission_id` saves nothing new, as in the mock.
+  - `GET`/`POST /chat/snapshots` and `GET /chat/snapshots/{snapshot_id}`: capture or read a fixed snapshot. Its TXT is returned exactly as saved.
+  - `POST /chat/snapshots/{snapshot_id}/process`: runs the pipeline in the background up to the dispatcher's pause, as `run_full_pipeline.py` does. The snapshot's `processing.json` records "running", "finished" (with the run and thread IDs) or "failed".
+- **Decisions:**
+  - **Paid processing needs a switch.** It is refused with 403 unless the API was started with `ALLOW_PAID_PROCESSING=1`. Reason: processing calls paid models, so a click must not spend unless the person who started the server allowed it. Alternative: no switch, which leaves spending to one click.
+  - **Each snapshot is processed once, and one at a time** (409 otherwise). Reason: one dispatcher is assumed, and two runs at once would make two paid runs and share the checkpoint file. Alternative: a job queue, which is out of scope.
+  - **A failure shows only the error's type on the page.** Reason: a model API error can quote part of the key. The full error is raised again, so the server's terminal shows it.
+  - **A run whose server process stopped reads "failed".** Reason: a dev-server reload stops the background task, and its status would otherwise stay "running" for ever. The status records the server's process ID and compares it with the current one.
+  - **The chat page links to `/dispatcher?run=...&thread=...`**, so the review opens directly.
+- **Frontend bug, root cause proved:** the link opened the run but not its review. A request log showed the cause. React's development StrictMode runs the page's opening effect twice; the first run's address update removed `&thread=`, so the second run found no thread. Fix in `app/dispatcher/page.tsx`: the address is read once, into a ref, and `openReview` is given the run explicitly. A new Playwright test, "Chat's link opens the run and its paused review", covers it. The temporary logging was removed.
+- **Evidence:** 11 new backend tests (`tests/test_chat_routes.py`). One sends the supplied 30-message chat through the routes: the stored times match, the snapshot's TXT is byte-identical to `data/dispatch_requests.txt`, and the real graph, run with offline model answers, gives the same paused plan as the saved test run.
+- **Verification:** 160 backend tests and the mock chat's 12 tests passed offline. In `frontend/`, the type check, lint, 53 Playwright tests and the build passed. Not done: a live server run from the browser, or any paid processing call. Docs updated: `backend/README.md`, `backend/AGENTS.md`, `backend/FASTAPI_BUILD.md` (D13), `frontend/AGENTS.md`, `frontend/BACKEND_PROPOSAL.md`, `frontend/FRONTEND_PLAN.md`, `PROJECT_HANDOFF.md`, `README.md` and `docs/project-plan.md`. No Git command, model call or installation.
+
+## 2026-10-23: The dispatcher's chosen workshop overrides what processing left open
+
+Aditya decided that a dispatcher's instruction is authoritative: with a known order and a chosen workshop, Python allocates the batch there, whatever processing left open. Claude Code fixed the accepted-then-ignored choice found by the pipeline audit below.
+- **Root cause (proved before the fix):** `build_dispatcher_plan` gives `flexible_decision` only the "allocate" tasks, so a task with a blocker or an unclear intent never reached the choice. `recommend` stops a split request or an unhandled constraint before any estimate, so `can_choose` was false. Four new tests failed for this reason first (8 failed checks).
+- **Change (`dispatcher_review/dispatcher_plan.py`):**
+  - New `open_flags(task)`: the blockers, "split requested" and a non-allocation intent.
+  - `derive_task`: a chosen workshop or `complete` records those flags under `dispatcher.overridden`, then makes the task a ready allocation: intent allocation, no blockers and no split flag.
+  - Without an order in `orders.csv`, the entry gets the problem "Python needs an order ID from orders.csv to plan this batch", so `apply_answer` refuses the answer.
+  - `build_dispatcher_plan` adds "It overrides what processing left open: ..." to the row's reason.
+  - Unchanged: a ready task's choice, routing, `flexible_decision`, `recommend`, and the behavior without a decision.
+- **Evidence:** the audit's repro now gives T:L0005:J1 `dispatcher_choice` at W1 and the split T:L0023:J1 `accepted_late` at W1, both in `changes`, with no problems. In the tests:
+  - T5 and T7 are planned at the chosen workshops;
+  - a split is sent as the dispatcher's 60 + 40 batches;
+  - a completed split is planned;
+  - a choice for T10, which has no order, is refused.
+- **Open, a product question:** a chosen row that also has an unchecked warning is planned but stays provisional and unresolved after Approve all, as before. The page shows a checkbox for each warning.
+- **Verification:** 149 backend tests passed offline (145 before, plus 4 new). Docs updated: `backend/README.md`, `backend/AGENTS.md` and `docs/system-design.md`. No Git command, model call or installation.
+
+## 2026-10-23: Consolidate the pipeline review and check its conclusions
+
+- **Request:** review the available analysis, add an independent assessment, save a local-only Markdown report and exclude it from publication. Codex used the earlier review discussion, today's pipeline audit and Test 11's report; no separate analysis attachment was provided. No implementation was authorized by this review.
+- **Independent checks:** scratch-copy checks reproduced accepted but unused workshop choices, the difference between new and saved lateness consent, and the comma/date ambiguity. Saved consent does prevent an uncovered late allocation; the inconsistency is whether the whole submission is refused or the row is saved unresolved. Notebook 07 now demonstrates Review again and no longer has the old placeholder.
+- **Additional scoring boundaries:** synthetic approved tables can produce the existing Perfect headline despite lateness; when an order has two approved batches, the case's lateness flag reads only the main batch. Test 11 separately reported all 85 expected allocations on time. Its frozen score was not changed; a stronger score needs a separately specified version.
+- **Evidence limits:** Test 11 used a key-informed simulated dispatcher through HTTP, not a real human in the browser. Its saved table has 85 approved rows and 26 unresolved rows. The default API does not list that run's separate output folder, and the current input signature does not match it. The chat API bridge remains unimplemented.
+- **Recommendation, not a new decision:** close the unused-choice and cancellation gaps first, make demo inputs reproducible, finish the agreed chat bridge, then prove the browser-to-API journey. Keep the rejected generic Hold action out of scope. The detailed report is local-only and is not linked from public guides.
+- **Verification:** 145 backend tests passed offline. The report's local links and fences and six ignore-rule cases were checked. Protected source, notebooks, data, harness, README and diagrams were compared with pre-review hashes. No Git command, model call, installation or runtime-code change was made.
+
+## 2026-10-23: Pipeline audit: open issues with evidence
+
+Aditya asked for the main open issues across the whole pipeline. Claude Code read every backend stage and checked each suspected issue against Test 11's saved run (`output/end_to_end_test_2026-10-22/runs/2026-10-22_22-31-00`) or a scratch copy of run `2026-10-14_14-40-08`. It changed no code and made no model call.
+
+- **New, reproduced: a dispatcher's workshop choice can be accepted and then ignored.**
+  - Repro: on the scratch copy, Approve all with `choose_workshop` W1 for T:L0005:J1 (needs clarification) and T:L0023:J1 (split requested).
+  - Result: no refusal, empty `decision_problems`, and both entries saved with `"workshop": "W1"`. Both rows stayed unresolved with no workshop and were not in `changes`.
+  - Cause: `build_dispatcher_plan` sends only "allocate" tasks to `flexible_decision`, and that function uses a choice only when `recommend` made estimates or the deadline passed (`can_choose`, `dispatcher_plan.py` line 165). Nothing reports an unused choice.
+  - The dispatcher page offers the dropdown on every task, with the hint "Your choice is used, and Python calculates it when the plan is approved" (`frontend/components/ChoiceForm.tsx`).
+- **Confirmed causes of the Test 11 failures** (Test 10 showed the same patterns):
+  - **CASE-097:** verification returned intent `allocation`, ready, with no doubts, for "The customer has cancelled ORD-297. Do not allocate...".
+    - `VERIFY_PROMPT` has no cancellation or hold rule, the intents are only allocation, question and unclear, and no Python check stops a cancellation.
+    - `possibly_affected_tasks` (`verify_tasks.py` line 518) assumes a cancellation arrives as `unclear`.
+    - CASE-098 ("Pause ... do not allocate") was held only because the model wrote its conditions into `missing_details`.
+  - **CASE-070:** `possible_deadline_words` returns `["today"]` for L0119 and `[]` when the comma after ORD-270 is removed. `CLAUSE_BREAK` separates the dispatch phrase from "today".
+  - **CASE-049:** the model's `deadline_evidence_id` was `T:L0085:J1:J1:E1` (the task ID doubled); the rest of the answer was right. The task went to processing review, which no dispatcher decision can name.
+  - **CASE-026 and CASE-051:** intake labelled "ORD-226: Choose the fastest eligible workshop..." as a request, so two tasks named one order and both went to duplicate-order review.
+  - **"For that batch" follow-ups:** all 8 link reviews had the 4 recent tasks as candidates and returned `needs_review`, although each refers to the request in the message just before it (L0019 then L0020, L0023 then L0024).
+    - Each link review marked the tasks of the two messages before it provisional (`HOLD_WINDOW`), so 16 tasks were warned.
+    - This caused 14 provisional rows and 15 of the 23 dispatcher choices.
+- **Other limits, with evidence:**
+  - `read_date("Jan 5")` returns `2026-01-05` whatever `message_date` is (`DATA_YEAR` is fixed at 2026).
+  - A saved run does not record its data folder or dispatch date in `manifest.json`. With `config.toml` restored, Test 11's saved plan no longer matches `input_signature()`, so its review would be refused.
+  - An unhandled condition appears twice in `blockers()`, once in `missing_details` and once in `unhandled_constraints`.
+  - Still open from 22 October: Review again does not re-check saved accepted lateness.
+- **Checked and not a problem:** the allocator broke no workshop rule in any run. The slowest of the 128 calls took 10 s, against a 60 s timeout. Neither orders file has a cancelled status.
+- **LangGraph's role:**
+  - It runs processing, the plan and the first review pause (`interrupt()` with `SqliteSaver`).
+  - Check workshop options, Review again and the re-planning of flexible rows run in plain Python, outside the graph.
+  - The frontend resumes the graph once; the graph's `review_again` loop is used only by `resume_dispatcher_review.py`.
+  - `process_messages` runs the same processing without the graph. The checkpoint saves only when the run stops (`durability="exit"`), and Test 11's checkpoint file is 2.5 MB, against 1 MB for the run's `state.json` and `plan.json`.
+- No fix was made; the order of fixes is Aditya's decision.
+
 ## 2026-10-22: End-to-end test with the dispatcher's review (Test 11)
 
 Aditya asked for one fresh run of the whole application on the 100-case golden set, then the dispatcher's review through the app (Approve all, then Review again), with the score before and after in a separate report. Claude Code wrote the expectation and the scoring rules before the run and ran it once. Full report: [end-to-end test](../backend/docs/evaluation/END_TO_END_TEST_2026-10-22.md); test log: Test 11 in [prompt testing results](../backend/docs/evaluation/PROMPT_TESTING_RESULTS.md).

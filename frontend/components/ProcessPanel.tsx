@@ -104,6 +104,12 @@ export default function ProcessPanel({ messageCount }: Props) {
   );
 }
 
+// Dispatcher opens the run and, when the pipeline paused it for review, that review as well.
+function dispatcherLink(runId: string, threadId: string | null) {
+  const thread = threadId ? `&thread=${encodeURIComponent(threadId)}` : "";
+  return `/dispatcher?run=${encodeURIComponent(runId)}${thread}`;
+}
+
 type StateProps = { snapshot: Snapshot; busy: boolean; onStart: () => void };
 
 // One snapshot: what it holds, and where its processing has got to.
@@ -138,8 +144,8 @@ function SnapshotState({ snapshot, busy, onStart }: StateProps) {
       )}
       {snapshot.processing === "finished" && snapshot.run_id && (
         <p role="status">
-          Processed as run {snapshot.run_id}.{" "}
-          <Link className="open-run" href={`/dispatcher?run=${encodeURIComponent(snapshot.run_id)}`}>
+          Processed as run {snapshot.run_id}, paused for review as thread {snapshot.thread_id}.{" "}
+          <Link className="open-run" href={dispatcherLink(snapshot.run_id, snapshot.thread_id)}>
             Open in Dispatcher
           </Link>
         </p>

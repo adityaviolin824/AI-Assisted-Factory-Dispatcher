@@ -11,7 +11,9 @@
 #              fixed first and always used, even when it is late, the deadline has passed or it breaks
 #              a hard rule, and the other ready tasks are planned around it, earliest deadline first as
 #              in plan.json. added_task is new (22 October 2026): a batch the dispatcher added is
-#              planned like any other batch, with a row of its own.
+#              planned like any other batch, with a row of its own. open_flags is new (23 October
+#              2026): a chosen workshop or completed request overrides whatever processing left open
+#              (blockers, a split, a non-allocation intent), and the row names what it overrides.
 # Reads:       the run folder's manifest.json and state.json, orders.csv and workshops.csv.
 # Writes:      nothing. A review is a preview: it commits no assignment and changes no queue outside
 #              its own copy. No model is called.
@@ -49,21 +51,37 @@ def blockers(task):
     return task["missing_details"] + task["doubts_to_clarify"] + task["unhandled_constraints"]
 
 
+def open_flags(task):
+    """Return everything processing left open on a task: its blockers, a split request and an intent
+    other than allocation. A workshop the dispatcher chose, or a request the dispatcher completed,
+    overrides them all.
+    """
+    flags = blockers(task) + (["split requested"] if task["wants_split"] else [])
+    if task["intent"] != "allocation":
+        flags.append(f"intent {task['intent']}")
+    return flags
+
+
 def derive_task(task, entry):
     """Apply one decision entry to a verified task, on a copy; return (task, problems).
 
     Corrected facts make a new version, the source version plus the entry's decision_version, so
     replaying the same decisions always gives the same version. Only the blockers the dispatcher named
-    are removed, and readiness then follows verification's own rule. An entry with any problem is not
-    applied, and the row says why.
+    are removed, and readiness then follows verification's own rule. The dispatcher decides: a chosen
+    workshop or a completed request makes the task a ready allocation, whatever processing left open,
+    and what it overrides stays on record; it needs an order in orders.csv. An entry with any problem
+    is not applied, and the row says why.
     """
     facts = entry.get("facts", {})
     resolved = entry.get("resolves", [])
+    decided = entry.get("workshop") or entry.get("complete")
     problems = [f"{name} cannot be corrected here" for name in facts if name not in CORRECTABLE]
     problems += [f"{facts[name]!r} is not a valid {name}" for name in ("preference", "intent")
                  if name in facts and facts[name] not in CORRECTABLE[name]]
     if "order_id" in facts and facts["order_id"] not in ORDERS:
         problems.append(f"{facts['order_id']} is not in orders.csv")
+    if decided and "order_id" not in facts and task["order_id"] not in ORDERS:
+        problems.append("Python needs an order ID from orders.csv to plan this batch")
     if "due_date" in facts:
         try:
             date.fromisoformat(facts["due_date"])
@@ -77,7 +95,7 @@ def derive_task(task, entry):
     if entry and entry["source_version"] != task["version"]:
         problems.append(f"the decision is for version {entry['source_version']}, the task is version {task['version']}")
     task = copy.deepcopy(task)
-    if problems or not (facts or resolved):
+    if problems or not (facts or resolved or (decided and open_flags(task))):
         return task, problems
     # What processing recorded stays on record next to what the dispatcher supplied.
     deadline = task_deadline(task)
@@ -91,6 +109,11 @@ def derive_task(task, entry):
         task["version"] += entry["decision_version"]
     for field in ("missing_details", "doubts_to_clarify", "unhandled_constraints"):
         task[field] = [text for text in task[field] if text not in resolved]
+    # The dispatcher's batch is planned as given (23 October 2026); the row names what it overrides.
+    if decided:
+        task["dispatcher"]["overridden"] = open_flags(task)
+        task.update(intent="allocation", wants_split=False, missing_details=[], doubts_to_clarify=[],
+                    unhandled_constraints=[])
     task["information_sufficient"] = (task["intent"] == "allocation" and task["order_id"] in ORDERS
                                       and not task["missing_details"] and not task["doubts_to_clarify"])
     return task, problems
@@ -279,17 +302,22 @@ def build_dispatcher_plan(run_folder, decisions):
     with contextlib.redirect_stdout(io.StringIO()):  # summarize_plan also prints its own table
         result["summary_rows"] = summarize_plan(result)
 
-    # 4. Label each batch the dispatcher added, naming the other planned batches of its order, and show
-    #    each decision that was not applied. Every row is unresolved until finalize_review.
-    planned = {}
+    # 4. Label each batch the dispatcher added, naming the other planned batches of its order, name
+    #    what each dispatcher's batch overrides, and show each decision that was not applied. Every row
+    #    is unresolved until finalize_review.
+    planned, overridden = {}, {}
     for decision in made:
         if decision["status"] in RESERVING:
             planned.setdefault(decision["order_id"], []).append(decision["task_id"])
+        if decision["task"].get("dispatcher", {}).get("overridden"):
+            overridden[decision["task_id"]] = decision["task"]["dispatcher"]["overridden"]
     for row in result["summary_rows"]:
         if entries.get(row["id"], {}).get("added"):
             others = [task_id for task_id in planned.get(row["order_id"], []) if task_id != row["id"]]
             also = f" Other planned batches of {row['order_id']}: {', '.join(others)}." if others else ""
             row["reason"] = f"Added by the dispatcher.{also} {row['reason']}"
+        if row["id"] in overridden:
+            row["reason"] += f" It overrides what processing left open: {'; '.join(overridden[row['id']])}."
         if row["id"] in problems:
             row["reason"] += f" Dispatcher decision not applied: {'; '.join(problems[row['id']])}."
         row["final"] = False

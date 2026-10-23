@@ -199,7 +199,7 @@ export type Decision =
 
 export type Answer = { decisions: Decision[]; then: "review_again" | "approve_all" };
 
-// Chat bridge: PROPOSED endpoints, not yet in the backend (BACKEND_PROPOSAL.md). The fields follow
+// Chat bridge: backend/fastapi_routes/chat.py (BACKEND_PROPOSAL.md, section 1). The fields follow
 // the mock chat's storage and export (backend/experimentation_notebooks/mock_frontend/PLAN.md).
 export type ChatMessage = { message_id: number; sender: string; raw_text: string; received_at_utc: string };
 

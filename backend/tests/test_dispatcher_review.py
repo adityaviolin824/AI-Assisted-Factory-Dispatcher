@@ -14,6 +14,8 @@ What they prove:
 - notebook 06's controlled decision checks that do not use per-row approval hold for the modules,
   except that the dispatcher's workshop choice is always used, even when late, past the deadline or
   against a hard rule;
+- a chosen workshop or a completed request overrides whatever processing left open (blockers, a split,
+  an unclear intent), and the row names it; without an order in orders.csv it is refused, never dropped;
 - finalize_review approves the shown allocations without planning again;
 - apply_answer applies a valid answer and refuses an invalid one with nothing changed, including when
   the order or workshop data or the dispatch date changed;
@@ -85,7 +87,7 @@ CHANGED = {
 }
 # Definitions that are new in the modules.
 NEW = {
-    "dispatcher_review.dispatcher_plan": ["added_task", "input_signature", "finalize_review"],
+    "dispatcher_review.dispatcher_plan": ["open_flags", "added_task", "input_signature", "finalize_review"],
     "dispatcher_review.dispatcher_decisions": [
         "DECISION_FIELDS", "REQUIRED_FIELDS", "FIELD_FORMS", "CHANGED_INPUTS", "CHANGE_MARKERS", "verified_tasks_by_id",
         "complete", "add_batch",
@@ -95,9 +97,9 @@ NEW = {
 DROPPED = ["approved_decision", "approve", "release"]
 
 DECISIONS_RUN = "2026-10-14_14-40-08"  # the 30-request run of check_notebook_06.py
-T4, T5, T7, T8, T9, T10, T11, T12, T14, T20, T21, T25 = (
+T4, T5, T7, T8, T9, T10, T11, T12, T14, T20, T21, T23, T25 = (
     "T:L0004:J1", "T:L0005:J1", "T:L0007:J1", "T:L0008:J1", "T:L0009:J1", "T:L0010:J1", "T:L0011:J1", "T:L0012:J1",
-    "T:L0014:J1", "T:L0020:J1", "T:L0021:J1", "T:L0025:J1")
+    "T:L0014:J1", "T:L0020:J1", "T:L0021:J1", "T:L0023:J1", "T:L0025:J1")
 
 
 def refuse_network(*args, **kwargs):
@@ -467,6 +469,55 @@ class ControlledDecisions(unittest.TestCase):
         self.assertEqual(over_cap["selected_workshop"], "W8")
         self.assertIn("It overrides the hard rule exceeds_batch_cap=400>300.", over_cap["reason"])
 
+    def test_a_choice_overrides_what_processing_left_open(self):
+        # T5 lacks a confirmed due date and T7's intent is unclear. Before 23 October 2026 a workshop
+        # chosen for either was accepted, then silently left out of the plan.
+        choose_workshop(self.decisions, self.tasks, T5, "W1")
+        choose_workshop(self.decisions, self.tasks, T7, "W2")
+        review = self.build()
+        self.assertEqual(review["decision_problems"], {})
+        for task_id, workshop_id, left_open in ((T5, "W1", blockers(self.tasks[T5])),
+                                                (T7, "W2", blockers(self.tasks[T7]) + ["intent unclear"])):
+            with self.subTest(task=task_id):
+                chosen = record(review, task_id)
+                self.assertEqual((chosen["status"] in ("dispatcher_choice", "accepted_late"), chosen["selected_workshop"]),
+                                 (True, workshop_id))
+                self.assertIn(task_id, review["reservation_order"])
+                self.assertEqual(chosen["task"]["dispatcher"]["overridden"], left_open)
+                self.assertIn(f"It overrides what processing left open: {'; '.join(left_open)}.",
+                              row(review, task_id)["reason"])
+
+    def test_a_split_request_takes_the_dispatchers_batches(self):
+        # T23 asks to split ORD-093 (100 pieces). The dispatcher sends 60 to W1 and adds the other 40 for
+        # W2, both with a revised deadline (ORD-093's own date has passed).
+        self.assertIn("split requested", record(self.build(), T23)["reason"])
+        correct(self.decisions, self.tasks, T23, {"quantity": "60", "due_date": "2026-04-24"}, [])
+        choose_workshop(self.decisions, self.tasks, T23, "W1")
+        add_batch(self.decisions, {"order_id": "ORD-093", "quantity": "40", "due_date": "2026-04-24"}, "W2")
+        review = self.build()
+        for task_id, workshop_id, pieces in ((T23, "W1", 60), ("ADD-1", "W2", 40)):
+            with self.subTest(task=task_id):
+                planned = record(review, task_id)
+                self.assertEqual((planned["selected_workshop"], planned["order_snapshot"]["pieces"]), (workshop_id, pieces))
+                self.assertIn(task_id, review["reservation_order"])
+        self.assertIn("It overrides what processing left open: split requested.", row(review, T23)["reason"])
+        self.assertIn(f"Other planned batches of ORD-093: {T23}.", row(review, "ADD-1")["reason"])
+
+    def test_completing_a_split_request_plans_it(self):
+        complete(self.decisions, self.tasks, T23, {"quantity": "60", "due_date": "2026-04-24"})
+        planned = record(self.build(), T23)
+        self.assertEqual((planned["status"], planned["order_snapshot"]["pieces"]), ("recommendation", 60))
+        self.assertEqual(planned["task"]["dispatcher"]["overridden"], ["split requested"])
+
+    def test_a_choice_without_a_known_order_is_refused(self):
+        # T10 names no order, so Python cannot build the batch: the choice is refused, never dropped silently.
+        choose_workshop(self.decisions, self.tasks, T10, "W1")
+        review = self.build()
+        self.assertEqual(review["decision_problems"],
+                         {T10: ["Python needs an order ID from orders.csv to plan this batch"]})
+        self.assertNotIn(T10, review["reservation_order"])
+        self.assertIn("Dispatcher decision not applied: Python needs an order ID", row(review, T10)["reason"])
+
     def test_chosen_workshops_are_planned_first(self):
         choose_workshop(self.decisions, self.tasks, T25, "W6")
         review = self.build()
@@ -717,6 +768,8 @@ class ApplyAnswer(unittest.TestCase):
              f"Not applied: {T8}: W99 is not a workshop."),
             (answer({"decision": "choose_workshop", "task_id": T8, "workshop_id": "W99"}, then="finalize"),
              f"Not applied: {T8}: W99 is not a workshop."),
+            (answer({"decision": "choose_workshop", "task_id": T10, "workshop_id": "W1"}),
+             f"Not applied: {T10}: Python needs an order ID from orders.csv to plan this batch."),
             (answer({"decision": "correct", "task_id": T10, "facts": {"order_id": "ORD-999"}}),
              f"Not applied: {T10}: ORD-999 is not in orders.csv."),
             (answer({"decision": "correct", "task_id": T5, "facts": {"due_date": "20 April"}}),

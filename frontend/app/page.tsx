@@ -1,14 +1,36 @@
 import Link from "next/link";
 
-// The introduction: one real request and Python's answers to the Factory Primer's three questions,
-// copied from saved run 2026-10-19_11-25-25 (row T:L0011:J1), then the flow and what works today.
+// The introduction: recorded results, one real request and Python's answers to the Factory Primer's three
+// questions, copied from saved run 2026-10-19_11-25-25 (row T:L0011:J1), then the flow, what works today,
+// how the results were measured and the team.
+// The figures are copied from backend/eval_harness/results/harness_results_2026-10-15.md (normal replay)
+// and the root README's "Testing and recorded results"; nothing here is calculated.
 export default function IntroductionPage() {
   return (
     <div className="intro">
-      <h1>Decide where each batch is sewn</h1>
+      <h1>Dispatching at your fingertips</h1>
       <p className="lede">
         Staff ask for work in a shared chat. An AI reads each request, Python checks all eight workshops, and the
         dispatcher makes the final choice.
+      </p>
+
+      <ul className="metrics" aria-label="Recorded results">
+        <li>
+          <strong className="figure">2 of 120</strong>
+          <span>Late batches, versus 41 with random</span>
+        </li>
+        <li>
+          <strong className="figure">8.1 days</strong>
+          <span>Mean delivery, versus 21.5 with random</span>
+        </li>
+        <li>
+          <strong className="figure">100 cases</strong>
+          <span>Chat test set, hand-reviewed by three team members</span>
+        </li>
+      </ul>
+      <p className="metrics-note">
+        Recorded results from a replay of 120 historical orders and a separate 100-case chat test set. Our policy
+        costs about 3% more than random. <a href="#how-we-measured">View evaluation</a>
       </p>
 
       <section className="example" aria-label="Worked example">
@@ -64,6 +86,7 @@ export default function IntroductionPage() {
         <Link href="/operations">Open Chat</Link>
         <Link href="/dispatcher">Open Dispatcher</Link>
       </p>
+      <p className="motto">Measure twice. Dispatch once.</p>
 
       <h2>What works today</h2>
       <ul className="status-list">
@@ -71,6 +94,64 @@ export default function IntroductionPage() {
         <li>In progress: sending and processing chat messages, and the dispatcher&apos;s choices with one final approval.</li>
         <li>Not built yet: reallocation, sending work to workshops and sign-in.</li>
       </ul>
+
+      <section className="measured" aria-labelledby="how-we-measured">
+        <h2 id="how-we-measured">How we measured</h2>
+        <p>
+          The scheduling rules were replayed on 120 historical orders with the supplied simulator and compared with
+          choosing a random eligible workshop. These are the simulator&apos;s six measures, unchanged.
+        </p>
+        <div className="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Normal historical replay</th>
+                <th className="number">Mean days</th>
+                <th className="number">p90 days</th>
+                <th className="number">Late</th>
+                <th className="number">Defective</th>
+                <th className="number">Cost</th>
+                <th className="number">Maximum workshop share</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Random eligible workshop</td>
+                <td className="number">21.5</td>
+                <td className="number">45.6</td>
+                <td className="number">34%</td>
+                <td className="number">4%</td>
+                <td className="number">111,780</td>
+                <td className="number">23%</td>
+              </tr>
+              <tr>
+                <td>Our policy: reduce lateness</td>
+                <td className="number">8.1</td>
+                <td className="number">13.7</td>
+                <td className="number">2%</td>
+                <td className="number">6%</td>
+                <td className="number">115,360</td>
+                <td className="number">25%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Our policy delivered sooner and had fewer late batches, but cost more and had more defective batches. The
+          replay measures the scheduling rules, not how well the AI reads a conversation.
+        </p>
+        <p>
+          The chat test set has 100 synthetic cases in 149 messages: 85 that should be allocated and 15 deliberate
+          exceptions, such as a cancelled order. Three team members hand-reviewed every case before any run. In three
+          fresh runs, 73 to 81 of the 85 were allocated correctly before the dispatcher&apos;s review, and the cancelled
+          order was wrongly given a workshop each time. The full reports are in the project README, under Testing and
+          recorded results.
+        </p>
+      </section>
+
+      <p className="credits">
+        Brought to you by Cheng Shiqi, Song Zhuoyan, Zhang Chang, Zhang Hongyi and Aditya Bhattacharyya.
+      </p>
     </div>
   );
 }

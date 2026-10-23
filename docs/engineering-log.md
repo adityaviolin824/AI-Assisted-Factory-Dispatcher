@@ -2,6 +2,24 @@
 
 Entries describe the code and evidence available at the time of each investigation. Older notebook names, settings, output paths and test files may have changed or been removed. For current behavior, read the [backend README](../backend/README.md); for remaining work, read the [project plan](project-plan.md). Do not treat a historical passing test count as a newly rerun result.
 
+## 2026-10-24: Green theme (step 1), About page results and credits, sand text, shorter processing message
+
+- **User decisions:** Aditya chose a deep green redesign (plan recorded in [DESIGN.md's fourth pass](../frontend/DESIGN.md#fourth-pass-deep-green-mist-glow-and-motion)). After seeing step 1 they asked for golden-sand text in dark mode, and for the About page to get a new headline, a strip of recorded results, a motto and team credits. Claude Code gave its opinion first; Aditya accepted all of it:
+  - the headline is "Dispatching at your fingertips". The proposed "Lightning fast" was dropped because the only recorded timing is 9 min 23 s of processing (Test 11), and dispatcher speed has never been measured;
+  - plain headline, with "Brought to you by" credits at the bottom (Aditya last);
+  - the strip names the trade-off (about 3% more cost than random), and "View evaluation" jumps to a new "How we measured" section on the same page with the simulator's six measures unchanged, rather than to a repository link that could break;
+  - the motto is "Measure twice. Dispatch once."
+- **Figures and their sources:** 2 of 120 late against 41 with random, and 8.1 against 21.5 mean days, are from `backend/eval_harness/results/harness_results_2026-10-15.md` (normal replay). The six-measure table and the 73 to 81 of 85 range, with the cancelled order wrongly given a workshop in all three runs, are from the root README's recorded results. The page copies them; it calculates nothing.
+- **Processing message:** after processing, Chat printed "paused for review as thread" followed by the thread ID, a 36-character random code (`uuid.uuid4()` in `backend/app_full_pipeline/pipeline_graph.py`). The text now reads "Processed as run X, ready for the dispatcher's review." The "Open in Dispatcher" link still carries the thread ID. The updated test failed on the old text before the change and passes after it.
+- **Files:** `frontend/app/globals.css` (green settings, mist, ready glow, moving stitches, double line for approved, sand text `#F0E5C8`, metrics strip, motto, credits); `frontend/app/page.tsx`; `frontend/components/ProcessPanel.tsx`; `frontend/tests/theme.spec.ts` (new page colours and a mist test); `frontend/tests/chat.spec.ts`; new `frontend/tests/about.spec.ts`; `frontend/DESIGN.md` (token values and measurements).
+- **Verification:** every text colour is at least 4.5:1 and every control border at least 3:1 on every background in both themes, including the brightest mist (sand: 15.2 on panels, 10.5 at the mist peak). Typecheck and lint are clean, 55 of 55 Playwright tests pass, and the About, Chat and Dispatcher pages were screenshotted at 1440 and 390 px against the local read-only API. No Git command, installation or model call was made.
+
+## 2026-10-24: Preserve final-sprint evaluation proposals locally
+
+- **Request and edits:** Aditya asked to preserve the evaluation discussion in a new root `PLANS_FOR_FINAL_SPRINT.md` and ignore it. Codex recorded current strengths, explicit coursework requirements, separate explanation scoring, stronger versioned scores, the known cancellation failure, fresh held-out evaluation, a dispatcher pilot, controlled comparisons, evaluator checks and supplementary robustness/reproducibility work. Add the root-anchored ignore rule in `.gitignore`.
+- **Evidence and limits:** The plan distinguishes saved observations from proposed work and key-informed recovery from measured human performance. Later 23 October log entries supersede the older review's chat-bridge and unused-choice implementation gaps. The presentation direction and experiment priorities remain Aditya's decisions; no runtime change or paid evaluation was requested.
+- **Verification:** All 13 local links resolve; Markdown fences are balanced; the root-only ignore entry and log entry each occur once. No Git command, installation or model call was made for this documentation increment.
+
 ## 2026-10-23: Chat API bridge (send, history, snapshots, processing)
 
 Aditya asked for the chat bridge agreed on 21 October ([frontend/BACKEND_PROPOSAL.md](../frontend/BACKEND_PROPOSAL.md), section 1). Claude Code built it. The frontend already called all six endpoints.

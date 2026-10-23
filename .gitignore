@@ -159,6 +159,7 @@ AGENTS.md
 /PROJECT_HANDOFF.md
 
 # Local build plans and proposals; the public record is in the READMEs and docs/.
+/PLANS_FOR_FINAL_SPRINT.md
 /backend/DISPATCHER_REVIEW_PLAN.md
 /backend/DISPATCHER_REVIEW_GRAPH_PLAN.md
 /backend/FASTAPI_BUILD.md

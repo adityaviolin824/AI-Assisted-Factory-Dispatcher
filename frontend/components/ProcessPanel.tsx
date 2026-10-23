@@ -142,9 +142,11 @@ function SnapshotState({ snapshot, busy, onStart }: StateProps) {
       {snapshot.processing === "running" && (
         <p role="status">Processing. This takes several minutes; you can keep chatting meanwhile.</p>
       )}
+      {/* The thread ID is a long random code, so it is not shown: the link below carries it. */}
       {snapshot.processing === "finished" && snapshot.run_id && (
         <p role="status">
-          Processed as run {snapshot.run_id}, paused for review as thread {snapshot.thread_id}.{" "}
+          Processed as run {snapshot.run_id}
+          {snapshot.thread_id && ", ready for the dispatcher's review"}.{" "}
           <Link className="open-run" href={dispatcherLink(snapshot.run_id, snapshot.thread_id)}>
             Open in Dispatcher
           </Link>

@@ -1,69 +1,83 @@
-/* Two themes share every rule below; only these colour settings differ (DESIGN.md). Dark is the
-   default. The app bar's switch sets data-theme="light" on <html> for the blue-and-white theme.
-   State marks mean the same in both: dashed gold is provisional, solid green is approved and saved,
-   red needs attention. Text is at least 4.5:1 and state lines and control borders at least 3:1 on
-   every background the theme uses. */
+/* Two themes share every rule below; only these colour settings differ (DESIGN.md, fourth pass).
+   Dark is the default. The app bar's switch sets data-theme="light" on <html> for the sage-and-white
+   theme. State marks mean the same in both and differ by shape as well as colour: dashed gold is
+   waiting or provisional, a single red line needs attention, a double green line is approved and
+   saved. Text is at least 4.5:1 and control borders at least 3:1 on every background the theme uses,
+   including the brightest part of the mist. */
 :root {
-  /* Near-black with a faint indigo tint, so the denim palette stays; ecru text. */
-  --page: #0b0e16;
-  --surface: #151a27; /* cards and panels, the app bar, table rows */
-  --inset: #10141e; /* areas set into a card: table heads, the choices box, quotes, the chat log */
-  --hover: #1c2232; /* the table row under the pointer */
-  --selected: #252d43; /* the selected row and the pressed filter */
-  --seam: #262e42; /* dividing lines and table rules */
-  --card-line: transparent; /* dark cards stand out by tone, so they need no outline */
-  --control: #6e7ba1; /* borders of buttons and fields */
-  --text: #ede6d3;
-  --muted: #a9b2ca;
-  --gold: #e3a73e;
-  --green: #5cc49a;
-  --red: #ee7564;
+  /* Loden: near-black green panels on a deep green field, with light golden-sand text, like camel
+     thread on loden cloth. */
+  --page: #0e1611;
+  --mist: #2f5a41; /* the steam light drifting behind the page */
+  --mist-opacity: 0.45;
+  --surface: #0b110d; /* cards and panels, the app bar, table rows */
+  --inset: #070c09; /* areas set into a card: table heads, the choices box, quotes, the chat log */
+  --hover: #121b15; /* the table row under the pointer */
+  --selected: #1a2a20; /* the selected row and the pressed filter */
+  --seam: #1d2e23; /* dividing lines and table rules */
+  --card-line: #24402f; /* the fine green rim of a panel */
+  --control: #5f8a72; /* borders of buttons and fields */
+  --text: #f0e5c8;
+  --muted: #a6bcae;
+  --gold: #e8c14f;
+  --green: #7cf78a;
+  --red: #ff6b81;
   /* Backgrounds behind open (gold), error (red) and saved (green) notes. */
-  --tint-open: #211c16;
-  --tint-error: #25171b;
-  --tint-saved: #12221e;
-  --accent: #ede6d3; /* primary buttons, with --on-accent text */
-  --on-accent: #0b0e16;
-  --link: #ede6d3;
-  --link-line: #e3a73e;
-  --highlight: #e3a73e; /* keyboard focus and the active filter */
-  --switch-on: #ede6d3; /* the current page in the Chat/Dispatcher switch */
-  --switch-on-text: #0b0e16;
-  --shadow-sm: none;
-  --shadow-md: none;
+  --tint-open: #1d1f12;
+  --tint-error: #1f1816;
+  --tint-saved: #132116;
+  --accent: #d9f6e0; /* primary buttons, with --on-accent text */
+  --on-accent: #0b110d;
+  --link: #f0e5c8;
+  --link-line: #7cf78a;
+  --highlight: #7cf78a; /* keyboard focus and the active filter */
+  --glow: rgb(124 247 138 / 55%); /* the ready lamp around the one control that is ready */
+  --switch-on: #d9f6e0; /* the current page in the Chat/Dispatcher switch */
+  --switch-on-text: #0b110d;
+  /* Panels: a faint highlight along the top edge and a soft shadow below. */
+  --shadow-sm: inset 0 1px 0 rgb(240 229 200 / 5%), 0 10px 28px rgb(3 8 5 / 40%);
+  --shadow-md: inset 0 1px 0 rgb(240 229 200 / 6%), 0 22px 56px rgb(3 8 5 / 55%);
+  /* Motion: short for small feedback, medium for panels, long for page-level moves. */
+  --duration-short: 160ms;
+  --duration-medium: 240ms;
+  --duration-long: 400ms;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
   --sans: var(--font-archivo), "Helvetica Neue", Arial, sans-serif;
   --serif: var(--font-literata), Georgia, serif;
   color-scheme: dark;
 }
 
-/* Light: white cards on a pale blue-grey page, with a blue accent. Gold and red are darker than in
-   dark mode so they stay readable on white. */
+/* Light: white panels on a pale sage page, with a forest-green accent. Gold, red and green are
+   darker than in dark mode so they stay readable on white. */
 :root[data-theme="light"] {
-  --page: #f4f7fb;
+  --page: #f1f6f2;
+  --mist: #dcebe0;
+  --mist-opacity: 0.5;
   --surface: #ffffff;
-  --inset: #f6f8fc;
-  --hover: #f5f8ff;
-  --selected: #e9efff;
-  --seam: #dce3ee;
+  --inset: #f6faf7;
+  --hover: #f2f8f4;
+  --selected: #e3efe7;
+  --seam: #d3e2d8;
   --card-line: var(--seam);
-  --control: #7f8ca3;
-  --text: #172033;
-  --muted: #5f6a80;
-  --gold: #9a5d00;
-  --green: #16805f;
-  --red: #d84b4b;
-  --tint-open: #fff8e8;
-  --tint-error: #fff1f1;
-  --tint-saved: #edf9f4;
-  --accent: #315ee8;
+  --control: #6d8577;
+  --text: #13241a;
+  --muted: #556b5e;
+  --gold: #9c5a00;
+  --green: #0b7262;
+  --red: #c0284e;
+  --tint-open: #f8f3ed;
+  --tint-error: #fbf2f4;
+  --tint-saved: #eef6f4;
+  --accent: #1d5c3f;
   --on-accent: #ffffff;
-  --link: #2448b8;
-  --link-line: #9eb4f4;
-  --highlight: #315ee8;
+  --link: #1d5c3f;
+  --link-line: #9cc3ad;
+  --highlight: #1d5c3f;
+  --glow: rgb(29 92 63 / 38%);
   --switch-on: #ffffff;
-  --switch-on-text: #2448b8;
-  --shadow-sm: 0 1px 2px rgb(20 33 61 / 5%), 0 8px 24px rgb(20 33 61 / 5%);
-  --shadow-md: 0 14px 36px rgb(20 33 61 / 9%);
+  --switch-on-text: #1d5c3f;
+  --shadow-sm: 0 1px 2px rgb(19 36 26 / 5%), 0 8px 24px rgb(19 36 26 / 5%);
+  --shadow-md: 0 14px 36px rgb(19 36 26 / 9%);
   color-scheme: light;
 }
 
@@ -79,6 +93,70 @@ body {
   font-size: 16px;
   line-height: 1.45;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Steam light: two soft blooms behind every page that drift slowly. It is the only motion nobody
+   started, never takes clicks and stays behind the solid panels, so nothing is read over it. It sits
+   at z-index -1 above the page colour, which only works while <html> itself has no background. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: -10vmax;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(42vmax 30vmax at 22% 20%, var(--mist), transparent 70%),
+    radial-gradient(36vmax 28vmax at 80% 78%, var(--mist), transparent 70%);
+  opacity: var(--mist-opacity);
+  animation: mist-drift 90s ease-in-out infinite alternate;
+}
+
+@keyframes mist-drift {
+  to {
+    transform: translate3d(5vmax, -4vmax, 0) scale(1.08);
+  }
+}
+
+/* The ready lamp: a halo that breathes around the one control whose next step is ready. */
+.ready {
+  position: relative;
+}
+
+.ready::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  box-shadow: 0 0 0 1px var(--glow), 0 0 18px 2px var(--glow);
+  pointer-events: none;
+  animation: lamp-breathe 2.4s ease-in-out infinite;
+}
+
+@keyframes lamp-breathe {
+  50% {
+    opacity: 0.4;
+  }
+}
+
+/* Moving stitches: work in progress, such as processing or approving. A dashed line that runs. */
+.stitching {
+  background: repeating-linear-gradient(to bottom, var(--green) 0 6px, transparent 6px 11px);
+  animation: stitch-run 0.8s linear infinite;
+}
+
+@keyframes stitch-run {
+  to {
+    background-position: 0 11px;
+  }
+}
+
+/* People who ask for reduced motion get still mist, a steady lamp and still stitches. */
+@media (prefers-reduced-motion: reduce) {
+  body::before,
+  .ready::after,
+  .stitching {
+    animation: none;
+  }
 }
 
 /* Content is centred and at most 1560px wide, so very wide screens do not stretch the tables. */
@@ -149,7 +227,7 @@ p {
   min-height: 68px;
   padding: 12px max(40px, calc((100vw - 1560px) / 2 + 40px));
   background: var(--surface);
-  border-bottom: 1px solid var(--seam);
+  border-bottom: 1px solid var(--card-line);
 }
 
 .brand {
@@ -271,7 +349,8 @@ p {
   max-width: 96ch;
 }
 
-/* Which plan is shown: dashed gold before the dispatcher's review, solid green once approved and saved. */
+/* Which plan is shown: dashed gold before the dispatcher's review, a double green line once approved
+   and saved. */
 .run-state {
   padding: 10px 14px;
   background: var(--tint-open);
@@ -281,7 +360,7 @@ p {
 
 .run-state.final {
   background: var(--tint-saved);
-  border-left: 3px solid var(--green);
+  border-left: 5px double var(--green);
 }
 
 table {
@@ -332,21 +411,25 @@ td.nowrap {
   white-space: nowrap;
 }
 
-/* Worklist thread marks, repeated in words in the Outcome column. */
+/* Worklist thread marks, repeated in words in the Outcome column: a single red line, dashed gold or a
+   double green line. The double line needs 5px, so the 3px marks get 2px more padding and every
+   row's text stays in the same column. */
 tr[data-group] td:first-child {
-  border-left: 3px solid transparent;
+  border-left: 5px solid transparent;
 }
 
 tr[data-group="attention"] td:first-child {
-  border-left-color: var(--red);
+  border-left: 3px solid var(--red);
+  padding-left: 12px;
 }
 
 tr[data-group="suggested"] td:first-child {
   border-left: 3px dashed var(--gold);
+  padding-left: 12px;
 }
 
 tr[data-group="approved"] td:first-child {
-  border-left-color: var(--green);
+  border-left: 5px double var(--green);
 }
 
 .legend {
@@ -367,7 +450,8 @@ tr[data-group="approved"] td:first-child {
 }
 
 .legend .mark-approved {
-  border-left-color: var(--green);
+  padding-left: 6px;
+  border-left: 5px double var(--green);
 }
 
 button,
@@ -455,7 +539,7 @@ select {
   padding: 0;
   margin-right: 8px;
   text-decoration: underline;
-  text-decoration-color: var(--gold);
+  text-decoration-color: var(--link-line);
   text-underline-offset: 3px;
 }
 
@@ -560,12 +644,13 @@ select {
   font-size: 14px;
 }
 
-/* Unsaved choices are basted, not sewn: dashed until Approve all saves them. */
+/* Unsaved choices are basted, not sewn: dashed until Approve all saves them. A box inside a panel
+   takes a quiet seam line, not the panel's green rim. */
 .choices {
   margin: 16px 0;
   padding: 2px 16px 14px;
   background: var(--inset);
-  border: 1px solid var(--card-line);
+  border: 1px solid var(--seam);
   border-radius: 10px;
 }
 
@@ -674,12 +759,13 @@ fieldset.lock {
 }
 
 /* Each message is a card across the full width: the chat is one shared log read by many people,
-   not a two-person messenger, so there are no left and right bubbles (DESIGN.md). */
+   not a two-person messenger, so there are no left and right bubbles (DESIGN.md). Messages are
+   transcript lines, not panels, so they take the seam line rather than the green rim. */
 .timeline li {
   margin: 0 0 12px;
   padding: 12px 16px;
   background: var(--surface);
-  border: 1px solid var(--card-line);
+  border: 1px solid var(--seam);
   border-radius: 10px;
   box-shadow: var(--shadow-sm);
 }
@@ -761,7 +847,7 @@ fieldset.lock {
   margin-top: 16px;
 }
 
-/* A snapshot is dashed gold until it has been processed into a run, then solid green. */
+/* A snapshot is dashed gold until it has been processed into a run, then a double green line. */
 .snapshot {
   margin-top: 20px;
   padding-left: 14px;
@@ -769,7 +855,7 @@ fieldset.lock {
 }
 
 .snapshot.final {
-  border-left: 3px solid var(--green);
+  border-left: 5px double var(--green);
 }
 
 summary {
@@ -819,6 +905,51 @@ pre {
   color: var(--muted);
   font-size: 20px;
   line-height: 1.6;
+}
+
+/* Recorded results: one strip of three figures between thin rim lines, each figure over its label. */
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 32px 0 0;
+  padding: 0;
+  list-style: none;
+  border-block: 1px solid var(--card-line);
+}
+
+.metrics li {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  padding: 16px 24px;
+}
+
+.metrics li:first-child {
+  padding-left: 0;
+}
+
+.metrics li + li {
+  border-left: 1px solid var(--card-line);
+}
+
+.metrics .figure {
+  font-size: 30px;
+  font-stretch: 125%;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.metrics span {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.metrics-note {
+  max-width: 90ch;
+  color: var(--muted);
+  font-size: 14px;
 }
 
 .example {
@@ -932,6 +1063,31 @@ pre {
   box-shadow: var(--shadow-sm);
 }
 
+/* A tailor's saying under the two buttons, in the serif voice used for words people say. */
+.motto {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-family: var(--serif);
+  font-size: 18px;
+}
+
+/* The full replay table and how the chat test set was scored, where "View evaluation" leads. */
+.measured p {
+  max-width: 72ch;
+}
+
+.measured .table-scroll {
+  margin: 14px 0;
+}
+
+.credits {
+  margin-top: 56px;
+  padding-top: 18px;
+  border-top: 1px solid var(--card-line);
+  color: var(--muted);
+  font-size: 14px;
+}
+
 @media (max-width: 1100px) {
   .workspace {
     grid-template-columns: minmax(0, 1fr);
@@ -969,6 +1125,20 @@ pre {
 
   .steps {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* On narrow screens the three figures stack, with the rim lines between them turned horizontal. */
+  .metrics {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .metrics li {
+    padding: 14px 0;
+  }
+
+  .metrics li + li {
+    border-left: none;
+    border-top: 1px solid var(--card-line);
   }
 }
 

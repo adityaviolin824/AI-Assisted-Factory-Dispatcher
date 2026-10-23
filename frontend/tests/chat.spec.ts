@@ -139,6 +139,8 @@ test("the name is remembered in this tab", async ({ page }) => {
 });
 
 test("processing waits for a confirmation about paid models, then links the run to Dispatcher", async ({ page }) => {
+  // Real thread IDs are long random codes (uuid4); the link carries it, so the text does not show it.
+  const threadId = "3f2a9c1e-5b7d-4e2a-9f1c-8d6b2a4e7c10";
   const processRequests: Request[] = [];
   page.on("request", (request) => request.url().endsWith("/process") && processRequests.push(request));
   await page.clock.install();
@@ -150,7 +152,9 @@ test("processing waits for a confirmation about paid models, then links the run 
     route.fulfill({ json: makeSnapshot({ processing: "running" }) }),
   );
   await page.route("**/api/backend/chat/snapshots/S1", (route) =>
-    route.fulfill({ json: makeSnapshot({ processing: "finished", run_id: "2026-10-21_09-10-00", thread_id: "T1" }) }),
+    route.fulfill({
+      json: makeSnapshot({ processing: "finished", run_id: "2026-10-21_09-10-00", thread_id: threadId }),
+    }),
   );
   await page.goto("/operations");
 
@@ -164,8 +168,10 @@ test("processing waits for a confirmation about paid models, then links the run 
   await page.clock.fastForward(5000);
   await expect(page.getByRole("link", { name: "Open in Dispatcher" })).toHaveAttribute(
     "href",
-    "/dispatcher?run=2026-10-21_09-10-00&thread=T1",
+    `/dispatcher?run=2026-10-21_09-10-00&thread=${threadId}`,
   );
+  await expect(page.getByText("Processed as run 2026-10-21_09-10-00, ready for the dispatcher's review.")).toBeVisible();
+  await expect(page.getByText(threadId)).toHaveCount(0);
   expect(processRequests).toHaveLength(1);
 });
 

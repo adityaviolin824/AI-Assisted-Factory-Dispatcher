@@ -66,4 +66,4 @@ Sources: [investigation and implementation steps](../backend/debugging/held-task
 
 Controlled checks test particular code rules. Cached replays compare behavior using recorded interpretations. Fresh model runs test the language stages under the recorded settings. The human-reviewed answer key supplies expected results for the separate 100-case dataset. These forms of evidence answer different questions and are kept separate in the records.
 
-The current backend also has intentional differences from these notebooks, including provisional warnings, the graph review pause and one-batch final approval. See the [backend README](../backend/README.md) for those contracts. Reallocation and its optional review/approval flow remain pending.
+The current backend also has intentional differences from these notebooks, including provisional warnings, the graph review pause and one-batch final approval. See the [backend README](../backend/README.md) for those contracts. The application implements dispatch-table reallocation through Approve all and Review again. Operational workshop transfers remain future work.

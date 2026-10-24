@@ -1,3 +1,4 @@
+import { count } from "@/lib/format";
 import type { RunSummary } from "@/lib/types";
 
 type Props = { runs: RunSummary[]; runId: string; onChange: (runId: string) => void; disabled?: boolean };
@@ -10,7 +11,7 @@ export default function RunPicker({ runs, runId, onChange, disabled = false }: P
         <option value="">Choose a run</option>
         {runs.map((run) => (
           <option key={run.run_id} value={run.run_id}>
-            {run.run_id}: {run.label} ({run.messages} messages)
+            {run.run_id}: {run.label} ({count(run.messages, "message")})
           </option>
         ))}
       </select>

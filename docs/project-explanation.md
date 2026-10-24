@@ -1,124 +1,81 @@
-# Project explanation for presentations
+# Product and technical overview
 
-Development and presentation notes for [AI-Assisted-Factory-Dispatcher](../README.md). The application is named SweaterCo Dispatch Copilot.
+Updated: 24 October 2026. SweaterCo Dispatch Copilot turns operations messages into an explainable workshop dispatch table. The [backend guide](../backend/README.md), [frontend guide](../frontend/README.md) and [system design](system-design.md) document the implemented behavior.
 
-Current implementation status updated: 13 October 2026; the graph's dispatcher review pause added 20 October 2026. The historical debugging and run evidence below retains its 10 October processing v3/allocation v4 baseline. Use this to explain the project to the professor. The [backend README](../backend/README.md) explains the implementation in more detail, and the [project plan](project-plan.md) distinguishes completed work from what comes next.
+## The problem
 
-The [experiment guide](../experiments/README.md) gives a reading order for the earlier notebooks. Its [development notes](../experiments/development-notes.md) explain four investigations, and the [timeline](../experiments/timeline.md) connects them to the later modules and API.
+A factory sends batches to outside workshops when it needs additional capacity. The dispatcher must establish whether each workshop can make the product, can take the batch given its capacity and queue, and is allowed to take it under workshop and request restrictions. Informal messages, missing facts and later corrections make that decision difficult to trace.
 
-**MVP goal and latest decision, 21 October 2026:** produce an explainable dispatch table that the dispatcher controls. The dispatcher finishes the whole choice set locally, then one **Approve all** authorizes Python to apply it, schedule flexible work, save immediately and show the final table with changed rows. The batch-finalization endpoint was implemented on 21 October. The older per-edit review description below records the earlier stage. Reallocation and the optional review/approval after it remain pending. Docker and deployment come at the absolute end.
+The application keeps original messages beside recommendations, calculates the alternatives and records the dispatcher's final choices. Most requests prioritize avoiding lateness and reducing delivery time; explicit cost and quality preferences select the corresponding policies. Production delivery time is separate from software processing latency.
 
-## The problem we are solving
+## Current workflow
 
-A factory sends batches to outside workshops when it needs extra capacity. The dispatcher must consider what each workshop can make, its available capacity and queue, whether it is allowed to receive the work, and the customer's requirements. Requests arrive as informal messages, sometimes with missing information or later corrections.
+1. Operations staff send named messages in Chat and capture a fixed conversation snapshot.
+2. Language models extract owned messages, identify jobs, connect supported follow-ups and assess current task evidence.
+3. Python checks order identity, quantities, dates, restrictions and readiness. Uncertain or unsupported input remains visible.
+4. The scheduler calculates workshop eligibility, delivery, cost and tentative shared queues in deadline order.
+5. LangGraph preserves the initial dispatcher review in a SQLite checkpoint.
+6. The dispatcher stages corrections, completes requests, adds batches and chooses destinations. An explicit optional preview calculates the whole set without saving.
+7. **Approve all** submits once. Python keeps manual destinations fixed, replans flexible work, saves the table and reports changes. **Review again** applies further choices to a saved plan as a new version.
 
-Our aim is to turn those messages into checked requests and produce an explainable workshop recommendation. Usually, avoiding late delivery and getting the work back promptly comes first. For delicate or expensive work, a lower risk of defects may deserve much more importance. Cost and workload distribution also affect the choice.
+The output is a saved decision table. It does not book workshop capacity or transfer work already in production. A final table can contain unresolved rows.
 
-There are two different kinds of speed here: how quickly the software answers, and how quickly a workshop can deliver the batch. Improving the first does not prove that we improved the second.
+## Why the responsibilities are separate
 
-## What the current prototype does
+The model interprets language; Python validates evidence and performs arithmetic; the dispatcher controls destinations. React displays these records and sends structured choices through FastAPI. The same scheduling functions serve the application and historical benchmark adapter.
 
-The current backend uses Python modules, run together by `run_full_pipeline.py` through an eight-node LangGraph graph:
-
-1. Read a chat TXT snapshot and assign source-message IDs.
-2. Extract jobs in owned batches and validate the original quotations and written order references.
-3. Create separate requests or attach supported follow-ups. Corrections increase the task version and invalidate earlier verification.
-4. Verify current task evidence, look up trusted order/workshop facts and calculate supported dates and readiness in Python.
-5. Route ready allocation tasks to the deterministic scheduler and retain clarification, reference and review outcomes.
-6. Plan earliest deadline first using a temporary queue copy, then save recommendations, calculations, review warnings and input accounting.
-7. Pause for the dispatcher's review (since 20 October 2026). The paused review is kept in a SQLite checkpoint; the dispatcher corrects facts, chooses workshops or accepts shown lateness, sees the recalculated review, and finally approves it all. Approval saves the review last shown as JSON without planning again. No model is called in the review.
-
-An unresolved follow-up no longer automatically stops the original task. A usable recommendation can be shown as provisional, with the unresolved message retained for dispatcher review. Missing essential facts and genuine verification failures still prevent allocation. A recommendation is a preview, not a committed assignment.
-
-Notebook 05 remains an unchanged experimental reference. The current modules deliberately differ in model settings, provisional warnings, partial previews and plan history; the tests declare these differences. They do not use the earlier v3/v4 disk handoff or resume contract. The mock SQLite chat exports input manually and is not connected to the pipeline or an assignment database.
-
-The model handles language interpretation. Python validates evidence and computes eligibility, dates, queues, cost, rankings and allocation. A well-formed model response can still misunderstand a request.
+A correction appends evidence, increments its task version and invalidates previous verification. Message, item, task and order IDs are separate because one message can contain several jobs and several messages can concern one evolving task. A schema-valid answer can still misunderstand meaning, so implementation tests and language evaluation remain distinct.
 
 ## Why duplicate counts were a real engineering problem
 
-The earlier parser used overlapping message groups. In the saved run inspected on 6 October, 30 source requests appeared 48 times across those groups. The separate model deduplication step returned all 48 occurrences, and the code accepted them. Verification then checked each occurrence separately, sometimes giving different judgments to copies of the same request.
+In the historical investigation of 6 October, 30 source messages appeared 48 times across overlapping intake groups. A later deduplication call returned all 48 and the application accepted them. The demonstrated cause was a missing source-ownership acceptance rule; saved files did not establish which edited prompts produced every answer.
 
-The proven problem was the missing acceptance rule around overlap duplicates. The investigation did not prove that the model itself was incapable, and the saved files did not establish which edited prompts had produced the results. More prompt editing alone could not provide a reliable guarantee.
+Owned target batches now prevent context-only messages from creating accepted duplicates. Different jobs within one message retain separate item IDs. Order ID alone cannot identify a task: an information question and allocation request may name the same order and remain independent.
 
-V3 prevents the same source message from being accepted again just because it appears as context. It also checks evidence, tracks separate jobs and invalidates old verification after a correction. However, it still needs evaluation for semantic mistakes, such as misunderstanding whether two differently worded requests are the same job.
+This prevents a mechanical duplication mechanism. It does not establish correct semantic merging of every differently worded request. The [development notes](../experiments/development-notes.md) retain the diagnosis and verification boundaries.
 
-An order ID is not a safe deduplication key. A status question and an allocation request can mention the same order and remain different tasks. Likewise, two jobs inside one message must not collapse into one just because they share a source line. Message, item, task and order counts describe different things.
+## How recommendations are calculated
 
-The detailed historical audit records the failure and its limits. It is not a claim about today's model accuracy.
+Automatic selection removes workshops that fail status, category compatibility, batch cap, requested/excluded destinations or deadline feasibility. Production is quantity / daily capacity; expected rework is production × defect rate × 0.5. Delivery adds queue, production, rework and pickup time; only production/rework occupy the temporary queue.
 
-## What the latest fixes show
+Default/fastest ranks lateness, delivery and cost. Cheapest starts with cost; quality starts with defect rate. The weighted hybrid combines lateness, cost and piece share without a direct quality weight. Delicacy/value inference and alternative weights require defined inputs and evaluation.
 
-Two observed processing failures were addressed: context-only messages in the model's non-task list caused valid intake batches to be rejected (P1), and equivalent date wording such as `Mar 23` / `March 23, 2026` failed an exact-text deadline check (P5). The current date check still requires the selected source to support the same calendar date, including any written year. The issues record preserves the causes, changes and recorded verification.
+When no on-time automatic option exists, the request remains for review. Manual destinations override automatic restrictions and lateness, with the consequences recorded. Python still requires a known order and workshop. Reallocation rebuilds once from original queues rather than repeatedly adding previous reservations.
 
-Expected interpretation failures are preserved as review records while other work continues. The latest change replaced automatic holds with provisional allocation previews: the original request can be checked and planned, and a warning asks whether an unresolved input changes it. Warnings are saved in `review_warnings`; provisional labels appear in `summary_rows`. Review records reserve no capacity, while provisional recommendations reserve tentative workload like other recommendations. No candidate relationship is presented as a confirmed link.
+Unresolved follow-ups produce provisional warnings instead of persistent holds. A provisional recommendation reserves tentative work but cannot be approved until applicable warnings are checked. Candidate relationships remain uncertain; the system does not invent attachments.
 
-Luna intake also fixed the recorded demo's follow-up detection: correct labels improved from 3/7 to 7/7 under the same prompt and context window, retaining the previously dropped deadline. That did not fix every downstream link: the quality addition and short replies can still require review. The [problem records](../backend/problems_solved/followup_detection_fixed_with_luna.md) distinguish the measured improvement from remaining failures. API, file and programming errors still stop execution visibly.
+## Recorded evidence
 
-The complete third run also exposed a remaining language error: R12 said nothing new should go to QuickStitch, but processing recorded QuickStitch as a reference rather than an exclusion. The first v4 plan consequently recommended it. B17 now requires review when the winning workshop is recorded only as a reference, leaving its queue unchanged. That prevents this observed unsafe recommendation; it does not prove that workshop-role interpretation is correct in every case or apply the instruction globally to other requests.
+| Evidence | Recorded result | Meaning |
+|---|---|---|
+| Historical scheduler replay | Default: 8.1 mean delivery days and 2/120 late; random: 21.5 days and 41/120 late. | Allocation rules on a seeded simulation. Cost and defects are higher for the default; all six official metrics remain reported. |
+| Supplied 30-request development set | Test 7 replay after a Python date fix: 30/30 readiness agreement; Test 9 fresh run: 29/30 readiness agreement. | Different experiments; a saved-answer replay is not a fresh language sample or 30 automatic allocations. |
+| Human-reviewed 100-case set | Three fresh automatic runs: 73, 80 and 81 of 85 expected allocations; 14/15 exceptions held in each. A 24 October replay of Test 11's saved answers with the cancellation check: 81 of 85 and 15/15. | Existing broad allocation score; lost preferences can count as allocated. CASE-097 cancellation was unsafe in all three runs; the replay reuses the same model answers, so it is not a fresh run. |
+| Key-informed API review | 85/85 expected allocations and 15/15 exceptions after 23 choices in Test 11. | Recovery capability with answer-key access, not autonomous accuracy or a human usability study. Twenty-six source rows remained unresolved. |
+| Implementation checks | Latest recorded 24 October baseline, after the cancellation change: 170 backend and 66 browser tests; type checking, lint and build passed. | Checked code/interaction properties; some fixtures are local and browser API replies are simulated. |
 
-## How the workshop recommendation is made
+See the [evaluation guide](../evaluation/README.md) for datasets, scoring definitions, costs, latency, failure evidence and complete results. The final coverage headline does not require timeliness or every field to match; split-part detail checks currently inspect only the main part. Test 11 separately reported all 85 allocations on time with matching fields.
 
-The system first removes workshops that fail status, product category, batch cap or the request's workshop restrictions. The normal plan also requires estimated on-time delivery. If no allowed workshop meets the request, it records the issue for review and reserves nothing.
+## Remaining work
 
-V4 names the least-late option when the deadline cannot be met, and can show an on-time alternative without an unusable requested destination. These options support the dispatcher's next decision; they do not silently change the request or make an assignment. The same distinction must remain visible in the eventual interface.
+- Measure the cancellation check in a fresh run, settle broader cancellation wording (negation, superseded instructions) and reduce unnecessary interpretation/link reviews.
+- Consolidate all 30 supplied requests by behavior and evaluate explanation faithfulness separately from decision correctness.
+- Version stronger scoring, test deliberately wrong outputs and evaluate unseen conversations after development on known failures.
+- Measure human dispatcher correctness, unsafe decisions, completion time and review effort without answer-key access.
+- Improve per-run reproducibility and protect unsaved choices across internal navigation.
+- Define chat/CSV deadline discrepancy handling; the current checked chat date can override the CSV date without an automatic mismatch alert.
 
-Estimated delivery time combines the existing queue, production time, expected rework and transport. This means choosing the lowest queue alone would be insufficient: a workshop could have a short queue but slow production or greater expected rework.
+Authentication, clarification replies, voice, multiple channels, live assignment transactions, progress/queue ownership and operational transfers are future extensions. Docker and deployment follow core functionality and evaluation.
 
-For the default or fastest preference, candidates are compared by lateness, then estimated delivery time, then cost. Since the normal plan has already removed late candidates, delivery time and cost distinguish the survivors. A cheapest preference starts with cost. A quality preference starts with defect rate, then delivery time and cost.
+## Engineering decisions to defend
 
-This already supports an explicit request to prioritise quality. A general rule that recognises delicate or expensive work still needs a defined input and evaluation. The current hybrid combines lateness, cost and planned piece share; it has no direct defect-rate weight. We should not present task-specific quality weighting as completed work.
+- Source ownership prevents repeated extraction while retaining multi-job messages.
+- Task versions prevent stale verification after a correction.
+- Deterministic calculations expose queue and ranking effects rather than delegating arithmetic to a model.
+- Provisional warnings keep uncertainty visible without blocking every nearby request.
+- One batch approval avoids hidden per-edit persistence and recalculation.
+- Manual destinations remain authoritative while their consequences are recorded.
+- Workflow checkpoints preserve review progress; they do not replace future operational transactions.
+- Historical simulation, fresh model runs, cached replays and assisted review answer different evaluation questions.
 
-Workshop defect rates and delivery estimates are uncertain business inputs. The calculation makes the decision inspectable; it does not guarantee a particular batch will arrive on time or without defects.
-
-## What we can honestly claim from the evidence
-
-- **Implementation:** 69 offline tests pass across processing, allocation, the harness adapter and the full graph. They check source/schema contracts, deterministic rules, queues, cached end-to-end equivalence, failures, partial accounting, history and provisional warnings.
-- **Saved-state regression:** an independent review replayed all 14 saved states without changing them. Decisions and tentative queues matched the earlier reference for those same tasks; R14's summary gained its intended provisional warning. The formerly held tasks were not freshly verified.
-- **Language interpretation:** the recorded all-Luna run on the supplied 30 requests achieved 30/30 intake labels and 28/30 readiness agreement with the development key. It contains no follow-ups, so it does not establish linking accuracy. Model comparisons and failures are recorded in [the experiments](../backend/docs/evaluation/PROMPT_TESTING_RESULTS.md).
-- **Scheduling:** the unchanged 120-order harness replay compares six policies with three baselines under normal and shock conditions. In the normal replay, the default records 8.1 mean delivery days and 2% late versus random's 21.5 days and 34% late. Baselines still win on some cost and defect metrics. Preserve all six official metrics and [the complete tables](../backend/eval_harness/results/harness_results_2026-10-15.md).
-- **Observability:** local manifests, state, call records and plan/history make the decisions inspectable. The 15 October 21:19:26 cached full-pipeline run was confirmed remotely in LangSmith, including its final plan and 34 chain spans.
-
-The supplied chats have informed development. Unseen examples, repeated fresh-model samples, separate explanation scores and at least ten analysed failure cases are required before broader claims. Cached replay establishes repeatability of saved answers, not model stability. DeepEval code is retained for reference but is not integrated. The current docs update made no paid model calls.
-
-## What is still to be built
-
-The working pipeline is modularized, including routing, allocation, the batch graph and its dispatcher review pause. Persistent assignments, live order-status enforcement, clarification replies, reallocation, safe changes of workshop and the product interface remain future work; the dispatcher's approval is saved JSON, not a committed assignment. The allocator records order status/stage and warns for completed historical orders; it does not enforce a live status policy or calculate remaining-stage work. Calendar handling, standing instructions and quality-sensitive policy choices also need explicit decisions.
-
-The planned reallocation workflow keeps the existing assignment active while a proposed move is checked. A confirmed move must change the assignment and its reservations together, preserve history and resist repeated submissions. Started or completed work needs a separate policy; we cannot simply erase its production time.
-
-The [system design](system-design.md) preserves these requirements without presenting them as implemented features.
-
-One recognized edge case for the professor is a deadline mismatch between a chat message and the order CSV. For example, the CSV might say April 10 while the message says April 8. Our preferred future approach is to use the trusted CSV date until an authorized update and explicitly show the discrepancy to the dispatcher, because either source could be outdated. We have deferred automatic comparison and alerts to keep the prototype manageable. The current code still allows a confirmed chat-date override; documenting this limitation does not implement the future policy.
-
-## How the planned app should work
-
-The product direction has three pages:
-
-- **Landing/demo page:** explain the factory problem, actual capabilities, architecture, measured results and limits, then provide demo access.
-- **Operations page:** factory users submit messages in chat channels, see processing outcomes and answer source-linked clarifications. Later voice input produces a transcript for confirmation before entering the same text pipeline.
-- **Dispatcher console:** one dispatcher reviews the unified work list, original evidence, allowed/rejected workshops, calculated alternatives and warnings, then takes a permitted assignment or reallocation action. A supported assistant explains recorded choices and calls code for new comparisons.
-
-Build the text journey first. An allocated order can also need review of a proposed move; its current assignment remains visible and active until a valid replacement commits. Voice and multiple live channels follow a measured core flow. Exact visual styling is still to be designed. The [frontend plan](system-design.md#8-planned-frontend-pages) records the page purposes and state distinctions.
-
-LangGraph already connects the module processing and allocation steps in `backend/app_full_pipeline/pipeline_graph.py`, as it does in notebook 05. Since 20 October 2026 it also waits for the dispatcher's review with `interrupt()`, keeping the paused review in a SQLite checkpoint so it can be answered after the program ends. Waiting for a clarification reply is still planned. It does not choose workshops through model arithmetic. In the planned workflow, a reply resumes the same request, a correction invalidates the old verified version, and a commit needs a database transaction with fresh task/queue checks. See the [planned architecture](system-design.md#7-planned-application-architecture-and-langgraph).
-
-The recorded technical direction is Next.js/React for the interface, Python with likely FastAPI for the backend, and project-local SQLite for the first operational store. These are planned choices. Their purpose is to keep the same verifiable capability, capacity/queue and permission checks behind every input channel and visible to the dispatcher.
-
-## Contributions and questions to prepare
-
-Aditya identified the confusing counts, proposed ownership/set-based handling and batching, and set the requirements for understandable code, visible execution and task-dependent quality priorities. Codex and Claude Code assisted with investigation, implementation, controlled verification and documentation; the engineering log attributes individual changes. Earlier log entries also record allocation work adapted from Zhang. Use that history to describe individual contributions accurately; do not claim that AI-generated work was independently written or verified by a team member.
-
-Before presenting, be ready to answer:
-
-- Why can one message contain several tasks, while several messages can describe one task?
-- What proved the old deduplication failure, and what remains uncertain about model interpretation?
-- Why must a correction invalidate the old verification?
-- How do queue, capacity, expected rework, transport and hard restrictions affect ranking?
-- When should quality outrank speed, and what evidence would justify the policy?
-- Why must a review item reserve no capacity, and how is a preview different from an assignment?
-- Why does B17 ask for review, and which interpretation errors can still get past that safeguard?
-- What belongs in LangGraph state, and why does an assignment still need a database transaction?
-- Why should voice enter the same pipeline, and how will the operations page differ from the dispatcher console?
-- What did you personally investigate or change, what did the AI assist with, and how would you verify the result again?
-
-The interview preparation rules describe how to practise these explanations one question at a time.
+Development used AI assistance for implementation, investigation and documentation. The human dataset review is recorded separately in the [review provenance](../backend/docs/evaluation/extended_dispatch_100_REVIEW.md).

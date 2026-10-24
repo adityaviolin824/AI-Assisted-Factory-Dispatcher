@@ -42,4 +42,4 @@ uv run python -m jupyterlab ../experiments/notebooks
 
 Saved outputs, credentials, local databases, response caches and private paths are not included here. Results quoted in the notes are historical; preparing these copies did not repeat the model runs.
 
-Reallocation, the optional review after it and approval after reallocation are still pending. No notebook 07 is included.
+Reallocation is now part of the application's **Approve all** and **Review again** (see the [backend README](../backend/README.md)). These notebooks predate it, and no notebook 07 is included.

@@ -44,6 +44,37 @@ test("the conversation shows each message with its Singapore time, name and orig
   await expect(page.getByText("2 messages, the last at 09:05")).toBeVisible();
 });
 
+test("the chat says which date relative words count from", async ({ page }) => {
+  await serveMessages(page, MESSAGES);
+  await page.route("**/api/backend/chat/dates", (route) =>
+    route.fulfill({ json: { message_date: "2026-04-01", dispatch_date: "2026-04-02" } }),
+  );
+  await page.goto("/operations");
+  await expect(
+    page.getByText(
+      'Words such as "by Friday" count from 1 April 2026, when the supplied chat was written, not from today. ' +
+        "Plans start from 2 April 2026.",
+    ),
+  ).toBeVisible();
+});
+
+test("one message is counted in the singular", async ({ page }) => {
+  const oneLine = { lines: [makeSnapshot().lines[0]], message_count: 1 };
+  await serveMessages(page, [MESSAGES[0]]);
+  await page.route("**/api/backend/chat/snapshots", (route) =>
+    route.fulfill({
+      json: [
+        makeSnapshot(oneLine),
+        makeSnapshot({ ...oneLine, snapshot_id: "S0", processing: "finished", run_id: "R0", thread_id: "TH0" }),
+      ],
+    }),
+  );
+  await page.goto("/operations");
+  await expect(page.getByText("1 message, the last at 09:02")).toBeVisible();
+  await expect(page.getByText("Snapshot of 1 message,")).toBeVisible();
+  await expect(page.getByRole("listitem").filter({ hasText: "R0" })).toHaveText("R0 1 message");
+});
+
 test("Send stays disabled until there is a name and a message", async ({ page }) => {
   await serveMessages(page, []);
   await page.goto("/operations");
@@ -53,6 +84,21 @@ test("Send stays disabled until there is a name and a message", async ({ page })
   await expect(send).toBeDisabled();
   await page.getByRole("textbox", { name: "Message", exact: true }).fill("Please allocate ORD-061.");
   await expect(send).toBeEnabled();
+});
+
+test("Ctrl+Enter does not send while Send is disabled", async ({ page }) => {
+  await serveMessages(page, MESSAGES);
+  const bodies = await recordSends(page, (body) => saved(body, 3));
+  await page.goto("/operations");
+  await page.getByLabel("Your name").fill("Chen");
+  const message = page.getByRole("textbox", { name: "Message", exact: true });
+  await message.press("Control+Enter");
+  // Only the message sent afterwards reaches the backend.
+  await message.fill("Please allocate ORD-061.");
+  await page.getByRole("button", { name: "Send" }).click();
+  await expect(page.getByText("Please allocate ORD-061.")).toBeVisible();
+  expect(bodies.map((body) => body.raw_text)).toEqual(["Please allocate ORD-061."]);
+  await expect(page.locator("p.error")).toHaveCount(0);
 });
 
 test("Send saves the message, shows it and clears the draft", async ({ page }) => {
@@ -173,6 +219,29 @@ test("processing waits for a confirmation about paid models, then links the run 
   await expect(page.getByText("Processed as run 2026-10-21_09-10-00, ready for the dispatcher's review.")).toBeVisible();
   await expect(page.getByText(threadId)).toHaveCount(0);
   expect(processRequests).toHaveLength(1);
+});
+
+test("a failed status read is shown, and processing is still followed", async ({ page }) => {
+  await page.clock.install();
+  await serveMessages(page, MESSAGES);
+  await page.route("**/api/backend/chat/snapshots", (route) =>
+    route.fulfill({ json: [makeSnapshot({ processing: "running" })] }),
+  );
+  let reads = 0;
+  await page.route("**/api/backend/chat/snapshots/S1", (route) => {
+    reads += 1;
+    // The first read fails, as while the API server reloads; the next one finds the run finished.
+    return reads === 1
+      ? route.fulfill({ status: 502, body: "Bad gateway" })
+      : route.fulfill({ json: makeSnapshot({ processing: "finished", run_id: "R1", thread_id: "TH1" }) });
+  });
+  await page.goto("/operations");
+  await expect(page.getByText("Processing. This takes several minutes")).toBeVisible();
+  await page.clock.fastForward(5000);
+  await expect(page.locator("p.error")).toContainText("HTTP 502");
+  await page.clock.fastForward(5000);
+  await expect(page.getByRole("link", { name: "Open in Dispatcher" })).toBeVisible();
+  await expect(page.locator("p.error")).toHaveCount(0);
 });
 
 test("Process conversation is disabled while the chat is empty", async ({ page }) => {

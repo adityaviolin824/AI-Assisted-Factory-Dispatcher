@@ -17,6 +17,7 @@ What they prove:
   with no deadline selected, dispatch timing keeps the CSV date and an omitted delivery date asks;
 - a piece count written for the task's order that differs from orders.csv blocks readiness;
 - a stage with a reasoning effort sends and records the effort instead of the temperature;
+- a saved answer is read as UTF-8, whatever the computer's default text encoding;
 - a review naming no order or message targets only the tasks of the two messages before it;
 - an unresolved input never stops a task's verification; possibly_affected_tasks finds the tasks
   it may modify, from the reviews and from two kinds of verified task.
@@ -26,6 +27,7 @@ import ast
 import builtins
 import contextlib
 import copy
+import csv
 import importlib
 import io
 import json
@@ -68,7 +70,8 @@ MOVED = {
 NEW = {
     "order_processing_into_tasks.processing_run": ["process_messages"],
     "order_processing_into_tasks.verify_tasks": ["possibly_affected_tasks", "last_day_of_month", "read_relative_date",
-                                                 "possible_deadline_words", "stated_piece_counts"],
+                                                 "possible_deadline_words", "stated_piece_counts",
+                                                 "cancellation_words"],
     "run_intake_and_processing": ["main"],
 }
 # Moved from notebook 05, then changed on purpose:
@@ -95,6 +98,12 @@ NEW = {
 # - 19 October 2026, after Test 8: finish_verification blocks an allocation whose evidence writes a
 #   piece count for its order that differs from orders.csv, found by stated_piece_counts (new). In
 #   Test 8, R191 ("ORD-105, 1300 vests"; the CSV has 200) was recommended (checked by PieceCounts).
+# - 24 October 2026: RecordedModel reads a saved answer as UTF-8, the encoding write_json saves it in,
+#   not the computer's default. Python 3.13 on Windows defaults to cp1252, which turned "—" in a quoted
+#   message into "â€”" (checked by SavedAnswerEncoding).
+#   The same day: finish_verification blocks an allocation whose evidence has words that may cancel or
+#   hold its order, found by cancellation_words (new). In all three runs on the 100-case set, R145 ("The
+#   customer has cancelled ORD-297. Do not allocate") was recommended (checked by Cancellations).
 CHANGED = {
     "order_processing_into_tasks.model_calls_with_cache": ["make_chat_model", "RecordedModel"],
     "order_processing_into_tasks.processing_run": ["run_configuration", "pipeline_complete", "save_run_outputs"],
@@ -223,6 +232,24 @@ PIECE_COUNT_CASES = [
     ("Place the whole ORD-291 batch of 500 vests with FreshStart (W8). Deliver by May 2.", "ORD-291", [500]),
     ("Split ORD-045 across 2 workshops; total cost must not exceed 100.", "ORD-045", []),
     ("Allocate ORD-045, 2 decisions pending.", "ORD-045", []),
+]
+# Words that may cancel or hold a request, as (quote, order ID, expected words).
+CANCELLATION_CASES = [
+    # R145 and R146 of data/extended_dispatch_100 (CASE-097 and CASE-098), and R21 of the blocker cases.
+    ("The customer has cancelled ORD-297. Do not allocate or reserve workshop capacity for this order.",
+     "ORD-297", ["cancelled", "Do not allocate"]),
+    ("Pause ORD-298. Fabric is not approved; do not allocate until release is confirmed.",
+     "ORD-298", ["do not allocate"]),
+    ("ORD-095 has been cancelled by the customer. Do not allocate.", "ORD-095", ["cancelled", "Do not allocate"]),
+    ("The client called off ORD-045.", "ORD-045", ["called off"]),
+    ("Don't reserve capacity for ORD-045 yet.", "ORD-045", ["Don't reserve"]),
+    # Text after another order ID belongs to that order.
+    ("ORD-201 is cancelled. Allocate ORD-045 as planned.", "ORD-201", ["cancelled"]),
+    ("ORD-201 is cancelled. Allocate ORD-045 as planned.", "ORD-045", []),
+    # R16 of the blocker cases, a workshop exclusion and a plain request are not cancellations.
+    ("Don't allocate based on memory. Use actual metrics.", "ORD-045", []),
+    ("Do not allocate to W3; use W5 for ORD-045.", "ORD-045", []),
+    ("Allocate ORD-045, 150 vests.", "ORD-045", []),
 ]
 
 
@@ -475,6 +502,29 @@ class ReasoningEffort(unittest.TestCase):
         self.assertEqual(run["manifest"]["reasoning_effort"], {"intake": "high"})
 
 
+class SavedAnswerEncoding(unittest.TestCase):
+    """Saved answers are read as UTF-8, also on a computer whose default text encoding is another one."""
+
+    def test_a_saved_answer_with_a_dash_is_reused_unchanged(self):
+        # One of notebook 05's saved intake answers whose text contains "—" (8 of them do).
+        records = [json.loads(path.read_text(encoding="utf-8")) for path in sorted(SAVED_ANSWERS.glob("*.json"))]
+        saved = next(record for record in records if "—" in json.dumps(record["parsed"], ensure_ascii=False))
+        request = saved["request"]
+        read_text = Path.read_text
+
+        def windows_read_text(path, encoding=None, errors=None):
+            """Path.read_text as Python 3.13 runs it on Windows, where the default encoding is cp1252."""
+            return read_text(path, encoding or "cp1252", errors)
+
+        with tempfile.TemporaryDirectory() as temp:
+            work_dir = Path(temp)
+            with (offline_modules(work_dir), contextlib.redirect_stdout(io.StringIO()),
+                  mock.patch.object(Path, "read_text", windows_read_text)):
+                model = model_calls_with_cache.RecordedModel(work_dir)
+                answer = model("intake", request["prompt"], request["payload"], extract_items.IntakeBatch)
+        self.assertEqual(answer.model_dump(), saved["parsed"])
+
+
 class Deadlines(unittest.TestCase):
     """Repair I04 on the module: a proposed date must equal a whole date written in its evidence.
     Relative delivery words (18 October 2026) are counted in Python from the message date."""
@@ -553,6 +603,54 @@ class PieceCounts(unittest.TestCase):
 
     def test_the_recorded_count_or_no_count_stays_ready(self):
         for quote in ("ORD-045 — 150 vests for Cotton Club.", "Please place ORD-045."):
+            with self.subTest(quote=quote):
+                record = self.verified(quote, "ORD-045")
+                self.assertTrue(record["information_sufficient"])
+                self.assertEqual(record["missing_details"], [])
+
+
+class Cancellations(unittest.TestCase):
+    """A request whose messages may cancel it goes to the dispatcher instead of being ready (24 October
+    2026, after CASE-097). Python never cancels anything: the dispatcher decides."""
+
+    def test_test_11s_answer_for_the_cancelled_order_is_not_ready(self):
+        # R145 and the verify model's answer to it in Test 11 (calls/verify-9d8a676dfbad8947.json in
+        # output/end_to_end_test_2026-10-22/runs/2026-10-22_22-31-00), copied because output/ is not in the
+        # repository. The other two runs on the 100-case set gave the same answer. ORD-297 is in that
+        # set's orders.csv only.
+        quote = ("R145 [10:25] Luis: The customer has cancelled ORD-297. Do not allocate or reserve workshop "
+                 "capacity for this order.")
+        with (settings_and_data.BACKEND_DIR / "data/extended_dispatch_100/orders.csv").open(encoding="utf-8") as file:
+            order = next(row for row in csv.DictReader(file) if row["order_id"] == "ORD-297")
+        catalog = [{"evidence_id": "T:L0145:J1:E1", "message_id": "L0145", "text": quote}]
+        payload = {"evidence": [{"message_id": "L0145", "excerpts": [quote]}], "evidence_catalog": catalog,
+                   "anchor_order_ids": ["ORD-297"], "workshop_mentions": [],
+                   "order_lookups": [{"order_id": "ORD-297", "found": True, "order": order}]}
+        scheduling = verify_tasks.SchedulingDetails(
+            due_date_text=None, preference="none", preference_evidence_id=None,
+            workshop_rules=[], split_evidence_id=None, unhandled_constraints=[])
+        assessment = verify_tasks.EvidenceAssessment(
+            intent="allocation", order_id="ORD-297", urgency_evidence_id=None, deadline_evidence_id=None,
+            quality_evidence_id=None, constraint_evidence_ids=["T:L0145:J1:E1"], missing_details=[],
+            doubts_to_clarify=[], scheduling=scheduling)
+        with mock.patch.dict(settings_and_data.ORDER_INDEX, {"ORD-297": order}):
+            record = verify_tasks.finish_verification({"task_id": "T:L0145:J1", "version": 1}, payload, assessment)
+        self.assertFalse(record["information_sufficient"])
+        self.assertEqual(record["missing_details"], [
+            'The chat may cancel or hold ORD-297 ("cancelled", "Do not allocate"); the dispatcher decides '
+            "whether to allocate it."])
+
+    def test_cancellation_cases(self):
+        for quote, order_id, expected in CANCELLATION_CASES:
+            with self.subTest(quote=quote, order_id=order_id):
+                self.assertEqual(verify_tasks.cancellation_words(quote, order_id), expected)
+
+    # The same made-up answer as PieceCounts, which raises no question.
+    verified = PieceCounts.verified
+
+    def test_other_wording_or_another_orders_cancellation_stays_ready(self):
+        for quote in ("Allocate ORD-045. Don't allocate based on memory.",
+                      "ORD-201 is cancelled. Allocate ORD-045 as planned."):
             with self.subTest(quote=quote):
                 record = self.verified(quote, "ORD-045")
                 self.assertTrue(record["information_sufficient"])

@@ -14,6 +14,8 @@
 #              planned like any other batch, with a row of its own. open_flags is new (23 October
 #              2026): a chosen workshop or completed request overrides whatever processing left open
 #              (blockers, a split, a non-allocation intent), and the row names what it overrides.
+#              A request the dispatcher cancelled is not planned (24 October 2026): it reserves no
+#              queue time and has a "cancelled" row of its own.
 # Reads:       the run folder's manifest.json and state.json, orders.csv and workshops.csv.
 # Writes:      nothing. A review is a preview: it commits no assignment and changes no queue outside
 #              its own copy. No model is called.
@@ -27,7 +29,7 @@ from datetime import date, datetime
 from order_processing_into_tasks.processing_run import pipeline_complete, verified_tasks
 from order_processing_into_tasks.settings_and_data import DATA_DIR
 from order_processing_into_tasks.verify_tasks import possibly_affected_tasks
-from task_allocation_to_workshops.allocation_plan import inputs_without_outcome, summarize_plan
+from task_allocation_to_workshops.allocation_plan import inputs_without_outcome, summarize_plan, summary_row
 from task_allocation_to_workshops.allocation_settings_and_data import (
     DISPATCH_DATE, INITIAL_QUEUES, ORDERS, WORKSHOPS)
 from task_allocation_to_workshops.recommend_one_task import batch_pieces, recommend, task_deadline
@@ -41,6 +43,8 @@ CORRECTABLE = {"order_id": None, "due_date": None, "quantity": None,
                "preference": {"none", "fastest", "cheapest", "quality"}, "intent": {"allocation", "question"}}
 # The outcomes that reserve queue time.
 RESERVING = ("recommendation", "dispatcher_choice", "accepted_late")
+# The reason on the row of a request the dispatcher cancelled.
+CANCELLED_REASON = "Cancelled by the dispatcher. No workshop time is reserved."
 
 
 def blockers(task):
@@ -244,13 +248,19 @@ def build_dispatcher_plan(run_folder, decisions):
     manifest = json.loads((run_folder / "manifest.json").read_text(encoding="utf-8"))
     state = json.loads((run_folder / "state.json").read_text(encoding="utf-8"))
     messages, entries = manifest["messages"], decisions["decisions"]
-    # 1. Apply the decisions to the verified tasks, then route them as allocation does.
-    tasks, problems = [], {}
+    # 1. Apply the decisions to the verified tasks, then route them as allocation does. A request the
+    #    dispatcher cancelled is neither routed nor planned, so it reserves nothing and no longer
+    #    counts in the duplicate-order check (24 October 2026).
+    tasks, cancelled, problems = [], [], {}
     for task in verified_tasks(state):
-        task, issues = derive_task(task, entries.get(task["task_id"], {}))
-        tasks.append(task)
+        entry = entries.get(task["task_id"], {})
+        task, issues = derive_task(task, entry)
         if issues:
             problems[task["task_id"]] = issues
+        if entry.get("cancelled") and not issues:
+            cancelled.append(task)
+        else:
+            tasks.append(task)
     routes = route_tasks(tasks)
     # A batch the dispatcher added is routed on its own: it skips the duplicate-order check and never
     # sends another request for its order to review (22 October 2026).
@@ -278,11 +288,13 @@ def build_dispatcher_plan(run_folder, decisions):
         made.append(flexible_decision(task, usable.get(task["task_id"], {}), queues, pieces))
         reserve(made[-1], queues, pieces, reserved)
 
-    # 3. The same records and summary rows as plan.json. A checked warning no longer makes a row provisional.
+    # 3. The same records and summary rows as plan.json. A checked warning no longer makes a row
+    #    provisional, and a cancelled request has no warning.
     warnings = {}
+    cancelled_ids = {task["task_id"] for task in cancelled}
     for task_id, row_ids in possibly_affected_tasks(state).items():
         unchecked = [row_id for row_id in row_ids if row_id not in usable.get(task_id, {}).get("warnings_checked", [])]
-        if unchecked:
+        if unchecked and task_id not in cancelled_ids:
             warnings[task_id] = unchecked
     texts = {message["message_id"]: message["raw_text"] for message in messages}
     result = {"source_run": run_folder.name, "dispatch_date": DISPATCH_DATE.isoformat(),
@@ -292,7 +304,7 @@ def build_dispatcher_plan(run_folder, decisions):
               "planning_order": [task["task_id"] for task in planning_order], "decisions": made,
               "duplicate_order_reviews": routes["duplicate_order"],
               "needs_clarification": routes["needs_clarification"], "reference_tasks": routes["reference"],
-              "intake_review": state["intake_review"], "task_review": list(state["task_review"].values()),
+              "cancelled_tasks": cancelled, "intake_review": state["intake_review"], "task_review": list(state["task_review"].values()),
               "link_review": list(state["unresolved_links"].values()),
               "non_task_messages": [{"message_id": message_id, "raw_text": texts[message_id]}
                                     for message_id in state["non_task_message_ids"]],
@@ -301,6 +313,10 @@ def build_dispatcher_plan(run_folder, decisions):
               "pieces_after_plan": pieces, "reservation_order": reserved}
     with contextlib.redirect_stdout(io.StringIO()):  # summarize_plan also prints its own table
         result["summary_rows"] = summarize_plan(result)
+    # Each cancelled request gets a row of its own, sorted by chat line as summarize_plan sorts.
+    result["summary_rows"] += [summary_row(task["task_id"], task["order_id"], "cancelled", CANCELLED_REASON,
+                                           task["source_message_ids"]) for task in cancelled]
+    result["summary_rows"].sort(key=lambda row: row["id"].removeprefix("T:"))
 
     # 4. Label each batch the dispatcher added, naming the other planned batches of its order, name
     #    what each dispatcher's batch overrides, and show each decision that was not applied. Every row
@@ -330,9 +346,10 @@ def finalize_review(review):
     """Return a copy of a draft review with the dispatcher's one final approval applied.
 
     Every allocation row (a recommendation, a dispatcher's choice or accepted lateness) without an
-    unchecked warning becomes "approved" and final, in its row and its decision record. Every other row
-    stays unresolved. Nothing is planned again, so every workshop, number and queue stays as shown;
-    the review passed in is not changed.
+    unchecked warning becomes "approved" and final, in its row and its decision record. A cancelled
+    row stays cancelled, neither approved nor unresolved. Every other row stays unresolved. Nothing is
+    planned again, so every workshop, number and queue stays as shown; the review passed in is not
+    changed.
     """
     final = copy.deepcopy(review)
     final["status"] = "final"
@@ -347,5 +364,5 @@ def finalize_review(review):
             row["outcome"] = "approved"
     final["final_ids"] = [row["id"] for row in final["summary_rows"] if row["final"]]
     final["unresolved_ids"] = [row["id"] for row in final["summary_rows"]
-                               if not row["final"] and row["outcome"] != "non_task"]
+                               if not row["final"] and row["outcome"] not in ("non_task", "cancelled")]
     return final

@@ -1,14 +1,14 @@
 # 05. LangGraph implementation: processing, allocation and dispatcher review
 
-Checked against the current Python modules: 20 October 2026.
+Implementation reference updated: 24 October 2026. The eight-node graph is the initial processing/review workflow; read-only previews and saved-plan Review again reuse its Python rules outside the graph.
 
-**INCOMPLETE: this explains the workflow implemented so far, through the first dispatcher review and saving its final JSON. Reallocation, operational assignment writes, live queue updates and the optional review after reallocation are still unfinished. This is not the complete application workflow.**
+The application implements dispatch-table reallocation through **Approve all** and **Review again**. Live workshop assignments, production queue updates and operational transfers remain future work. The [backend guide](../README.md) and [frontend guide](../../frontend/README.md) describe the complete current interface/API contract.
 
 Read [04. Task allocation demo](04-task-allocation-demo.md) first. The implementation explained here is [pipeline_graph.py](../app_full_pipeline/pipeline_graph.py).
 
-## 1. What LangGraph does for us
+## 1. LangGraph responsibilities
 
-Our Python modules already know how to process messages, link requests, verify tasks, calculate workshop choices and apply dispatcher decisions.
+Python modules process messages, link requests, verify tasks, calculate workshop choices and apply dispatcher decisions.
 
 LangGraph connects those functions into a workflow. It decides which step runs next, passes the current data between steps and remembers where the workflow paused for the dispatcher.
 
@@ -54,7 +54,7 @@ The node functions call the existing module functions. Allocation and decision r
 
 ## 3. Why extraction and linking form a loop
 
-Imagine a chat with several batches of messages:
+For a conversation containing several message batches:
 
 1. `start_run` creates an empty record.
 2. The first `link_items` finds no extracted items yet.
@@ -124,22 +124,22 @@ Example only: use a task ID from the actual review.
 1. `apply_answer()` checks the answer and applies it to a copy of the decisions.
 2. The dispatcher planner rebuilds the draft from the original queues.
 3. Dispatcher-selected work is planned first, then the remaining ready tasks around it. Each group uses earliest deadline first.
-4. The chosen workshop stays fixed. Lateness and overridden workshop rules are recorded in the reason. Missing facts and unsupported operations still need resolution.
+4. The chosen workshop stays fixed. Lateness, broken automatic rules and overridden processing flags are recorded. Python still requires known order/workshop identities; an unidentifiable batch is refused.
 5. The graph returns to `dispatcher_review` and pauses with the updated draft.
 
 A later workshop choice replaces the earlier choice for that task. Rebuilding from the original queues prevents repeated reviews from adding the same work twice.
 
 A refused answer leaves the accepted decisions and review unchanged and returns the reason. Other supported answers correct facts, accept a shown late option, acknowledge warnings or clear a task's edits.
 
-Here, `review_again` means inspecting an updated draft during the first review. The planned review after reallocation is a separate, unfinished capability.
+Here, the lower-level `then: review_again` means inspecting a new draft during the paused graph review. The web **Review again** action on a saved plan is also implemented, through `/runs/{run_id}/preview` and `/finalize`, outside the graph.
 
-## 7. What final approval does today
+## 7. Final approval and one-batch reallocation
 
 ```json
 {"decisions": [], "then": "approve_all"}
 ```
 
-Approval takes no new edits. Send edits first, inspect the updated review, then approve it.
+This empty `approve_all` is the lower-level terminal/API mode: it approves the review already shown. The web **Approve all** action instead submits all pending decisions with `then: finalize` through `POST /reviews/{thread_id}/finalize`. That mode calculates the complete set once, preserves manual destinations, replans flexible work and saves immediately with a change report. It does not require preceding edit requests or another approval.
 
 `after_review` sends approval to `save_review`. That node calls `finalize_review()` and saves:
 
@@ -147,11 +147,11 @@ Approval takes no new edits. Send edits first, inspect the updated review, then 
 - `dispatcher-plan.json`: the final review, including any unresolved rows.
 - History copies of both files in `plan-history/`.
 
-**Approval preserves the displayed workshops, estimates and queues. It does not calculate a new plan.** Allocation rows without unchecked warnings become approved; unresolved rows remain unresolved.
+**Empty `approve_all` preserves the displayed workshops, estimates and queues. Batch `finalize` first calculates the submitted choices, then saves that result.** Allocation rows without unchecked warnings become approved; unresolved rows remain unresolved.
 
 This is final approval of a saved JSON preview. It does not write operational workshop assignments or update live workshop queues.
 
-Notebook 06 remains the earlier prototype with per-row approvals. This tutorial describes the modular graph's single final approval.
+Notebook 06 remains the earlier prototype with per-row approvals. The current application replaces that per-row interaction with a single batch approval and optional saved-plan re-review.
 
 ## 8. What is still incomplete
 
@@ -159,12 +159,12 @@ Notebook 06 remains the earlier prototype with per-row approvals. This tutorial 
 |---|---|
 | Operational assignments | Persist actual committed batches and their workload. |
 | Live queues | Carry assignments and workshop progress into later dispatch decisions. |
-| Reallocation | Move previously assigned work and account for its old and new workload. |
-| **Review again after reallocation** | Let the dispatcher choose whether to inspect a reallocation preview before finalization. Preserve this exact requirement. |
+| Operational transfers | Move work already accepted by a workshop with transactional release/reservation and remaining-work rules. |
+| Clarification reply loop | Return questions to source messages and resume the same request/version. |
 | Wider human recovery | Complete handling of unresolved intake/link records and unsupported operations. |
-| Product API and frontend | Connect the workflow to the planned application screens. |
+| Authentication and multiple dispatchers | Define identities, permissions and concurrent operational state. |
 
-The current graph therefore covers **chat processing, an allocation preview, the first dispatcher review and final JSON**. The operational dispatch and reallocation lifecycle remains unfinished.
+The graph covers processing, the automatic plan, a persistent initial review and saving the final table. FastAPI/Next.js connect that flow to Chat and Dispatcher. Preview and saved-plan Review again call the same rules outside the graph; live operational assignments remain outside this workflow.
 
 ## 9. Where to look and how to check it
 
@@ -181,4 +181,4 @@ Run the graph tests from `backend/`, with no paid model calls:
 uv run python -m unittest discover -s tests -p test_pipeline_graph.py -v
 ```
 
-A LangGraph routing function chooses the next workflow step. FastAPI's `APIRouter` groups HTTP endpoints. A future API endpoint can call this graph's existing functions.
+A LangGraph routing function chooses the next workflow step. FastAPI's `APIRouter` groups HTTP endpoints. The current FastAPI routes call these graph functions for initial reviews and the same planning functions directly for preview and saved-plan re-review.

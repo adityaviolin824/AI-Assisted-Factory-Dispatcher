@@ -12,6 +12,9 @@ export type LocalChoice = {
   // Undo the dispatcher's saved choices for this row, or remove a saved added batch (Review again).
   // It is sent alone, so Python plans the row as processing recorded it.
   clear?: boolean;
+  // Cancel the request: Python leaves it out of the plan, so it reserves no workshop time. It is sent
+  // alone, and an undo (clear) brings the request back.
+  cancel?: boolean;
 };
 
 export type Choices = Record<string, LocalChoice>;
@@ -35,19 +38,24 @@ export function withChoice(choices: Choices, taskId: string, choice: LocalChoice
     !choice.workshop_id &&
     !choice.complete &&
     !choice.clear &&
+    !choice.cancel &&
     !Object.keys(choice.facts ?? {}).length &&
     !choice.warnings_checked?.length;
   return empty ? rest : { ...rest, [taskId]: choice };
 }
 
 // The decisions Approve all would submit, in the backend's vocabulary. Corrections come first,
-// because a correction can change the request that a workshop choice is for. An undo (clear) replaces
-// the row's other choices. Added batches come last.
+// because a correction can change the request that a workshop choice is for. An undo (clear) or a
+// cancellation replaces the row's other choices. Added batches come last.
 export function decisionsFrom(choices: Choices, added: AddedBatch[] = []): Decision[] {
   const decisions: Decision[] = [];
   for (const [taskId, choice] of Object.entries(choices)) {
     if (choice.clear) {
       decisions.push({ decision: "clear", task_id: taskId });
+      continue;
+    }
+    if (choice.cancel) {
+      decisions.push({ decision: "cancel", task_id: taskId });
       continue;
     }
     if (choice.complete) {
@@ -91,6 +99,8 @@ export function decisionText(decision: Decision) {
       return `${decision.task_id}: send to ${decision.workshop_id}`;
     case "warnings_checked":
       return `${decision.task_id}: not changed by ${decision.row_ids.join(", ")}`;
+    case "cancel":
+      return `${decision.task_id}: cancel this request, do not allocate it`;
     // Python names added batches ADD-1, ADD-2, ...; undoing one removes it.
     case "clear":
       return decision.task_id.startsWith("ADD-")

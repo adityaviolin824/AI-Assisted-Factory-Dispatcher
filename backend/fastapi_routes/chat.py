@@ -3,7 +3,8 @@
 # 23 October 2026).
 #
 # Send, history and snapshots call the mock chat's functions, copied into
-# order_intake_from_chat/chat_storage.py, and make no model call. Processing runs the whole pipeline
+# order_intake_from_chat/chat_storage.py, and make no model call. GET /chat/dates (24 October 2026)
+# returns the configured dates that relative words in the chat count from. Processing runs the whole pipeline
 # on one snapshot's dispatch_requests.txt up to the dispatcher's first pause, as run_full_pipeline.py
 # does on the configured chat file. It can make paid model calls, so it is refused unless the server
 # was started with ALLOW_PAID_PROCESSING=1. It answers at once and runs in the background; the
@@ -21,7 +22,8 @@ from pydantic import BaseModel
 from app_full_pipeline.pipeline_graph import CHECKPOINT_FILE, run_graph
 from order_intake_from_chat import chat_storage
 from order_intake_from_chat.read_chat_messages import read_messages
-from order_processing_into_tasks.settings_and_data import BACKEND_DIR
+from order_processing_into_tasks.settings_and_data import BACKEND_DIR, MESSAGE_DATE
+from task_allocation_to_workshops.allocation_settings_and_data import DISPATCH_DATE
 
 router = APIRouter(tags=["chat"])
 
@@ -111,6 +113,16 @@ def process_in_background(folder):
                      error=f"{type(error).__name__}. The API server's terminal shows the details.")
         raise
     write_status(folder, processing="finished", run_id=Path(graph_state["run_dir"]).name, thread_id=thread_id)
+
+
+@router.get("/chat/dates")
+def chat_dates():
+    """Return the dates from config.toml that processing uses: {message_date, dispatch_date}.
+
+    Relative delivery words in the chat, such as "by Friday", count from message_date, and every plan
+    starts from dispatch_date. The chat page shows them, because they are not today's date.
+    """
+    return {"message_date": MESSAGE_DATE.isoformat(), "dispatch_date": DISPATCH_DATE.isoformat()}
 
 
 @router.get("/chat/messages")

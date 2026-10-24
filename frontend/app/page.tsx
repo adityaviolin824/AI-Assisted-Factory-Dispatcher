@@ -10,27 +10,27 @@ export default function IntroductionPage() {
     <div className="intro">
       <h1>Dispatching at your fingertips</h1>
       <p className="lede">
-        Staff ask for work in a shared chat. An AI reads each request, Python checks all eight workshops, and the
+        Staff post requests in a shared chat. An AI reads each request, Python checks all eight workshops, and the
         dispatcher makes the final choice.
       </p>
 
       <ul className="metrics" aria-label="Recorded results">
         <li>
           <strong className="figure">2 of 120</strong>
-          <span>Late batches, versus 41 with random</span>
+          <span>Late batches, versus 41 with a random choice</span>
         </li>
         <li>
           <strong className="figure">8.1 days</strong>
-          <span>Mean delivery, versus 21.5 with random</span>
+          <span>Mean delivery time, versus 21.5 with a random choice</span>
         </li>
         <li>
           <strong className="figure">100 cases</strong>
-          <span>Chat test set, hand-reviewed by three team members</span>
+          <span>Chat test set, hand-reviewed by our team</span>
         </li>
       </ul>
       <p className="metrics-note">
         Recorded results from a replay of 120 historical orders and a separate 100-case chat test set. Our policy
-        costs about 3% more than random. <a href="#how-we-measured">View evaluation</a>
+        costs about 3% more than a random choice. <a href="#how-we-measured">See how we measured</a>
       </p>
 
       <section className="example" aria-label="Worked example">
@@ -46,7 +46,7 @@ export default function IntroductionPage() {
           <h2>What Python worked out</h2>
           <dl className="questions">
             <dt>Can the workshop make the batch?</dt>
-            <dd>ORD-045 is 150 tops. W4 Little Loom makes only accessories, so it is out.</dd>
+            <dd>ORD-045 is 150 vests, which count as tops. W4 Little Loom makes only accessories, so it is out.</dd>
             <dt>Can it take the batch, given its capacity and queue?</dt>
             <dd>
               W3 BudgetWorks would deliver after 9 April, so it is out. W6 Nimble Needle delivers in 3.18 of the 8
@@ -56,8 +56,8 @@ export default function IntroductionPage() {
             <dd>W7 OldMill is suspended, so it is out.</dd>
           </dl>
           <p className="run-state">
-            <strong>Suggested: W6 Nimble Needle</strong>, first for the fastest delivery. The dispatcher can approve
-            it or choose another workshop.
+            <strong>Suggested: W6 Nimble Needle</strong>, ranked first for the fastest delivery. The dispatcher can
+            approve it or choose another workshop.
           </p>
         </div>
       </section>
@@ -90,9 +90,16 @@ export default function IntroductionPage() {
 
       <h2>What works today</h2>
       <ul className="status-list">
-        <li>Dispatcher reads saved runs: worklist, original messages, request facts, workshop comparison and queues.</li>
-        <li>In progress: sending and processing chat messages, and the dispatcher&apos;s choices with one final approval.</li>
-        <li>Not built yet: reallocation, sending work to workshops and sign-in.</li>
+        <li>
+          Chat saves messages, captures a fixed copy of the conversation and sends it for processing. Processing calls
+          paid AI models, so the server must be started with permission.
+        </li>
+        <li>
+          Dispatcher shows each run&apos;s worklist, original messages, request facts, workshop comparison and queues.
+          Choices stay on the page until one Approve all, which keeps them fixed and plans the other work around them.
+          Check workshop options and Review again also work.
+        </li>
+        <li>Not built yet: sending work to workshops and sign-in.</li>
       </ul>
 
       <section className="measured" aria-labelledby="how-we-measured">
@@ -142,10 +149,15 @@ export default function IntroductionPage() {
         </p>
         <p>
           The chat test set has 100 synthetic cases in 149 messages: 85 that should be allocated and 15 deliberate
-          exceptions, such as a cancelled order. Three team members hand-reviewed every case before any run. In three
-          fresh runs, 73 to 81 of the 85 were allocated correctly before the dispatcher&apos;s review, and the cancelled
-          order was wrongly given a workshop each time. The full reports are in the project README, under Testing and
-          recorded results.
+          exceptions, such as a cancelled order. Three team members shared the hand review of every case before any
+          run. In three fresh runs, 73 to 81 of the 85 were allocated correctly before the dispatcher&apos;s review, and
+          the cancelled order was wrongly given a workshop each time. A Python check added on 24 October now sends it
+          to the dispatcher instead, which a replay of the third run&apos;s saved answers confirmed. The full reports
+          are in the{" "}
+          <a href="https://github.com/adityaviolin824/AI-Assisted-Factory-Dispatcher#testing-and-recorded-results">
+            project README
+          </a>
+          .
         </p>
       </section>
 

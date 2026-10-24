@@ -6,8 +6,10 @@
 # date and objective, so a saved run or plan always shows what it used.
 
 [input]
-# The chat file to process: one message per line, such as "R01 [07:53] Chen: ...".
-# Use data/dispatch_requests.txt, or the TXT path shown by the mock chat's "Export for notebook".
+# The chat file that run_full_pipeline.py and run_intake_and_processing.py process: one message per
+# line, such as "R01 [07:53] Chen: ...". Since 15 Oct 2026 the default is the short blocker-cases file
+# (26 lines), so changes can be tested cheaply; data/dispatch_requests.txt is the supplied chat.
+# The web Chat does not use this setting: it processes the snapshot it saves.
 chat_file = "data/dispatch_requests_blocker_cases.txt"
 # The folder holding orders.csv and workshops.csv.
 data_folder = "data"

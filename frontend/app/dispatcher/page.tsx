@@ -65,6 +65,18 @@ export default function DispatcherPage() {
     }
   }, [selectedId]);
 
+  // A reload or closing the tab would lose unsaved choices, so the browser asks first, as Refresh does.
+  useEffect(() => {
+    if (decisions.length === 0) {
+      return;
+    }
+    function askFirst(event: BeforeUnloadEvent) {
+      event.preventDefault();
+    }
+    window.addEventListener("beforeunload", askFirst);
+    return () => window.removeEventListener("beforeunload", askFirst);
+  }, [decisions.length]);
+
   // A preview appears above the worklist, far from the button that asked for it, so it is brought into view.
   useEffect(() => {
     if (preview) {
@@ -74,7 +86,8 @@ export default function DispatcherPage() {
 
   // The run named in the address (/dispatcher?run=<id>) opens straight away, as when Chat links here;
   // Chat's link also names the paused review (&thread=<id>), which then opens too. The address is read
-  // once: React's development mode runs this effect twice, and openRun rewrites it without &thread=.
+  // once: React's development mode runs this effect twice, and openRun rewrites it without &thread=
+  // until the review has opened.
   useEffect(() => {
     listRuns()
       .then(setRuns)
@@ -167,6 +180,8 @@ export default function DispatcherPage() {
           setReviewNote(`Thread ${id} reviews run ${envelope.review.source_run}, not the open run ${openRunId}.`);
           return;
         }
+        // Keep the open review in the address too, so a reload opens it again.
+        window.history.replaceState(null, "", `?run=${encodeURIComponent(openRunId)}&thread=${encodeURIComponent(id)}`);
         setThreadId(id);
         setReview(envelope.review);
         if (envelope.refused) {

@@ -25,7 +25,7 @@ Two separate things were evaluated, and their results are kept apart:
 | Earlier notebooks and selected debugging records | [Development experiments](../experiments/README.md) |
 | Scoring code | [Report command](../backend/make_run_report.py) (before the review), [review score command](../backend/score_dispatcher_review.py) (after it) and [scoring modules](../backend/eval_run_report/) |
 
-The detailed run 2 report is an unchanged copy of the generated report for run `2026-10-21_23-43-53`. The original run folder is excluded from version control; paths inside the report are recorded relative to `backend/`. Its "Key's own description" preserves the key's frozen text from before testing. The offline feasibility checker and saved regression snapshots are kept locally rather than published here.
+The detailed run 2 report is a public presentation of the generated report, with provenance wording standardized and numerical results retained, for run `2026-10-21_23-43-53`. The original run folder is excluded from version control; paths inside the report are recorded relative to `backend/`. Its "Key's own description" is historical pre-run text; later scored results are reported separately. The original golden key remains unchanged. The offline feasibility checker and saved regression snapshots are kept locally rather than published here.
 
 ## 1. The scheduling rules (harness)
 
@@ -47,7 +47,7 @@ AI custom-created the test set after repeated project experiments, at several di
 - **To emulate real-life dispatch conditions:** varied wording, preferences given in a later message, corrections, several conversations interleaved, relative dates such as "by the end of next week", and two jobs in one message.
 - **To target weak points we had seen in our own application:** follow-ups that only make sense with the earlier message, corrections that replace an earlier instruction, dispatch timing ("send out today") that must not become a delivery date, a stated piece count that differs from the order record, and requests that break a workshop rule.
 
-**Three team members then divided the work and hand-reviewed the complete set, line by line. This review was done by humans, not AI.** Their notes and the project owner's final clarifications were reconciled into the version 2 answer key on 21 October 2026, before any model run. The [review record](../backend/docs/evaluation/extended_dispatch_100_REVIEW.md) keeps the evidence and the agreed changes.
+**Three team members then divided the work and hand-reviewed the complete set, line by line. This review was done by humans, not AI.** Their notes and documented preference decisions were reconciled into the version 2 answer key on 21 October 2026, before any model run. The [review record](../backend/docs/evaluation/extended_dispatch_100_REVIEW.md) keeps the evidence and the agreed changes.
 
 The set has 100 task cases in 149 chat messages: 98 request messages (two of them hold two jobs each), 45 follow-ups and 6 messages that are not tasks. The 100 synthetic orders (ORD-201 to ORD-300) use the app's normal order format, and the eight workshops are the supplied ones, unchanged.
 
@@ -95,9 +95,9 @@ An offline check using the key's expected interpretations confirms that all 85 a
 
 ### How a run is scored
 
-Each case is matched to the task the app created from the case's first message. A case that should be allocated is **correct** when the app recommends a workshop that obeys every workshop rule and meets the deadline. A different workshop from the key's own plan is not an error, because earlier tasks can take queue time in a different order. A case is **missed** when the app sends it to a person instead. The rules are fixed in "How the score works" in [NEW_TEST_SETS_PLAN.md](../backend/docs/evaluation/NEW_TEST_SETS_PLAN.md), and the expectations were written down and hashed before the runs.
+Each case is matched to the task created from its first message. Under the frozen headline score, an expected allocation is **correct** when it receives a recommendation respecting the key's requested and excluded destinations. Provisional recommendations count; field agreement, eligibility and timeliness are separate checks, and a lost preference can count as allocated. An expected allocation without a recommendation is **missed**. An allocated exception or a broken requested/excluded destination is **unsafe**. Matching the key's exact workshop is a separate comparison because queue effects can produce another valid destination. The rules are fixed in "How the score works" in [NEW_TEST_SETS_PLAN.md](../backend/docs/evaluation/NEW_TEST_SETS_PLAN.md), and the expectations were written down and hashed before the runs.
 
-After the dispatcher's review (Test 11), a different rule applies: only rows the dispatcher approved count as allocated. Each approved row counts for the case of its order, so a batch the dispatcher added also counts. A table is **perfect** when all 85 cases are allocated correctly and no exception or unrelated row is approved. These rules are in `backend/eval_run_report/final_plan_score.py`, and they were written and hashed before Test 11 ran.
+After the dispatcher's review (Test 11), a different rule applies: only rows the dispatcher approved count as allocated. Each approved row counts for the case of its order, so a batch the dispatcher added also counts. The final **perfect** coverage headline requires all 85 expected allocations, correct non-allocation of exceptions, matching total quantity, respected requested/excluded destinations and no unrelated approved row. Timeliness and full field agreement are not requirements of that headline; split-part detail checks currently read only the main part. These rules are in `backend/eval_run_report/final_plan_score.py`, and they were written and hashed before Test 11 ran.
 
 ### All three runs, before and after the dispatcher's review
 
@@ -110,7 +110,7 @@ All three runs used the same inputs and settings and started with empty answer c
 | Unsafe allocations | 1 | 1 | 1 | **0** |
 | Cost, time | $0.0728, 10 min 52 s | $0.0700, 10 min 1 s | $0.0757, 9 min 23 s | no model calls |
 
-The "after review" result is the app's ceiling, because the simulated dispatcher had the key. The cancelled order (CASE-097) could only be stopped by relabelling it as a question: the app has no "do not allocate" choice yet. See the [Test 11 report](../backend/docs/evaluation/END_TO_END_TEST_2026-10-22.md).
+The "after review" result demonstrates recovery capability with answer-key access. All 85 allocations separately matched the compared fields and were reported on time, while 26 source rows remained unresolved. Human effort and usability were not measured. The cancelled order (CASE-097) could only be stopped by relabelling it as a question: the app has no "do not allocate" choice yet. See the [Test 11 report](../backend/docs/evaluation/END_TO_END_TEST_2026-10-22.md).
 
 ### Recorded results: run 2 (21 October 2026)
 
@@ -140,13 +140,13 @@ The recommendations met workshop eligibility and deadline rules, but one was sti
 | 070 | Missed. Python's written-date check splits at commas, so "...for Cotton Club today" was read as a possible deadline and the app asked for a date. |
 | 019, 023, 027 | Allocated, but "For that batch, choose the cheapest..." was not linked, so the preference was lost and the rows were flagged provisional. |
 
-### Planned fixes (proposals, not implemented)
+### Follow-up status and proposals
 
-1. **A Python cancellation and pause check** to block cases such as the cancelled order. It can be tested offline by replaying saved answers.
+1. **Possible cancellation/hold check (implemented 24 October):** verification adds a blocker for recognized wording about a known order, so the dispatcher reviews it, and the dispatcher's **Cancel this request** keeps it out of the plan. Its tests failed before the change and pass after it. A replay of Test 11's saved answers, with no model calls, held CASE-097: 15 of 15 exceptions, 0 unsafe and 81 of 85 allocations ([Test 11 report, section 11](../backend/docs/evaluation/END_TO_END_TEST_2026-10-22.md#11-follow-up-replay-24-october-2026-the-cancellation-check)). No fresh run has measured it.
 2. **A sentence-level date check** to address CASE-070. It can be tested the same way.
 3. **An intake prompt clarification** for messages that only add a preference to an existing request. Testing a prompt change requires new model calls.
 
-These changes remain proposals. No improvement is claimed until it is tested.
+The remaining changes are proposals. The original scores above remain unchanged; a source edit alone does not establish a new measured improvement.
 
 ### Limits
 

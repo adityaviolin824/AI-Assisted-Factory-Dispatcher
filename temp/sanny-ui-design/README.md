@@ -1,11 +1,7 @@
-# Sanny UI Design Experiment
+# Historical styling reference
 
-This ZIP contains the frontend file modified for the `sanny-ui-experiment` visual redesign:
+This folder retains a CSS design experiment for SweaterCo Dispatch Copilot. The candidate stylesheet is [frontend/app/globals.css](frontend/app/globals.css).
 
-- `frontend/app/globals.css`
+It is reference material, not a runnable application or the active design. The current stylesheet is [the application stylesheet](../../frontend/app/globals.css); the [frontend guide](../../frontend/README.md) documents the implemented interface and checks.
 
-The change is a visual UI experiment focused on styling, layout, typography, spacing, navigation, cards, tables, chat messages, and responsive presentation.
-
-It is not a complete standalone application. The file is intended to be reviewed or copied into the existing **AI-Assisted-Factory-Dispatcher** repository, where the rest of the frontend and backend already exist.
-
-No backend code, application logic, API definitions, dependency files, build output, or generated files are included.
+The experiment covers styling, spacing, typography, navigation, tables, chat messages and responsive presentation. It contains no backend logic, API definitions or dependency setup.

@@ -1,6 +1,8 @@
 # Golden-set run report: 100 cases, two fresh runs (21 Oct 2026)
 
-Two paid runs of the full pipeline on the human-team golden set, scored after allocation. The dispatcher review was not used. Claude Code ran both runs and wrote this report; Test 10 in [PROMPT_TESTING_RESULTS.md](PROMPT_TESTING_RESULTS.md) has the run record. The charts are SVG images in [golden_100_charts/](golden_100_charts/), drawn from the same numbers as the tables. They switch to dark colours when the reader's system uses a dark theme.
+Historical experiment record: the results below describe the implementation at the run date. A conservative possible-cancellation/hold guard was subsequently added to verification source on 24 October; it does not revise these scores. See the [current implementation](../../README.md).
+
+Two paid runs of the full pipeline on the human-team golden set, scored after allocation. The dispatcher review was not used. Both runs used the same frozen configuration; Test 10 in [PROMPT_TESTING_RESULTS.md](PROMPT_TESTING_RESULTS.md) has the run record. The charts are SVG images in [golden_100_charts/](golden_100_charts/), drawn from the same numbers as the tables. They switch to dark colours when the reader's system uses a dark theme.
 
 A third run, on 22 October 2026, used the same settings and also tested the dispatcher's review. It is recorded separately in the [end-to-end test](END_TO_END_TEST_2026-10-22.md) (Test 11).
 
@@ -8,7 +10,7 @@ A third run, on 22 October 2026, used the same settings and also tested the disp
 
 - **Allocations:** 73 of 85 (run 1) and 80 of 85 (run 2) expected allocations were made. 14 of the 15 exceptions were correctly not allocated in both runs.
 - **One unsafe allocation in both runs.** CASE-097, "The customer has cancelled ORD-297. Do not allocate...", was recommended to W1. This is the most important fix.
-- **The allocator made no error.** Every recommendation was on time and obeyed its workshop rules. Every failure started in the language stages (intake, linking, verification) or in one Python date check.
+- **No downstream workshop-rule or timeliness violation was observed.** Given the verified task inputs, every recommendation was on time and obeyed workshop rules. This does not excuse the upstream cancellation or lost preferences. Every failure started in the language stages (intake, linking, verification) or in one Python date check.
 - **Stable and random failures.** 6 failing cases repeat in both runs; 7 appear in run 1 only. Run-to-run variation alone moved the score by 7 cases.
 - **Cost:** about $0.07 and 10-11 minutes per run.
 
@@ -139,7 +141,7 @@ On the 99 verified matched tasks, order ID, due date, requested workshop, exclud
 
 Preference matched 88 (run 1) and 93 (run 2). Every preference error is a consequence of a follow-up that never reached its task (intake or linking). None is a misreading by verification.
 
-## Room for improvement
+## Improvement proposals at the time of the experiment
 
 Ranked by safety first, then cases recovered. These are proposals only; nothing has been implemented.
 
@@ -183,8 +185,8 @@ Both runs together cost $0.1428, below the pre-run estimate of $0.10-0.20 per ru
 
 ## Method and limits
 
-- **Key.** `docs/evaluation/extended_dispatch_100_human_team_golden.json`, version 2, SHA-256 `e8d861875b08cd9a...`, unchanged before and after both runs. AI custom-created our test set after repeated experiments, with several difficulty levels to emulate real-life dispatch situations and target weaknesses in our system. Three team members divided the work and comprehensively hand-reviewed it line by line; this review was done by humans, not AI. Their notes and the owner's final clarifications were reconciled into the golden key before scoring. See the [review record](extended_dispatch_100_REVIEW.md).
+- **Key.** `docs/evaluation/extended_dispatch_100_human_team_golden.json`, version 2, SHA-256 `e8d861875b08cd9a...`, unchanged before and after both runs. AI custom-created our test set after repeated experiments, with several difficulty levels to emulate real-life dispatch situations and target weaknesses in our system. Three team members divided the work and comprehensively hand-reviewed it line by line; this review was done by humans, not AI. Their notes and the documented preference rules were reconciled into the golden key before scoring. See the [review record](extended_dispatch_100_REVIEW.md).
 - **Score rules.** "How the score works" in [NEW_TEST_SETS_PLAN.md](NEW_TEST_SETS_PLAN.md), unchanged. They were applied by `make_run_report.py --key --data data/extended_dispatch_100`, and the expectations were hashed before the runs. Provisional recommendations count as allocations. A recommendation with a lost preference counts as correct when it obeys the workshop rules, which is why the headline shows it separately.
 - **Runs.** `output/extended_dispatch_100/runs/2026-10-21_23-32-41` and `output/extended_dispatch_100_repeat/runs/2026-10-21_23-43-53` (gitignored), each with its own `run_report.md`. Each was one run of `run_full_pipeline.py` with an empty cache, and both paused at the dispatcher review with no answer sent. `config.toml` was changed for the runs only, then restored; its SHA-256 matches the backup. The 127 offline tests pass after the restore. Both runs were traced to LangSmith, because `.env` enables tracing.
-- **This is a best case for clean chat.** The wording is templated, and every chat deadline equals its CSV date. The professor's 30 requests and the old extended chat remain the harder tests.
+- **This is a best case for clean chat.** The wording is templated, and every chat deadline equals its CSV date. The supplied 30 requests and the old extended chat remain the harder tests.
 - **Two runs show that variation exists, not how large it is.** A case that passed in both runs can still fail in a third.

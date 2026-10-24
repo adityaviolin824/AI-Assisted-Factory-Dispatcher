@@ -30,17 +30,31 @@ export default function ChoiceForm({ task, record, warnings, workshops, choice, 
   const intents = INTENTS.includes(task.intent) ? INTENTS : [task.intent, ...INTENTS];
   const facts = choice.facts ?? {};
   const pending = Boolean(
-    choice.workshop_id || choice.complete || choice.clear || Object.keys(facts).length || choice.warnings_checked?.length,
+    choice.workshop_id ||
+      choice.complete ||
+      choice.clear ||
+      choice.cancel ||
+      Object.keys(facts).length ||
+      choice.warnings_checked?.length,
   );
+  // An undo or a cancellation is sent alone, and a saved cancellation takes only an undo (the backend's rule).
+  const locked = Boolean(choice.clear || choice.cancel || saved?.cancelled);
 
-  // A correction is kept only while it differs from what the review shows.
+  // A correction is kept only while it differs from what the review shows. An emptied box stays empty,
+  // so it can be retyped; restoreIfEmpty shows the review's value again when the box is left empty.
   function changeFact(name: string, value: string) {
     const next = { ...facts };
     delete next[name];
-    if (value && value !== shown[name]) {
+    if (value !== shown[name]) {
       next[name] = value;
     }
     onChange({ ...choice, facts: next });
+  }
+
+  function restoreIfEmpty(name: string, value: string) {
+    if (value === "") {
+      changeFact(name, shown[name]);
+    }
   }
 
   function changeWarning(rowId: string, checked: boolean) {
@@ -58,21 +72,35 @@ export default function ChoiceForm({ task, record, warnings, workshops, choice, 
             checked={choice.clear ?? false}
             onChange={(event) => onChange(event.target.checked ? { clear: true } : {})}
           />
-          {saved.added ? "Remove this added batch" : "Undo my saved choices for this task"}
+          {saved.added ? "Remove this added batch" : saved.cancelled ? "Undo the cancellation" : "Undo my saved choices for this task"}
         </label>
       )}
-      {choice.clear && (
+      {choice.clear && <p className="hint">{undoHint(saved)}</p>}
+      {saved?.cancelled && !choice.clear && (
+        <p className="hint">This request is cancelled. Undo the cancellation to change it.</p>
+      )}
+      {!task.added && !saved?.cancelled && (
+        <label className="check">
+          <input
+            type="checkbox"
+            checked={choice.cancel ?? false}
+            disabled={choice.clear}
+            onChange={(event) => onChange(event.target.checked ? { cancel: true } : {})}
+          />
+          Cancel this request: do not allocate it
+        </label>
+      )}
+      {choice.cancel && (
         <p className="hint">
-          {saved?.added
-            ? "Python plans without this batch, so its queue time is freed."
-            : "Python plans this task as processing recorded it, without your earlier workshop choice or corrections."}
+          Python leaves this request out of the plan, so it reserves no workshop time. Approval keeps it cancelled until
+          you undo it.
         </p>
       )}
       <label>
         Workshop
         <select
           value={choice.workshop_id ?? ""}
-          disabled={choice.clear}
+          disabled={locked}
           onChange={(event) => onChange({ ...choice, workshop_id: event.target.value || undefined })}
         >
           <option value="">{record?.selected_workshop ? `Keep ${record.selected_workshop}, as shown` : "None, as shown"}</option>
@@ -85,11 +113,15 @@ export default function ChoiceForm({ task, record, warnings, workshops, choice, 
       </label>
       {choice.workshop_id && <p className="hint">{consequence(record, choice.workshop_id)}</p>}
 
-      <fieldset disabled={choice.clear}>
+      <fieldset disabled={locked}>
         <legend>Correct the request</legend>
         <label>
           Order
-          <input value={facts.order_id ?? shown.order_id} onChange={(event) => changeFact("order_id", event.target.value)} />
+          <input
+            value={facts.order_id ?? shown.order_id}
+            onChange={(event) => changeFact("order_id", event.target.value)}
+            onBlur={(event) => restoreIfEmpty("order_id", event.target.value)}
+          />
         </label>
         <label>
           Quantity
@@ -98,6 +130,7 @@ export default function ChoiceForm({ task, record, warnings, workshops, choice, 
             placeholder="orders.csv quantity"
             value={facts.quantity ?? shown.quantity}
             onChange={(event) => changeFact("quantity", event.target.value)}
+            onBlur={(event) => restoreIfEmpty("quantity", event.target.value)}
           />
         </label>
         <label>
@@ -106,6 +139,7 @@ export default function ChoiceForm({ task, record, warnings, workshops, choice, 
             type="date"
             value={facts.due_date ?? shown.due_date}
             onChange={(event) => changeFact("due_date", event.target.value)}
+            onBlur={(event) => restoreIfEmpty("due_date", event.target.value)}
           />
         </label>
         <label>
@@ -146,7 +180,7 @@ export default function ChoiceForm({ task, record, warnings, workshops, choice, 
       </fieldset>
 
       {warnings.length > 0 && (
-        <fieldset disabled={choice.clear}>
+        <fieldset disabled={locked}>
           <legend>Unresolved inputs that may change this request</legend>
           {warnings.map((rowId) => (
             <label key={rowId} className="check">
@@ -166,6 +200,17 @@ export default function ChoiceForm({ task, record, warnings, workshops, choice, 
       </button>
     </section>
   );
+}
+
+// What an undo of the dispatcher's saved choices does.
+function undoHint(saved?: DispatcherEntry) {
+  if (saved?.added) {
+    return "Python plans without this batch, so its queue time is freed.";
+  }
+  if (saved?.cancelled) {
+    return "Python plans this request again, as processing recorded it.";
+  }
+  return "Python plans this task as processing recorded it, without your earlier workshop choice or corrections.";
 }
 
 // What the review already records about a chosen workshop. Python calculates the choice itself

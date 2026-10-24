@@ -1,8 +1,8 @@
-# 04. Task allocation demo: choosing a workshop and updating the preview queue
+# 04. Task allocation: choosing a workshop and updating the preview queue
 
-Prepared and checked against the current Python modules and notebook 06: 19 October 2026.
+Automatic-allocation reference calculation recorded 19 October 2026. Section 9 describes notebook 06's historical per-row approval queues; the current application places manual destinations first and uses one batch approval.
 
-This saves the allocation walkthrough discussed after the processing tutorials, with the queue-table explanation added. Follow [02. Task verification demo](02-task-verification-demo.md) and [03. Processing files explanation](03-order-processing-files-explanation.md) first.
+This walkthrough explains automatic selection and temporary queues. Follow [02. Task verification demo](02-task-verification-demo.md) and [03. Processing files explanation](03-order-processing-files-explanation.md) first.
 
 Verification answers: **"What is the current request, and is it clear enough to process?"**
 
@@ -45,7 +45,7 @@ The order CSV supplies the factory facts:
 | Delivery deadline | 9 April 2026 |
 | Time available | 8 calendar days |
 
-The quantity comes from the CSV. A conflicting written quantity must be clarified during verification; the application does not replace the CSV quantity. The deadline is the checked chat deadline when present, otherwise the order's CSV due date.
+The quantity comes from the CSV. A conflicting written quantity must be clarified during verification; automatic processing does not replace the CSV quantity. The dispatcher can explicitly correct batch quantity during review. The deadline is the checked chat deadline when present, otherwise the order's CSV due date.
 
 The calculations below treat this as the first planned task, using the original workshop queues. Earlier recommendations can change later tasks' estimates.
 
@@ -68,7 +68,7 @@ Ready allocation tasks are planned earliest deadline first. Equal deadlines keep
 
 [workshop_rules_and_estimates.py](../task_allocation_to_workshops/workshop_rules_and_estimates.py) checks whether each workshop is allowed to take the batch.
 
-It checks request exclusions, ACTIVE status, product-category compatibility, maximum batch size and any requested destination. Naming a workshop does not override its limits.
+It checks request exclusions, ACTIVE status, product-category compatibility, maximum batch size and any requested destination. A destination requested in chat does not override these limits. A workshop explicitly chosen during dispatcher review is a separate authoritative human action whose overrides are recorded.
 
 For this 150-piece TOPS batch:
 
@@ -199,7 +199,7 @@ The last column already includes approved work. Do not add the three columns tog
 
 These are three calculation snapshots, not three dates. Time does not pass between them, so existing queues do not drain. The screen rounds values to two decimal places.
 
-The screenshot discussed on 19 October is reproduced by saved run `2026-10-14_14-40-08` with no dispatcher decisions:
+The historical notebook queue table is reproduced by saved run `2026-10-14_14-40-08` with no dispatcher decisions:
 
 | Workshop | At start | After approved work | After the plan | Added work in this preview |
 |---|---:|---:|---:|---|
@@ -218,10 +218,10 @@ For example, W8 can take ORD-045 on time, but W6 wins that request's fastest pre
 
 Approval is not another copy of the batch. An approved task is placed in the approved group and excluded from the remaining-task group, so it reserves once. Approval can change planning order and therefore affect other estimates; it does not necessarily increase the final total queue.
 
-## 10. Verification and next discussion
+## 10. Recorded verification and ranking consequence
 
-The example metrics and all eight screenshot queue rows were recalculated from the actual Python functions and notebook 06's Part 8 calculation, with network connections refused and a blank API key. No model call or Gradio server was started. The notebook, source run, configuration, original CSVs and professor's simulator were unchanged by hash.
+The example metrics and all eight screenshot queue rows were recalculated from the actual Python functions and notebook 06's Part 8 calculation, with network connections refused and a blank API key. No model call or Gradio server was started. The notebook, source run, configuration, original CSVs and supplied simulator were unchanged by hash.
 
-Learning check: if the request changes to cheapest, why does W8 win instead of W3?
+For a cheapest preference, W8 wins because W3 misses the deadline and is removed before cost ranking.
 
-Continue with [05. LangGraph implementation](05-langgraph-implementation-demo.md), which explains the current processing, allocation and dispatcher review graph. That workflow is still incomplete: operational assignments, reallocation and the optional review after reallocation remain future work.
+Continue with [05. LangGraph implementation](05-langgraph-implementation-demo.md), which explains the current processing, allocation and dispatcher review graph. The current application implements dispatch-table reallocation through Approve all and Review again. Operational assignments and transfers of real production remain future work.

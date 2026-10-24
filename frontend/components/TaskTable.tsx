@@ -11,7 +11,7 @@ const FILTERS: { filter: Filter; label: string }[] = [
   { filter: "attention", label: "Needs attention" },
   { filter: "suggested", label: "Suggested" },
   { filter: "approved", label: "Approved" },
-  { filter: "info", label: "No request" },
+  { filter: "info", label: "No request or cancelled" },
 ];
 
 type Props = { plan: Plan; selectedId: string | null; onSelect: (rowId: string) => void; choices?: Choices };
@@ -66,6 +66,7 @@ export default function TaskTable({ plan, selectedId, onSelect, choices = {} }: 
                 <td>
                   {workshopText(plan, row)}
                   {choices[row.id]?.clear && <span className="unsaved block">Unsaved: undo</span>}
+                  {choices[row.id]?.cancel && <span className="unsaved block">Unsaved: cancel</span>}
                   {choices[row.id]?.workshop_id && (
                     <span className="unsaved block">Unsaved: {choices[row.id].workshop_id}</span>
                   )}

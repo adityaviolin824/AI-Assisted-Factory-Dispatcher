@@ -101,7 +101,7 @@ class RecordedModel:
         self.last_trace_file = str(trace_file)
         # A saved answer exists: record the reuse in this run and return it. No API call.
         if cached.exists():
-            record = json.loads(cached.read_text())
+            record = json.loads(cached.read_text(encoding="utf-8"))
             write_json(trace_file, {**record, "reused_response": True})
             print(f"[Model: {stage}] reused a saved answer; no API call ({trace_file.name})")
             try:

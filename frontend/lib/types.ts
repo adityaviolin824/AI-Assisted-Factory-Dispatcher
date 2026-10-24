@@ -120,6 +120,8 @@ export type Plan = {
   duplicate_order_reviews: DecisionRecord[];
   needs_clarification: Task[];
   reference_tasks: Task[];
+  // Only a dispatcher review has the requests the dispatcher cancelled (24 October 2026).
+  cancelled_tasks?: Task[];
   intake_review: { message_id: string; raw_text: string; reason: string }[];
   task_review: {
     task_id: string;
@@ -155,6 +157,8 @@ export type DispatcherEntry = {
   resolves?: string[];
   accept_late?: { workshop: string; version: number; days: number };
   warnings_checked?: string[];
+  // The dispatcher cancelled the request: it is not planned and reserves no queue time.
+  cancelled?: boolean;
 };
 
 // One side of a changed row (dispatcher_decisions.changed_rows).
@@ -195,6 +199,7 @@ export type Decision =
   | { decision: "add_batch"; facts: Record<string, string>; workshop_id?: string }
   | { decision: "accept_late"; task_id: string; max_days?: number }
   | { decision: "warnings_checked"; task_id: string; row_ids: string[] }
+  | { decision: "cancel"; task_id: string }
   | { decision: "clear"; task_id: string };
 
 export type Answer = { decisions: Decision[]; then: "review_again" | "approve_all" };
@@ -202,6 +207,9 @@ export type Answer = { decisions: Decision[]; then: "review_again" | "approve_al
 // Chat bridge: backend/fastapi_routes/chat.py (BACKEND_PROPOSAL.md, section 1). The fields follow
 // the mock chat's storage and export (backend/experimentation_notebooks/mock_frontend/PLAN.md).
 export type ChatMessage = { message_id: number; sender: string; raw_text: string; received_at_utc: string };
+
+// The dates from config.toml that processing uses, such as "2026-04-01" (GET /chat/dates).
+export type ChatDates = { message_date: string; dispatch_date: string };
 
 // One send attempt. Sending it again with the same submission_id saves nothing new.
 export type NewMessage = { submission_id: string; sender: string; raw_text: string };

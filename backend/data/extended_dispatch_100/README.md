@@ -1,10 +1,10 @@
 # Human team golden set: 100 dispatch tasks
 
-Created 19 October 2026 for the SweaterCo Track 2 project. This is an additional synthetic development test set. It is separate from the professor's supplied data and the official historical harness benchmark.
+Created 19 October 2026 for the SweaterCo Track 2 project. This is an additional synthetic development test set. It is separate from the supplied source data and the official historical harness benchmark.
 
 AI custom-created the questions and dispatch requests after repeated project experiments, with several difficulty levels to emulate real-life dispatch situations and address weaknesses found in our intake, linking, verification and allocation. These are synthetic scenarios, not captured factory conversations.
 
-**Three team members divided the work and comprehensively hand-reviewed the complete set, line by line. The review was performed by humans, not AI.** The returned workbook and the project owner's final clarifications were reconciled into the version 2 golden key on 21 October 2026. The initial questions and draft answers remain AI-authored; see the [review record](../../docs/evaluation/extended_dispatch_100_REVIEW.md) for the evidence and agreed changes.
+**Three team members divided the work and comprehensively hand-reviewed the complete set, line by line. The review was performed by humans, not AI.** The returned workbook and the documented preference rules were reconciled into the version 2 golden key on 21 October 2026. The initial questions and draft answers remain AI-authored; see the [review record](../../docs/evaluation/extended_dispatch_100_REVIEW.md) for the evidence and agreed changes.
 
 There are **100 intended task cases across 149 messages**. With the reviewed correct interpretations, the existing deterministic allocator produces **85 on-time recommendations in one cumulative plan**. The other 15 are explicit exceptions. This establishes input feasibility. Model extraction, linking and end-to-end accuracy were measured later: in two paid runs on 21 October 2026 (Test 10), and in one on 22 October 2026 that also tested the dispatcher's review (Test 11). See the [evaluation summary](../../../evaluation/README.md). No paid model call was made to create or validate it.
 
@@ -58,7 +58,7 @@ From `backend/`:
 uv run --offline --no-sync python experimentation_notebooks/testing/check_extended_dispatch_100.py
 ```
 
-The check uses the expected interpretations as controlled fixtures. It does not run intake, linking, verification models, notebook processing cells or the full pipeline. Network connections are blocked during the check.
+The checker is a local notebook-support file excluded from publication. It uses the expected interpretations as controlled fixtures. It does not run intake, linking, verification models, notebook processing cells or the full pipeline. Network connections are blocked during the check.
 
 It confirms all 100 cases have source messages; the chat matches the frozen message map; all 85 recommendations obey workshop/request restrictions and their deadlines after earlier reservations; reviews reserve nothing; and repeating the same plan gives the same queues. It independently checks production, expected rework and delivery arithmetic. All seven active workshops receive work; suspended W7 receives none.
 
@@ -66,15 +66,15 @@ The 85% is a deliberate composition of this dataset. It is not an observed AI su
 
 ## Team review of the answer key
 
-Review is complete for the 100 cases and 149 messages. The [submitted workbook](../../docs/evaluation/extended_dispatch_100_human_team_review.xlsx) records approval/discussion statuses and human notes. The owner confirmed that three members divided the work and reviewed it manually, line by line. Individual reviewer-name and date columns were left blank; no names, dates or signatures have been invented.
+Review is complete for the 100 cases and 149 messages. The [submitted workbook](../../docs/evaluation/extended_dispatch_100_human_team_review.xlsx) records approval/discussion statuses and human notes. Three team members divided the work and reviewed it manually, line by line. Individual reviewer-name and date columns are blank; the review record documents scope and reconciliation rather than per-reviewer signatures.
 
-The agreed reconciliation corrects 12 unstated preferences to `none`. No preference means the existing default, **minimize lateness**, unless another preference is explicitly stated. The owner explicitly confirmed that a delivery deadline alone is not a fastest preference. Message labels, case links, expected outcomes and intentional input traps remain unchanged. The nine case discussion flags and two message discussion flags are resolved in the [review record](../../docs/evaluation/extended_dispatch_100_REVIEW.md).
+The agreed reconciliation corrects 12 unstated preferences to `none`. No preference means the existing default, **minimize lateness**, unless another preference is explicitly stated. A delivery deadline alone does not create an explicit fastest preference. Message labels, case links, expected outcomes and intentional input traps remain unchanged. The nine case discussion flags and two message discussion flags are resolved in the [review record](../../docs/evaluation/extended_dispatch_100_REVIEW.md).
 
-The active key is now `extended_dispatch_100_human_team_golden.json`, version 2. The original AI draft and blank-review template are preserved in the evaluation archive. Codex applied the human notes and owner decisions and ran consistency checks; those automated checks do not replace or constitute the team's human review.
+The active key is now `extended_dispatch_100_human_team_golden.json`, version 2. The original AI draft and blank-review template are preserved in the evaluation archive. AI-assisted reconciliation applied the human notes and documented preference rules, then ran consistency checks; those automated checks do not replace or constitute the team's human review.
 
-## Settings for a future model test
+## Configuration used for the recorded model tests
 
-The active `backend/config.toml` was left unchanged. If a separate model test is later authorized, use these values in its existing sections and restart the process/kernel so imported lookup dictionaries reload:
+Tests 10 and 11 used this dataset configuration with separate output folders and restored the default configuration afterwards. An authorized repeat needs these input settings and a restarted process so imported lookups reload:
 
 ```toml
 [input]
@@ -99,4 +99,4 @@ The snapshot date is **1 April 2026**, regardless of the computer's date. The al
 
 “AI custom-created our 100-case, 149-message test set after repeated project experiments. It contains questions and dispatch requests at several difficulty levels, designed to emulate real-life situations and target weaknesses in our system. Three members of our team divided the work and comprehensively hand-reviewed the set, line by line; this review was done by humans, not AI. We reconciled their comments into a golden answer key. Offline checks confirm that 85 cases can be allocated on time together and 15 test exceptions. In our better of two full runs, the app allocated 80 of the 85 correctly and held 14 of the 15 exceptions; one cancelled order was allocated, and a check for that is our top-ranked proposed fix.”
 
-The observed results are reported separately, in the [evaluation summary](../../../evaluation/README.md) and the [full run report](../../docs/evaluation/GOLDEN_100_RUN_REPORT.md). Preserve this dataset and its prewritten answer key so those results can be reproduced. The professor's `harness/simulate.py`, supplied data and official metrics are unchanged. Aditya requested the test composition; Codex authored the synthetic inputs, expected interpretations and offline validation.
+The observed results are reported separately, in the [evaluation summary](../../../evaluation/README.md) and the [full run report](../../docs/evaluation/GOLDEN_100_RUN_REPORT.md). Preserve this dataset and its prewritten answer key so those results can be reproduced. The supplied `harness/simulate.py`, supplied data and official metrics are unchanged. AI assistance produced the synthetic inputs, initial expected interpretations and offline validation; the comprehensive human review is recorded separately above.

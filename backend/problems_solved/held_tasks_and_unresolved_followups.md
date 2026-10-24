@@ -39,8 +39,8 @@ The original request remains saved. The problem is not deletion of its evidence:
 
 - The actual R09 linking payload already contained R07 and R08 as separate candidates' original evidence, with R09 as the follow-up. It did not supply a separate continuous-chat block. Missing access to these three messages is therefore not the explanation for this particular refusal; whether presentation or the prompt's linking standard caused it still needs a controlled experiment.
 - The saved verification requests contained eight task IDs; `T:L0007:J1` was absent.
-- In a copy of the saved state, removing only R09's unresolved-link record and calling the current hold calculation left ORD-108's `related_review` in place. The verification batch builder still skipped it.
-- This diagnostic changed no saved state, plan or application code. It did not simulate an implemented dispatcher resolution flow; that flow does not exist yet.
+- In a copy of the saved state, removing only R09's unresolved-link record and calling the historical hold calculation left ORD-108's `related_review` in place. The verification batch builder still skipped it.
+- This diagnostic changed no saved state, plan or application code. It did not simulate an implemented dispatcher resolution flow; that flow was not implemented at the investigation date.
 
 Sources: saved state, saved plan, [verification and holds](../order_processing_into_tasks/verify_tasks.py).
 
@@ -67,7 +67,7 @@ Sources: [request/link handling](../order_processing_into_tasks/create_and_link_
 
 ## SOLUTION TO THIS PROBLEM: allocation previews with provisional warnings
 
-Decided by Aditya and implemented on 15 October 2026. The step-by-step plan and its evidence are in [debugging/held-tasks-never-verified.md](../debugging/held-tasks-never-verified.md).
+Implemented on 15 October 2026. The step-by-step plan and its evidence are in [debugging/held-tasks-never-verified.md](../debugging/held-tasks-never-verified.md).
 
 ### The decision
 
@@ -92,7 +92,7 @@ Allocation previews are allowed while follow-up links need review.
 
 ### Alternatives considered
 
-- **Keep holds, but verify held tasks and give them a `held` plan outcome.** This was the first plan. It fixed the dead end but still gave no recommendation for ORD-108. Aditya chose provisional previews instead.
+- **Keep holds, but verify held tasks and give them a `held` plan outcome.** This was the first plan. It fixed the dead end but still gave no recommendation for ORD-108. The implemented alternative used provisional previews.
 - **Warn every link candidate.** This would flag 10 of Test 6's 14 tasks, against 6 for the hold rule's targets. Rejected as too broad.
 - **Any not-ready allocation task with no order affects the 2 messages before it.** On the original 30 requests this flagged 3 to 5 ready, independent tasks. For example, R10 "New rush coming in" would flag ORD-073 and urgent ORD-045. Rejected. Requiring a requested or excluded workshop narrows it to R14 across all 14 saved runs.
 - **Make a cancellation block its order** through the duplicate-order check. Not chosen: a review or task that names an order only warns, like every other source.
@@ -109,7 +109,7 @@ Allocation previews are allowed while follow-up links need review.
 
 ### Remaining limitations
 
-- **Saved runs are not re-verified.** ORD-108 (Example 1) and the other formerly held tasks of Test 6 stay unverified in the saved runs. The next run of the blocker file verifies them. That needs about 5 new verification calls, which is a paid run awaiting approval. Intake and link answers stay cached.
-- **A warning is not enforcement.** R14's recommendation still allows QuickStitch until the dispatcher confirms R15. A cancellation warns R02 but does not block it. Dispatcher resolution and reallocation are planned in [system design section 6](../../docs/system-design.md#6-planned-dispatcher-review-and-reallocation).
+- **Saved runs are not re-verified.** ORD-108 (Example 1) and the other formerly held tasks of Test 6 stay unverified in the saved runs. The next run of the blocker file verifies them. At the investigation date this was estimated to need about five new verification calls; later experiments are recorded separately. Intake and link answers stay cached.
+- **A warning is not enforcement.** R14's recommendation still allows QuickStitch until the dispatcher confirms R15. A cancellation warns R02 but does not block it. Dispatcher review and dispatch-table reallocation are now implemented as described in [system design section 6](../../docs/system-design.md#6-planned-dispatcher-review-and-reallocation).
 - **Warnings come from text rules.** The two-message window still links R20 to ORD-036 (false association). It still misses a correction more than two messages back (Pending Improvements, issue 5).
 - **Root causes are unchanged.** Intake still labels R15 a request (issue 1), linking still refuses "Yes." (issue 2), and intake can still reject R21's batch (issue 4). Those need prompt work and paid runs.

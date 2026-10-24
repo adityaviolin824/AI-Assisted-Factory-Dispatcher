@@ -39,7 +39,7 @@ export default function ReviewBar({
     onOpen(typed.trim());
   }
 
-  let hint = "Approve all saves the plan exactly as shown. Reallocation is not built yet.";
+  let hint = "Approve all saves the plan exactly as shown.";
   if (decisions.length > 0) {
     hint =
       "Approve all sends these choices together. Python plans once with them, other tasks may move around them, and the result is saved at once. Check workshop options shows that result first without saving it. Nothing has been saved yet.";
@@ -86,15 +86,10 @@ export default function ReviewBar({
             <button disabled={decisions.length === 0 || approving || previewing} onClick={onPreview}>
               {previewing ? "Checking..." : "Check workshop options"}
             </button>
-            {savedPlan ? (
+            {savedPlan && (
               <button disabled={approving} onClick={onClose}>
                 Close without saving
               </button>
-            ) : (
-              <>
-                <button disabled>Reallocate</button>
-                <button disabled>Review again after reallocation</button>
-              </>
             )}
           </div>
           <p className="hint">{hint}</p>

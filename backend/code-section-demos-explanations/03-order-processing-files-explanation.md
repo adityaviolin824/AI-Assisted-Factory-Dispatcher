@@ -12,7 +12,7 @@ The current application uses the Python modules. Notebook 05 remains their exper
 |---|---|
 | `run_intake_and_processing.py` | Saves processing inputs, state and model-call records. It stops before allocation and does not create `plan.json`. |
 | `run_allocation.py <run folder>` | Reads the explicitly selected run's processing files and saves its allocation plan and history. It makes no model call. |
-| `run_full_pipeline.py` | Runs processing and allocation together, carrying the state directly between stages. The same run folder contains both processing files and the plan. Cache misses during processing can make paid model calls. |
+| `run_full_pipeline.py` | Runs processing and allocation, then pauses for dispatcher review. The same run folder contains the processing files and plan. Cache misses during processing can make paid model calls; approval later saves the dispatcher files. |
 
 These filenames describe entry points, not instructions to run them during this tutorial. The extra files from notebook 04 are historical and are listed separately at the end.
 
@@ -24,7 +24,7 @@ The examples below continue Elena’s conversation. They illustrate the contents
 
 **1. `manifest.json` — what went into this processing session**
 
-Think of this as the **original input record**.
+The manifest is the **original input record**.
 
 It stores:
 

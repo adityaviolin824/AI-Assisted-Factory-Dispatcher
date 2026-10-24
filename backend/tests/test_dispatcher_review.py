@@ -52,7 +52,7 @@ from test_processing_modules import logic, module_definitions, undefined_names
 
 from dispatcher_review import dispatcher_decisions, dispatcher_plan
 from dispatcher_review.dispatcher_decisions import (
-    CHANGED_INPUTS, accept_late, add_batch, apply_answer, choose_workshop, clear, complete, correct,
+    CHANGED_INPUTS, accept_late, add_batch, apply_answer, cancel, choose_workshop, clear, complete, correct,
     save_dispatcher_files, verified_tasks_by_id, warnings_checked)
 from dispatcher_review.dispatcher_plan import blockers, build_dispatcher_plan, finalize_review
 from order_processing_into_tasks.settings_and_data import RUNS_DIR
@@ -76,7 +76,9 @@ MOVED = {
 # accept_late refuse with ValueError, not KeyError; warnings_checked takes a list; print_review takes
 # the tasks and has no "after approved work" queue column. The dispatcher may give a quantity (22 October
 # 2026): CORRECTABLE takes it, derive_task checks it and keeps it as a number, and batch_of and reserve
-# use it through batch_pieces.
+# use it through batch_pieces. The dispatcher may cancel a request (24 October 2026, after CASE-097):
+# build_dispatcher_plan neither routes nor plans it and gives it a "cancelled" row, and entry_for refuses
+# another decision for it until clear.
 CHANGED = {
     "dispatcher_review.dispatcher_plan": [
         "CORRECTABLE", "RESERVING", "derive_task", "batch_of", "named_option", "reserve", "flexible_decision",
@@ -87,10 +89,11 @@ CHANGED = {
 }
 # Definitions that are new in the modules.
 NEW = {
-    "dispatcher_review.dispatcher_plan": ["open_flags", "added_task", "input_signature", "finalize_review"],
+    "dispatcher_review.dispatcher_plan": ["CANCELLED_REASON", "open_flags", "added_task", "input_signature",
+                                          "finalize_review"],
     "dispatcher_review.dispatcher_decisions": [
         "DECISION_FIELDS", "REQUIRED_FIELDS", "FIELD_FORMS", "CHANGED_INPUTS", "CHANGE_MARKERS", "verified_tasks_by_id",
-        "complete", "add_batch",
+        "complete", "add_batch", "cancel",
         "valid_field", "answer_problem", "apply_decision", "apply_answer", "changed_rows", "review_saved_plan"],
 }
 # Notebook 06's per-row approval code, which the modules leave out.
@@ -223,7 +226,10 @@ class SameResultsAsNotebook(unittest.TestCase):
                 expected = notebook["build_dispatcher_plan"](run_dir, no_decisions(run_dir))
                 review = build_dispatcher_plan(run_dir, no_decisions(run_dir))
                 self.assertEqual(expected.pop("queues_after_approved"), expected["queues_before_plan"])
-                self.assertEqual(without(review, "created_at", "input_signature"), without(expected, "created_at"))
+                # cancelled_tasks is new (24 October 2026); with no decision nothing is cancelled.
+                self.assertEqual(review["cancelled_tasks"], [])
+                self.assertEqual(without(review, "created_at", "input_signature", "cancelled_tasks"),
+                                 without(expected, "created_at"))
                 for key in ("processing_complete", "planning_order", "decisions", "duplicate_order_reviews",
                             "needs_clarification", "reference_tasks", "intake_review", "task_review",
                             "link_review", "non_task_messages", "not_processed", "review_warnings",
@@ -263,7 +269,8 @@ class SameResultsAsNotebook(unittest.TestCase):
                         self.assertEqual(module_review["planning_order"][0], T8)
                         self.assertNotEqual(notebook_review["planning_order"][0], T8)
                     else:
-                        self.assertEqual(without(module_review, "created_at", "input_signature"),
+                        self.assertEqual(module_review["cancelled_tasks"], [])
+                        self.assertEqual(without(module_review, "created_at", "input_signature", "cancelled_tasks"),
                                          without(notebook_review, "created_at", "queues_after_approved"))
             self.assertEqual(record(module_review, T12)["status"], "accepted_late")
 
@@ -374,6 +381,46 @@ class ControlledDecisions(unittest.TestCase):
         review = self.build()
         self.assertEqual(review["duplicate_order_reviews"], [])
         self.assertEqual([task_id for task_id in review["planning_order"] if task_id in (T14, T20)], [T14, T20])
+
+    def test_a_cancelled_request_reserves_nothing_and_is_never_approved(self):
+        # T21 is a recommendation; the dispatcher cancels it (24 October 2026, after CASE-097).
+        self.assertEqual(row(self.build(), T21)["outcome"], "recommendation")
+        cancel(self.decisions, self.tasks, T21)
+        review = self.build()
+        self.assertEqual(row(review, T21), {
+            "id": T21, "order_id": self.tasks[T21]["order_id"], "outcome": "cancelled", "workshop": None,
+            "delivery_days": None, "days_available": None,
+            "reason": "Cancelled by the dispatcher. No workshop time is reserved.",
+            "messages": self.tasks[T21]["source_message_ids"], "final": False})
+        self.assertEqual([task["task_id"] for task in review["cancelled_tasks"]], [T21])
+        self.assertNotIn(T21, review["planning_order"] + review["reservation_order"])
+        # Approval leaves it cancelled: neither approved nor waiting for a decision.
+        final = finalize_review(review)
+        self.assertEqual((row(final, T21)["outcome"], row(final, T21)["final"]), ("cancelled", False))
+        self.assertNotIn(T21, final["final_ids"] + final["unresolved_ids"])
+        # clear undoes the cancellation.
+        clear(self.decisions, T21)
+        self.assertEqual(row(self.build(), T21)["outcome"], "recommendation")
+
+    def test_cancelling_one_of_two_requests_for_an_order_plans_the_other(self):
+        # T14 and T20 both name ORD-103; with T14 cancelled, T20 is the order's only request.
+        cancel(self.decisions, self.tasks, T14)
+        review = self.build()
+        self.assertEqual(review["duplicate_order_reviews"], [])
+        self.assertIn(T20, review["planning_order"])
+
+    def test_a_cancellation_replaces_the_choices_and_only_clear_changes_it(self):
+        choose_workshop(self.decisions, self.tasks, T8, "W1")
+        cancel(self.decisions, self.tasks, T8)
+        self.assertEqual(self.decisions["decisions"][T8], {"source_version": self.tasks[T8]["version"],
+                                                          "cancelled": True})
+        with self.assertRaisesRegex(ValueError, f"{T8} is cancelled: undo the cancellation with clear first."):
+            choose_workshop(self.decisions, self.tasks, T8, "W2")
+        # A batch the dispatcher added is removed with clear, not cancelled.
+        add_batch(self.decisions, {"order_id": "ORD-041"})
+        tasks = {**self.tasks, "ADD-1": dispatcher_plan.added_task("ADD-1")}
+        with self.assertRaisesRegex(ValueError, "cancel ADD-1: remove an added batch with clear instead."):
+            cancel(self.decisions, tasks, "ADD-1")
 
     def test_an_added_batch_is_planned_and_reserved_once(self):
         # T10 is completed as 300 pieces of ORD-041; the dispatcher adds the other 300 as a batch of its own.
@@ -640,6 +687,7 @@ class ApplyAnswer(unittest.TestCase):
              lambda decisions: accept_late(decisions, self.tasks, self.review, T12, 2)),
             ({"decision": "warnings_checked", "task_id": T9, "row_ids": ["L0019"]},
              lambda decisions: warnings_checked(decisions, self.tasks, T9, ["L0019"])),
+            ({"decision": "cancel", "task_id": T8}, lambda decisions: cancel(decisions, self.tasks, T8)),
         ]
         for entry, helper in cases:
             with self.subTest(decision=entry["decision"]):
@@ -724,6 +772,16 @@ class ApplyAnswer(unittest.TestCase):
             "id": "ADD-1", "order_id": "ORD-041", "after": None,
             "before": {field: earlier[field] for field in ("outcome", "workshop", "delivery_days", "reason")}})
 
+    def test_a_saved_cancellation_needs_clear_before_another_choice(self):
+        # As in Review again: the saved decisions cancel T8.
+        decisions = no_decisions(self.run_dir)
+        cancel(decisions, self.tasks, T8)
+        self.assert_refused(answer({"decision": "choose_workshop", "task_id": T8, "workshop_id": "W1"}),
+                            f"{T8} is cancelled: undo the cancellation with clear first.", decisions)
+        cleared, _, _, refusal = apply_answer(self.run_dir, decisions, self.review,
+                                              answer({"decision": "clear", "task_id": T8}))
+        self.assertEqual((cleared, refusal), (no_decisions(self.run_dir), None))
+
     def test_finalize_refuses_lateness_that_grew(self):
         # T12's late W5 option is accepted, but choosing W5 for T11 in the same batch makes T12 later.
         entries = [{"decision": "accept_late", "task_id": T12},
@@ -791,6 +849,13 @@ class ApplyAnswer(unittest.TestCase):
              "Not applied: ADD-1: '0' is not a whole number of pieces above 0."),
             # A valid decision followed by an invalid one: the whole answer is refused.
             (answer(choose, {"decision": "correct", "task_id": T5, "resolves": [5]}), f"{T5} has no blocker [5]"),
+            # A cancellation comes alone for its task, in either order.
+            (answer({"decision": "cancel", "task_id": T8, "reason": "x"}),
+             f"cancel {T8}: unknown field reason; it takes no other field"),
+            (answer({"decision": "cancel", "task_id": T8}, choose),
+             f"choose_workshop {T8}: the same answer cancels {T8}, so send no other decision for it."),
+            (answer(choose, {"decision": "cancel", "task_id": T8}, then="finalize"),
+             f"choose_workshop {T8}: the same answer cancels {T8}, so send no other decision for it."),
         ]
         for reply, message in cases:
             with self.subTest(reply=reply):

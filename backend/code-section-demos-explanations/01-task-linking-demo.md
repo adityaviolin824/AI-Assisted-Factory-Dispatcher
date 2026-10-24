@@ -1,4 +1,4 @@
-# 01. Task linking demo — two parts: initial explanation and comprehensive worked example
+# 01. Task linking walkthrough
 
 Prepared: 13 October 2026.
 
@@ -10,7 +10,7 @@ The main code is [create_and_link_tasks.py](../order_processing_into_tasks/creat
 
 This walkthrough uses five realistic messages and stops after linking. The AI answers and saved records below are examples of the intended behaviour, not results from a run. The JSON examples show the relevant parts of the records rather than a complete processing file.
 
-### 1. Our sample TXT file
+### 1. Sample TXT input
 
 ```text
 R01 [10:15] Chen: Please allocate ORD-061 by April 5.
@@ -53,7 +53,7 @@ For example, the first saved message looks like:
 
 ### 3. Extracting the first three messages
 
-Our first batch contains the first three messages.
+The first batch contains the first three messages.
 
 AI should recognise each as a new independent request. Here, "request" also includes an information question; it does not mean everything should be allocated.
 
@@ -142,7 +142,7 @@ The first is saved as:
 }
 ```
 
-We now know it is a follow-up, but **we still need to decide which task it belongs to**.
+The item is classified as a follow-up; **its target task must still be identified**.
 
 ### 6. Finding possible tasks for that follow-up
 
@@ -323,7 +323,7 @@ Excluded workshop: QuickStitch
 
 Those are the **expected later interpretation**, not fields already established by linking.
 
-At the end of linking, we have **three separate tasks**, with Chen's two corrections connected to his original request and all original evidence retained.
+At the end of linking there are **three separate tasks**, with Chen's two corrections connected to his original request and all original evidence retained.
 
 **End of Part 1: initial explanation.**
 
@@ -506,7 +506,7 @@ After all seven of Elena's messages are connected:
 }
 ```
 
-Notice that there is **no long evidence paragraph inside this task record**. It contains the IDs needed to retrieve the saved text.
+There is **no long evidence paragraph inside this task record**. It contains the IDs needed to retrieve the saved text.
 
 The shared processing record contains two connected collections:
 

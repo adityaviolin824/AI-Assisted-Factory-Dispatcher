@@ -17,6 +17,7 @@ const OUTCOME_LABELS: Record<string, string> = {
   link_review: "Follow-up not linked",
   non_task: "No request",
   not_processed: "Not processed",
+  cancelled: "Cancelled",
 };
 
 // An unfamiliar outcome keeps its backend name, so nothing is hidden.
@@ -31,12 +32,12 @@ export const SELECTED_OUTCOMES = ["recommendation", "dispatcher_choice", "accept
 export type Group = "attention" | "suggested" | "approved" | "info";
 
 // The worklist filter a row belongs to. A selected outcome with an unchecked warning still needs
-// attention: approval leaves it unresolved.
+// attention: approval leaves it unresolved. A request the dispatcher cancelled needs nothing more.
 export function rowGroup(row: SummaryRow, plan: Plan): Group {
   if (row.final) {
     return "approved";
   }
-  if (row.outcome === "non_task") {
+  if (row.outcome === "non_task" || row.outcome === "cancelled") {
     return "info";
   }
   if (SELECTED_OUTCOMES.includes(row.outcome) && !plan.review_warnings?.[row.id]) {
@@ -50,7 +51,7 @@ export function decisionFor(plan: Plan, rowId: string): DecisionRecord | null {
 }
 
 export function taskFor(plan: Plan, rowId: string): Task | null {
-  const others = [...plan.needs_clarification, ...plan.reference_tasks];
+  const others = [...plan.needs_clarification, ...plan.reference_tasks, ...(plan.cancelled_tasks ?? [])];
   return decisionFor(plan, rowId)?.task ?? others.find((task) => task.task_id === rowId) ?? null;
 }
 

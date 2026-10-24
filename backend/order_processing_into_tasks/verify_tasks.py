@@ -8,7 +8,8 @@
 # Changes:         the processing state: each task's verified record and task reviews.
 #
 # Order of calls: run_verification -> verification_batches -> verification_payload -> model call
-#   -> finish_verification_batch -> finish_verification -> stated_piece_counts, resolve_scheduling
+#   -> finish_verification_batch -> finish_verification -> stated_piece_counts, cancellation_words,
+#   resolve_scheduling
 # possibly_affected_tasks is called by allocation: it finds the tasks an unresolved input may modify.
 #
 # Two expected outcomes that are not errors:
@@ -382,6 +383,27 @@ def stated_piece_counts(quote, order_id):
     return counts
 
 
+# Words that may cancel or hold a request (24 October 2026, after CASE-097): "cancel" in any form,
+# "call off", and "do not allocate" or "don't reserve" unless "to", "at", "with", "in" or "based"
+# follows, as in "Do not allocate to W3" or "Don't allocate based on memory".
+CANCELLATION_WORDS = (r"\bcancel(?:s|l?ed|l?ing|l?ations?)?\b|\bcall(?:s|ed|ing)?\s+(?:it\s+|them\s+)?off\b"
+                      r"|\b(?:do\s+not|don['’]?t)\s+(?:allocate|reserve)\b(?!\s+(?:to|at|with|in|based)\b)")
+
+
+def cancellation_words(quote, order_id):
+    """Return the words in one quote that may cancel or hold order_id, such as ["cancelled", "Do not allocate"].
+
+    Uses the ownership rule of stated_piece_counts: text after another order ID belongs to that order.
+    """
+    words, owner = [], None
+    for part in re.split(r"((?<![\w-])ORD-\d+(?![\w-]))", quote):
+        if re.fullmatch(r"ORD-\d+", part):
+            owner = part
+        elif owner in (None, order_id):
+            words += [match.group() for match in re.finditer(CANCELLATION_WORDS, part, re.IGNORECASE)]
+    return words
+
+
 def finish_verification(task, payload, assessment):
     """Check one task's assessment and build its verified record (on the copy of the task it is given).
 
@@ -405,6 +427,9 @@ def finish_verification(task, payload, assessment):
     #    orders.csv, several orders in the task's first item, or a piece count written for the order
     #    that differs from orders.csv (19 October 2026: in Test 8 the model marked "ORD-105, 1300
     #    vests" ready, and the CSV has 200). The CSV quantity is never replaced; the task asks.
+    #    Also words that may cancel or hold the order (24 October 2026: in all three runs on the
+    #    100-case set the model marked "The customer has cancelled ORD-297. Do not allocate" ready).
+    #    Python never cancels a request: the dispatcher decides.
     missing = list(assessment.missing_details)
     questions = list(assessment.doubts_to_clarify)
     if assessment.intent == "allocation" and assessment.order_id not in ORDER_INDEX:
@@ -425,6 +450,12 @@ def finish_verification(task, payload, assessment):
             written = ", ".join(str(count) for count in sorted(stated))
             missing.append(f"The chat states {written} pieces for {assessment.order_id}, "
                            f"but orders.csv records {recorded}; confirm the quantity.")
+        words = list(dict.fromkeys(word for item in payload["evidence"] for quote in item["excerpts"]
+                                   for word in cancellation_words(quote, assessment.order_id)))
+        if words:
+            quoted = ", ".join(f'"{word}"' for word in words)
+            missing.append(f"The chat may cancel or hold {assessment.order_id} ({quoted}); the dispatcher "
+                           "decides whether to allocate it.")
     # 3. constraints: original sentences kept for audit only; the allocator does not read them.
     #    They are the chosen constraint sentences, every sentence that names a workshop, and the
     #    quality sentence.

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createSnapshot, errorText, listSnapshots, processSnapshot, readSnapshot } from "@/lib/api";
-import { chatDateTime } from "@/lib/format";
+import { chatDateTime, count } from "@/lib/format";
 import type { Snapshot } from "@/lib/types";
 
 type Props = { messageCount: number };
@@ -24,18 +24,23 @@ export default function ProcessPanel({ messageCount }: Props) {
       .catch((caught) => setError(errorText(caught)));
   }, []);
 
-  // While the pipeline runs, read the current snapshot again every five seconds.
+  // While the pipeline runs, read the current snapshot again every five seconds. A failed read, such
+  // as while the API server reloads, is shown, and the reads go on until processing ends.
+  const runningId = current?.processing === "running" ? current.snapshot_id : null;
   useEffect(() => {
-    if (current?.processing !== "running") {
+    if (!runningId) {
       return;
     }
-    const timer = setTimeout(() => {
-      readSnapshot(current.snapshot_id)
-        .then((updated) => setSnapshots((list) => [updated, ...list.slice(1)]))
+    const timer = setInterval(() => {
+      readSnapshot(runningId)
+        .then((updated) => {
+          setSnapshots((list) => [updated, ...list.slice(1)]);
+          setError(null);
+        })
         .catch((caught) => setError(errorText(caught)));
     }, 5000);
-    return () => clearTimeout(timer);
-  }, [current]);
+    return () => clearInterval(timer);
+  }, [runningId]);
 
   async function capture() {
     setBusy(true);
@@ -94,7 +99,7 @@ export default function ProcessPanel({ messageCount }: Props) {
             {earlier.map((snapshot) => (
               <li key={snapshot.snapshot_id}>
                 <Link href={`/dispatcher?run=${encodeURIComponent(snapshot.run_id ?? "")}`}>{snapshot.run_id}</Link>{" "}
-                <span className="muted">{snapshot.message_count} messages</span>
+                <span className="muted">{count(snapshot.message_count, "message")}</span>
               </li>
             ))}
           </ul>
@@ -119,7 +124,7 @@ function SnapshotState({ snapshot, busy, onStart }: StateProps) {
   return (
     <div className={snapshot.processing === "finished" ? "snapshot final" : "snapshot"}>
       <p>
-        <strong>Snapshot of {snapshot.message_count} messages</strong>, {first} to {last}
+        <strong>Snapshot of {count(snapshot.message_count, "message")}</strong>, {first} to {last}
         <br />
         <span className="muted">Captured {chatDateTime(snapshot.exported_at_utc)}</span>
       </p>

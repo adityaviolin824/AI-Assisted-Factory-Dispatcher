@@ -26,7 +26,7 @@ Batches: 3 target and 2 context messages per extraction call; up to 3 tasks per 
 
 - Key: `docs/evaluation/extended_dispatch_100_human_team_golden.json`, version 2, SHA-256 `e8d861875b08cd9a...`; 100 cases in 149 messages.
 - Key's own description: Human team golden set: extended dispatch conversation and edge cases, 100 tasks. Human-reviewed expected interpretations and offline allocation feasibility; no model-accuracy measurement or paid processing result on this set.
-- Review recorded with the key: Comprehensive manual, line-by-line review by human team members, not AI. Reviewers: 3 human team members. Draft author: Codex (AI assistant). Confirmation source: Project owner confirmation in chat.
+- Review recorded with the key: Comprehensive manual, line-by-line review by human team members, not AI. Reviewers: 3 human team members. Draft origin: AI-assisted. Review provenance: the returned workbook and reconciled human-review record.
 - The key's own plan is calculated by the app's routing and allocation rules from `data/extended_dispatch_100`.
 - A case is matched to the app task created from its first message; with two jobs in that message, to the task whose excerpts name its order. Not allocating an exception is correct, whatever the route.
 

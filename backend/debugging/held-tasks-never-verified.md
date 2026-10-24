@@ -1,13 +1,13 @@
 # Held tasks are never verified, and some restrictions are missed
 
-Status: completed historical investigation. The final plan was agreed with Aditya on 15 October 2026, and steps 1-6 were implemented and documented that day (see Progress). No paid run on the blocker file has measured the change since; Test 7 (19 October) ran the original 30 requests, which have no follow-ups. The interpretation limits in the backlog remain open.
+Historical investigation and implementation record, 15 October 2026. Steps 1-6 replaced stored holds with provisional warnings. The checks at that increment were offline; subsequent experiments are in the [evaluation history](../docs/evaluation/PROMPT_TESTING_RESULTS.md). The source and plan descriptions below refer to that investigation date; current review and reallocation are in the [backend guide](../README.md).
 
 - **Problem write-up:** [Held tasks and unresolved follow-ups](../problems_solved/held_tasks_and_unresolved_followups.md).
 - **Backlog:** Pending improvements, issues 1, 4, 5 and 12.
 
 ## Problem
 
-Today, an unresolved input *holds* the tasks it might change:
+Before the 15 October replacement, unresolved input held tasks it might change:
 - `hold_reviewed_requests` (`verify_tasks.py`) writes a `related_review` record and clears the task's verification.
 - `run_verification` holds tasks before the model sees them.
 
@@ -18,7 +18,7 @@ In run `2026-10-15_21-19-26` this caused the following:
   - R15 "Fastest workshop excluding QuickStitch" became its own task (no order, excludes W1), so R14 (ORD-024) stays ready without the exclusion.
   - A cancellation verified as its own `unclear` task would not stop the request it names.
 
-## Decision (Aditya, 15 October 2026)
+## Implemented decision, 15 October 2026
 
 Allocation previews are allowed while follow-up links need review.
 
@@ -26,9 +26,9 @@ Allocation previews are allowed while follow-up links need review.
 2. **Reviews stay visible.** The ambiguous input stays in review, with its original text and its candidate task IDs.
 3. **Affected tasks are marked provisional.** A recommendation that the input may affect is flagged provisional, and the dispatcher is told: "This follow-up may modify this request. Please confirm whether it applies; the recommendation may need recalculation." A candidate relationship is never presented as a confirmed link.
 4. **Enforced rules are unchanged.** An incomplete or invalid request is still not allocatable. Confirmed restrictions and linked corrections are still enforced. Verification failures and missing-information checks are unchanged.
-5. **No new machinery.** There is no new model stage, automatic linking, graph branch or reallocation. Reallocation comes later; the plan keeps the evidence it will need.
+5. **No new machinery.** There is no new model stage, automatic linking, graph branch or reallocation. This increment changed warning behavior only. Dispatch-table reallocation was implemented later through Approve all and Review again.
 
-Details settled in the same discussion:
+Warning-target rules:
 - **Which tasks are warned:** the hold rule's own targets, from `review_targets`:
   - the order or message IDs the input names;
   - otherwise the tasks of the 2 messages before it;
@@ -57,13 +57,13 @@ Its sources:
 
 After the sources, it applies the same-order spread used today. A task never warns itself.
 
-The function is called only when a plan is made, on the state being planned, so a warning can never go stale.
+The function is called only when a plan is made, on the state being planned, so its targets reflect the supplied state at calculation time. New source messages require a new processing state before their effects can be considered.
 
 `summarize_plan` gives each routed task that has a warning:
 - a reason ending with "Provisional: L0009:J1 may modify this request. Please confirm whether it applies; the result may need recalculation.";
 - if the task is a recommendation, the outcome `provisional_recommendation`.
 
-The decision records, the ranking, routing and queue reservations do not change. `plan["review_warnings"]` keeps the whole map, for the later reallocation work.
+The decision records, the ranking, routing and queue reservations do not change. `plan["review_warnings"]` keeps the whole map, for dispatcher inspection and subsequent replanning.
 
 ## Code edits
 
@@ -123,11 +123,11 @@ Validate each step before starting the next.
    - `../docs/system-design.md` section 2 (the decision entry);
    - `../docs/engineering-log.md`;
    - the test count in `../docs/project-plan.md`.
-7. **Report, then ask before any paid run.**
+7. **Record the offline result; treat paid follow-up as a separate experiment.**
    - The next real run of the blocker file verifies the 6 tasks held today. That is about 5 new verification calls, under one cent at Test 6's cost.
    - Intake and link answers stay cached.
 
-## Stop and ask Aditya if
+## Historical experiment boundaries
 
 - a change would alter prompts, response formats, or intake or link payloads;
 - a saved run's decisions change, or a row other than T:L0014:J1 changes;
@@ -143,4 +143,4 @@ Validate each step before starting the next.
 | 4. Replays, mutation check, unchanged files | done | **Replay** (all 14 saved states, plans in temporary folders): the warned tasks are Test 4 36 (107 old holds), Test 5 6 (13) and Test 6 7 (the old 6 holds plus T:L0014:J1). The only provisional row in any run is T:L0014:J1 in Test 6; runs with no holds are unchanged. **Mutation check** (55 tests; control 0 failures): no R15 rule 2 failures; no unclear rule 1; a task may warn itself 3; old `related_review` records counted as failures 1 (after a test was added: before it, 0 failures, yet Test 4 rose to 50 warned tasks and Test 5 to 8); no warnings in the plan 4; verification skipping affected tasks 1. **Unchanged:** `git status` lists only the 7 intended files; notebook 05, `data/`, `config.toml` and the prompts are untouched; `output/runs` still has 14 folders and no newer file. |
 | 5. Simplify | done | Touched functions reviewed; one docstring re-wrapped. The `stage == "verify"` filter stays (see step 4), and so does the self-exclusion filter. `review_targets` and `HOLD_WINDOW` keep their names and modules, since moving or renaming them would touch more files than the fix needs. 69 OK, no warnings, none skipped. |
 | 6. Docs | done | `Pending_Improvements.md` (header update and status notes on issues 1, 4, 5 and 12); the solution section of `problems_solved/held_tasks_and_unresolved_followups.md` (and its status line); `backend/AGENTS.md` (the allocation rule and the processing-module note); `README.md`; `../docs/system-design.md` (section 2 decision entry, section 3 sentence); `../docs/engineering-log.md` (new top entry); `../docs/project-plan.md` (test count, Application row); `../docs/project-explanation.md` (the hold paragraph). |
-| 7. Report; ask about a paid run | report given 15 October 2026 | Waiting for Aditya to approve or decline the paid run. |
+| 7. Paid follow-up | not part of this offline increment | Subsequent experiments are recorded separately in the evaluation history. |

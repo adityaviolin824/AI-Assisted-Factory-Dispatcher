@@ -1,6 +1,8 @@
 # End-to-end test of the whole application (Test 11, 22 October 2026)
 
-**Verdict: the application can reach a perfect dispatch table.** One fresh paid run took the 100-case golden set through processing, allocation and the pause for the dispatcher. A simulated dispatcher who knows the answer key then reviewed it through the app's HTTP API.
+Historical experiment record: the results below describe the implementation at the run date. A conservative possible-cancellation/hold guard and a dispatcher `cancel` decision were subsequently added on 24 October; they do not revise these scores. [Section 11](#11-follow-up-replay-24-october-2026-the-cancellation-check) records a free replay of this run's saved answers with that change. See the [current implementation](../../README.md).
+
+**Recorded result: key-informed review covered every expected case.** One fresh paid run took the 100-case golden set through processing, allocation and the pause for the dispatcher. A simulated dispatcher who knows the answer key then reviewed it through the app's HTTP API.
 
 | Stage | Correct allocations (of 85) | Exceptions not allocated (of 15) | Unsafe | Approved rows of no case |
 |---|---|---|---|---|
@@ -11,17 +13,17 @@
 
 - After the review, every allocation has every field matching the key and is on time.
 - The paid run cost $0.0757 for 128 calls and took 9 min 23 s. The review made no model call.
-- This is the baseline for later changes and regression tests.
+- This is a historical regression baseline. Its frozen coverage headline is separate from timeliness/full field agreement; split-part detail checks currently inspect only the main part. The record separately reports all 85 allocations on time with matching fields.
 
 **What the "after" numbers mean.** They show what the app can reach when the dispatcher knows every right answer. They are not model accuracy, and not the effort of a real dispatcher: here the dispatcher had the key. The "before" row is the measure of the model and Python on their own.
 
-## 1. What Aditya asked
+## 1. Experiment objective and scope
 
 - Add a score for the table after the dispatcher's review.
-- Run one fresh paid run of the whole application. A second run was allowed only if Claude Code judged it very important; a third was not allowed.
+- Run one fresh paid run of the whole application. The protocol permitted a second run only if materially necessary; no third run was permitted.
 - Do the dispatcher's work: correct inputs, allocate, Approve all, then reallocate with Review again.
 - Record the performance before and after the review in this file.
-- After the review it should be perfect: every case the key allocates is allocated, and none of the others is.
+- The target was complete case coverage after review: every case the key allocates is allocated, and none of the others is.
 - Do not change the main logic of the app.
 
 ## 2. What was done, step by step
@@ -138,13 +140,13 @@ Approve all then re-planned the whole table from the original queues, with those
 
 ## 6. What this shows, and what to decide
 
-**Happy about:**
+**Verified outcomes:**
 - One fresh run plus 23 choices reached a perfect table. The decisions the app offers were enough for every case: `correct`, `complete`, `add_batch` and `warnings_checked`.
 - No answer was refused. Check workshop options showed exactly what Approve all then saved.
 - The model's own score, 81 of 85, is the best so far on this set.
 - The review needed no model call and changed no source file of the run.
 
-**Not happy about. These need Aditya's decisions; nothing was changed:**
+**Limitations identified on 22 October; no application behavior was changed by this experiment:**
 1. **There is no "do not allocate" decision.**
    - A cancelled order that verification reads as a clean allocation (CASE-097, in all three runs) is approved by Approve all unless the dispatcher changes it.
    - The only decision that stops it is `correct` intent `question`. The final table then calls a cancellation "Information question; not an allocation", which is a misleading record.
@@ -153,6 +155,7 @@ Approve all then re-planned the whole table from the original queues, with those
      - an explicit dispatcher decision such as "not to be allocated", with a reason;
      - accepting the workaround and documenting it.
    - Each needs a decision, because "no hold action" is a product rule.
+   - Addressed on 24 October with the explicit decision plus a Python check in verification; see section 11.
 2. **A task that failed verification cannot be named by any decision** (CASE-049). Adding a batch works, but the failed row stays in processing review next to the batch that replaced it.
 3. **The model-side failures remain**, and their fixes are still proposals, not implemented:
    - "For that batch" linking;
@@ -212,3 +215,32 @@ For a regression test after a code change:
 - **Processing changes:** run the pipeline again with the same output folder. Unchanged requests reuse the saved answers in `output/end_to_end_test_2026-10-22/response-cache/` and cost nothing; a changed prompt, payload or model makes new, paid calls.
 
 Then compare against the numbers above, before and after the review.
+
+## 11. Follow-up replay, 24 October 2026: the cancellation check
+
+This replays the run above with the code of 24 October; it is not a new run. The Python check `cancellation_words` and the dispatcher decision `cancel` were added test-first: their tests failed before the change and pass after it.
+
+**How it was run.** A scratch copy of `backend/` had its `config.toml` pointed at the 100-case set and held this run's 128 saved model answers. The replay script replaced the model client with one that refuses every call, so an answer that had not been saved would have stopped the run instead of being paid for. All 128 answers were reused: no call was sent and the cost was $0.
+
+**3 of the 115 plan rows changed** against this run's `plan.json`:
+- `T:L0145:J1` (CASE-097): from a W1 recommendation (14.75 of 31 days) to `needs_clarification`, with the reason "The chat may cancel or hold ORD-297 ("cancelled", "Do not allocate"); the dispatcher decides whether to allocate it."
+- `T:L0146:J1` (CASE-098, the order paused for fabric approval): already `needs_clarification`; it gained the same kind of blocker for "do not allocate".
+- `T:L0118:J1` (CASE-069): from W5 to W1. ORD-297 no longer reserves 0.636 days on W1, so W1's queue for this batch is 13.116 days instead of 13.752. W1's delivery estimate becomes 15.18 days against W5's 15.34, so W1 ranks first under minimize_tardiness. The batch has 60 days available, so it is on time either way.
+
+**Scores.** `make_run_report.py` scored the replay before the review. Then one decision, `cancel` for `T:L0145:J1`, was sent with `finalize`, and `score_dispatcher_review.py` scored the approved table.
+
+| Measure | This run | Replay |
+|---|---:|---:|
+| Before the review: expected allocations, of 85 | 81 | 81 |
+| Before the review: exceptions not allocated, of 15 | 14 | 15 |
+| Before the review: unsafe allocations | 1 (CASE-097) | 0 |
+| Recommendations; needs clarification | 68; 8 | 67; 9 |
+| After Approve all: correct allocations, of 85 | 67 (no choices) | 67 (one `cancel`) |
+| After Approve all: correct non-allocations, of 15 | 14 | 15 |
+| After Approve all: unsafe allocations | 1 | 0 |
+| After Approve all: at the key's own workshop | 56 | 55 |
+| Approved; cancelled; unresolved rows | 68; 0; 42 | 67; 1; 42 |
+
+The one fewer row at the key's own workshop is CASE-069: W1 is on time but is not the workshop of the key's plan.
+
+**Limits.** The replay reuses the same model answers, so it tests the Python check on one sample, not the model. The check recognizes only listed wording, does not read negation ("do not cancel") or a superseding instruction, and counts wording before the first order ID for every order in the message. A fresh paid run is still needed to measure the change on new model answers. The replay files are in the session's scratch folder, not in `output/`.

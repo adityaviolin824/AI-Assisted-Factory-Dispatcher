@@ -3,6 +3,7 @@
 // Error carrying the backend's own "detail" message when it has one.
 import type {
   Answer,
+  ChatDates,
   ChatMessage,
   Decision,
   NewMessage,
@@ -100,6 +101,11 @@ export function finalizeRun(runId: string, decisions: Decision[]) {
 
 export function listMessages() {
   return request<ChatMessage[]>("/chat/messages");
+}
+
+// The date relative words in the chat count from, and the date plans start from.
+export function readChatDates() {
+  return request<ChatDates>("/chat/dates");
 }
 
 // Saves one message. It makes no model call.

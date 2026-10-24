@@ -143,6 +143,22 @@ test("Refresh asks before discarding unsaved choices", async ({ page }) => {
   await expect(page.getByText("Plan before the dispatcher's review")).toBeVisible();
 });
 
+test("an open review stays in the address, so a reload opens it again", async ({ page }) => {
+  await openReview(page);
+  await expect(page).toHaveURL(/\?run=R1&thread=TH1$/);
+  await page.reload();
+  await expect(page.getByText("Reviewing thread TH1.")).toBeVisible();
+});
+
+test("leaving the page with unsaved choices asks first", async ({ page }) => {
+  await openReview(page);
+  await page.getByRole("button", { name: "T:L0001:J1" }).click();
+  await choicesFor(page, "T:L0001:J1").getByLabel("Workshop").selectOption("W1");
+  const dialog = page.waitForEvent("dialog");
+  await page.close({ runBeforeUnload: true });
+  expect((await dialog).type()).toBe("beforeunload");
+});
+
 test("a correction stages only the facts that differ from the review", async ({ page }) => {
   await openReview(page);
   await page.getByRole("button", { name: "T:L0001:J1" }).click();
@@ -152,6 +168,23 @@ test("a correction stages only the facts that differ from the review", async ({ 
   await expect(staged(page)).toHaveText(["T:L0001:J1: correct preference to cheapest, due_date to 2026-04-12"]);
   await choices.getByLabel("Preference").selectOption("fastest");
   await expect(staged(page)).toHaveText(["T:L0001:J1: correct due_date to 2026-04-12"]);
+  expect(posts).toEqual([]);
+});
+
+test("an emptied box can be retyped, and shows the review's value again if left empty", async ({ page }) => {
+  await openReview(page);
+  await page.getByRole("button", { name: "T:L0001:J1" }).click();
+  const choices = choicesFor(page, "T:L0001:J1");
+  const order = choices.getByLabel("Order", { exact: true });
+  await order.fill("");
+  await expect(order).toHaveValue("");
+  await order.pressSequentially("ORD-002");
+  await expect(staged(page)).toHaveText(["T:L0001:J1: correct order_id to ORD-002"]);
+
+  await order.fill("");
+  await order.blur();
+  await expect(order).toHaveValue("ORD-001");
+  await expect(staged(page)).toHaveCount(0);
   expect(posts).toEqual([]);
 });
 
@@ -189,6 +222,41 @@ test("a completed request is sent as one complete decision with its facts", asyn
   expect(posts[0].body).toEqual({
     decisions: [{ decision: "complete", task_id: "T:L0004:J1", facts: { order_id: "ORD-041", quantity: "250" } }],
   });
+});
+
+test("a cancelled request is sent alone as one cancel decision and saved as cancelled", async ({ page }) => {
+  await openReview(page);
+  await page.getByRole("button", { name: "T:L0004:J1" }).click();
+  const choices = choicesFor(page, "T:L0004:J1");
+  await choices.getByLabel("Order").fill("ORD-041");
+  // Cancelling replaces the row's other choices, as an undo does.
+  await choices.getByLabel("Cancel this request: do not allocate it").check();
+  await expect(choices.getByLabel("Workshop")).toBeDisabled();
+  await expect(choices.getByLabel("Order")).toBeDisabled();
+  await expect(staged(page)).toHaveText(["T:L0004:J1: cancel this request, do not allocate it"]);
+  await expect(page.getByRole("table", { name: "Worklist" })).toContainText("Unsaved: cancel");
+  expect(posts).toEqual([]);
+
+  const plan = makePlan();
+  const reason = "Cancelled by the dispatcher. No workshop time is reserved.";
+  const approved = makeReview({
+    status: "final",
+    summary_rows: plan.summary_rows.map((row) => (row.id === "T:L0004:J1" ? { ...row, outcome: "cancelled", reason } : row)),
+    needs_clarification: [],
+    cancelled_tasks: plan.needs_clarification,
+    dispatcher_entries: { "T:L0004:J1": { source_version: 1, cancelled: true } },
+  });
+  await serve(page, "/reviews/TH1/finalize", envelope(approved, { status: "finished" }));
+  await serve(page, `/runs/${RUN.run_id}`, { ...runDetails(plan), dispatcher_plan: approved });
+  await page.getByRole("button", { name: "Approve all" }).click();
+  await expect(page.getByText("Approved dispatcher plan", { exact: true })).toBeVisible();
+  expect(posts).toHaveLength(1);
+  expect(posts[0].body).toEqual({ decisions: [{ decision: "cancel", task_id: "T:L0004:J1" }] });
+  // The cancelled row no longer needs attention, and its outcome says why.
+  await expect(page.getByRole("button", { name: "Needs attention (1)" })).toBeVisible();
+  await page.getByRole("button", { name: "No request or cancelled (2)" }).click();
+  const row = page.getByRole("table", { name: "Worklist" }).getByRole("row").filter({ hasText: "T:L0004:J1" });
+  await expect(row.getByRole("cell")).toHaveText(["T:L0004:J1", "-", "Cancelled", "-", "-", "-", reason]);
 });
 
 test("added batches stay in the page and are sent as add_batch decisions", async ({ page }) => {
@@ -370,6 +438,13 @@ test("a checked warning stages exactly its row ID", async ({ page }) => {
   expect(posts).toEqual([]);
 });
 
+test("a paused review has no separate reallocation buttons, because Approve all reallocates", async ({ page }) => {
+  await openReview(page);
+  await expect(page.getByRole("button", { name: "Approve all" })).toBeEnabled();
+  await expect(page.getByRole("button", { name: /reallocation|reallocate/i })).toHaveCount(0);
+  await expect(page.getByText(/reallocation is not built/i)).toHaveCount(0);
+});
+
 test("Approve all sends one empty approval and then shows the saved plan", async ({ page }) => {
   await openReview(page);
   const approved = makeReview({ status: "final" });
@@ -487,9 +562,9 @@ function approvedPlan(changes: Partial<Review> = {}): Review {
 }
 
 // Opens run R1, approved, and its Review again.
-async function openReviewAgain(page: Page) {
+async function openReviewAgain(page: Page, saved = approvedPlan()) {
   await serve(page, "/runs", [RUN]);
-  await serve(page, `/runs/${RUN.run_id}`, { ...runDetails(makePlan()), dispatcher_plan: approvedPlan() });
+  await serve(page, `/runs/${RUN.run_id}`, { ...runDetails(makePlan()), dispatcher_plan: saved });
   await page.goto(`/dispatcher?run=${RUN.run_id}`);
   await expect(page.getByText("Approved dispatcher plan", { exact: true })).toBeVisible();
   await expect(page.getByRole("region", { name: "Dispatcher review" })).toHaveCount(0);
@@ -500,9 +575,8 @@ async function openReviewAgain(page: Page) {
 
 test("Review again sends undo, removal and new choices to the run, and shows the new version", async ({ page }) => {
   await openReviewAgain(page);
-  // No thread and no reallocation here, and Approve all waits for a choice.
+  // No thread here, and Approve all waits for a choice.
   await expect(page.getByRole("button", { name: "Approve all" })).toBeDisabled();
-  await expect(page.getByRole("button", { name: "Reallocate" })).toHaveCount(0);
 
   await page.getByRole("button", { name: "ADD-1" }).click();
   const added = choicesFor(page, "ADD-1");
@@ -545,6 +619,26 @@ test("Review again sends undo, removal and new choices to the run, and shows the
       { decision: "choose_workshop", task_id: "T:L0002:J1", workshop_id: "W2" },
     ],
   });
+});
+
+test("Review again offers only an undo for a cancelled request", async ({ page }) => {
+  const plan = approvedPlan();
+  const reason = "Cancelled by the dispatcher. No workshop time is reserved.";
+  await openReviewAgain(page, {
+    ...plan,
+    summary_rows: plan.summary_rows.map((row) => (row.id === "T:L0004:J1" ? { ...row, outcome: "cancelled", reason } : row)),
+    needs_clarification: [],
+    cancelled_tasks: plan.needs_clarification,
+    dispatcher_entries: { ...plan.dispatcher_entries, "T:L0004:J1": { source_version: 1, cancelled: true } },
+  });
+  await page.getByRole("button", { name: "T:L0004:J1" }).click();
+  const choices = choicesFor(page, "T:L0004:J1");
+  await expect(choices.getByLabel("Cancel this request: do not allocate it")).toHaveCount(0);
+  await expect(choices.getByLabel("Workshop")).toBeDisabled();
+  await expect(choices.getByLabel("Order")).toBeDisabled();
+  await choices.getByLabel("Undo the cancellation").check();
+  await expect(staged(page)).toHaveText(["T:L0004:J1: undo your saved choices"]);
+  expect(posts).toEqual([]);
 });
 
 test("Review again checks options on the run, keeps choices after a refusal and closes without saving", async ({

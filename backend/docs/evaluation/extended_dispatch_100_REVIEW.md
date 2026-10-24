@@ -4,30 +4,30 @@ The active answer key is [extended_dispatch_100_human_team_golden.json](extended
 
 AI custom-created the questions and dispatch requests after repeated project experiments. The set includes several difficulty levels, from complete requests to contextual replies, interleaved conversations, multiple jobs in one message and deliberate exceptions. The scenarios emulate real-life dispatch situations and target weaknesses found in intake, linking, verification and allocation.
 
-**Three members of our team divided the work and comprehensively hand-reviewed the set, line by line. This review was performed by humans, not AI.** It covers all 100 task cases and 149 messages, including expected fields, outcomes, labels and case links. The project owner confirmed the review method, scope and three-member participation on 21 October 2026.
+**Three members of our team divided the work and comprehensively hand-reviewed the set, line by line. This review was performed by humans, not AI.** It covers all 100 task cases and 149 messages, including expected fields, outcomes, labels and case links. The review scope and three-member participation were recorded on 21 October 2026.
 
-Codex then applied the review comments and the owner's final preference decisions and ran automated consistency checks. This reconciliation and checking are separate from the team's human review. The source questions and initial answers remain AI-authored.
+AI-assisted reconciliation applied the human comments and documented preference decisions, followed by automated consistency checks. This reconciliation and checking are separate from the team's human review. The source questions and initial answers remain AI-authored.
 
 ## Preserved review evidence
 
-- The [returned workbook](extended_dispatch_100_human_team_review.xlsx) is preserved byte for byte. Its source contents were not rewritten to manufacture signatures or approvals.
+- The [returned workbook](extended_dispatch_100_human_team_review.xlsx) is preserved byte for byte. It retains the original approval/discussion statuses and comments.
 - It records 91 case rows as Approved and 9 as Discuss; 147 message rows as Approved and 2 as Discuss. The discussion notes are reconciled below and retained verbatim in the key's provenance.
-- Reviewer-name and review-date columns are blank. No individual names, dates or signatures were invented. The three-person, line-by-line review is recorded from the project owner's confirmation; 21 October is the confirmation/reconciliation date, not an invented date for each person's work.
+- Individual reviewer-name and review-date columns are blank. The recorded review scope is three-person, line-by-line coverage; 21 October is the reconciliation date, not a per-reviewer timestamp.
 - The AI draft key and original review template are retained as history. They are not the active evaluation answers.
 
 ## Reconciled decisions
 
-No expectation cells or message labels/links were directly edited in the returned workbook. The team recorded corrections in the review notes. These notes and the owner's subsequent decisions produce **12 preference corrections**, with all message labels, case links and expected allocation outcomes unchanged.
+No expectation cells or message labels/links were directly edited in the returned workbook. The team recorded corrections in the review notes. These notes and the reconciled preference rules produce **12 preference corrections**, with all message labels, case links and expected allocation outcomes unchanged.
 
 | Record | Resolution |
 |---|---|
 | CASE-087, 090, 092, 094, 095 | Apply the explicit note: preference becomes `none`. Preserve each case's existing exception and source facts. |
 | CASE-091 | Preference becomes `none`. The order ID identifies the source row; its customer name need not be repeated in the chat. |
 | CASE-096 | Preference becomes `none`. Keep the deliberately unknown `ORD-9999`, the written Apr 20 deadline and the clarification outcome. The reserved CSV row `ORD-296` is not the requested order and must not replace it. |
-| CASE-088 | The reviewer suggested fastest. The owner explicitly chose `none`: the deadline already sets the delivery requirement and does not state a preference. |
+| CASE-088 | The reviewer suggested fastest. The reconciled key uses `none`: the deadline already sets the delivery requirement and does not state a preference. |
 | CASE-100 | Keep intent `question` and outcome `reference`: this asks about history, not a new allocation. Its message label `request` means a new task, which may be a question. Preference becomes `none`. |
 | L0130, L0131 | Keep each message linked to its existing two cases. The human notes explicitly confirm the two independent jobs; no label or link correction is needed. |
-| CASE-086, 098, 099 | These were marked Approved but also contained unstated preferences. Apply the owner's general clarification and set them to `none`. |
+| CASE-086, 098, 099 | These were marked Approved but also contained unstated preferences. Apply the default-preference rule and set them to `none`. |
 
 **Default rule:** when no preference is explicitly stated, record `none`. Python's existing default is `minimize_tardiness`: minimize lateness, then delivery time, then cost. An explicit preference is stored separately. No allocator policy or ranking code was changed during reconciliation.
 
@@ -35,9 +35,9 @@ The deliberate quantity mismatch, unknown/missing identities, suspended/incompat
 
 ## Validation and freeze
 
-The offline checker confirms **100 task cases across 149 messages**, with **85 jointly feasible on-time recommendations** and **15 exceptions**: 2 past deadlines, 5 reviews, 7 clarifications and 1 reference question. It also checks workshop eligibility, cumulative queue arithmetic and repeatability. This is dataset feasibility, not an observed AI accuracy score. No paid pipeline run has been made on this set.
+The offline checker confirms **100 task cases across 149 messages**, with **85 jointly feasible on-time recommendations** and **15 exceptions**: 2 past deadlines, 5 reviews, 7 clarifications and 1 reference question. It also checks workshop eligibility, cumulative queue arithmetic and repeatability. This is dataset feasibility, not an observed AI accuracy score. This describes the pre-run freeze on 21 October 2026. Subsequent Tests 10 and 11 are recorded in the [evaluation guide](../../../evaluation/README.md).
 
-From `backend/`:
+The checker is a local notebook-support file excluded from publication. In a workspace containing that file, run from `backend/`:
 
 ```sh
 uv run --offline --no-sync python experimentation_notebooks/testing/check_extended_dispatch_100.py

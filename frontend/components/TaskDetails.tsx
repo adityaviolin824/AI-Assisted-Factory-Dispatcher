@@ -185,7 +185,7 @@ function Comparison({ record }: { record: DecisionRecord }) {
               <th className="number">Queue</th>
               <th className="number">Production</th>
               <th className="number">Rework</th>
-              <th className="number">Transport</th>
+              <th className="number">Pickup</th>
               <th className="number">Cost</th>
               <th className="number">Defect rate</th>
             </tr>

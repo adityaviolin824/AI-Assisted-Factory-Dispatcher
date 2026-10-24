@@ -1,4 +1,4 @@
-# 02. Task verification demo: consolidating the current order request
+# 02. Task verification: consolidating the current request
 
 Prepared: 13 October 2026.
 
@@ -6,7 +6,7 @@ Checked against the current Python modules: 19 October 2026. This version includ
 
 The main code is [verify_tasks.py](../order_processing_into_tasks/verify_tasks.py). Its key steps are `verification_payload`, `finish_verification_batch`, `finish_verification` and `resolve_scheduling`.
 
-This demo follows [01. Task linking demo](01-task-linking-demo.md). Here, consolidation means working out the current requirements from the messages already connected to one task. AI interprets those requirements, and code checks its answer against the evidence and known factory records.
+This walkthrough follows [01. Task linking demo](01-task-linking-demo.md). Here, consolidation means working out the current requirements from the messages already connected to one task. AI interprets those requirements, and code checks its answer against the evidence and known factory records.
 
 The messages, proposed answers and saved records below are illustrative. They are not results from a notebook or model run. The readable records explain the relevant information rather than reproducing the complete response or saved-file format.
 

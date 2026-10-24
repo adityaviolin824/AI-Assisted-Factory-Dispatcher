@@ -7,6 +7,7 @@ What they prove, with the chat, the runs and the checkpoint file in a temporary 
 - the chat storage functions have the mock chat's logic (same syntax tree; docstrings and comments
   ignored), and every other definition is declared new;
 - reading messages or snapshots before the first message gives [] and creates no file;
+- GET /chat/dates gives the message date and dispatch date that processing and allocation use;
 - POST /chat/messages saves a message, saves nothing new for a repeated submission ID, and refuses an
   invalid name, empty text or a missing field with 422 and the mock's own message;
 - POST /chat/snapshots refuses an empty chat with 400, and captures the whole conversation: the TXT
@@ -50,6 +51,8 @@ from test_processing_modules import logic, module_definitions, offline_modules, 
 import main
 from fastapi_routes import chat, dispatcher, runs
 from order_intake_from_chat import chat_storage
+from order_processing_into_tasks.settings_and_data import MESSAGE_DATE
+from task_allocation_to_workshops.allocation_settings_and_data import DISPATCH_DATE
 
 MOCK_APP = Path(__file__).resolve().parents[1] / "experimentation_notebooks/mock_frontend/app.py"
 # The definitions chat_storage copies unchanged from the mock chat's app.py.
@@ -133,6 +136,11 @@ class Endpoints(unittest.TestCase):
     def test_reading_before_the_first_message_creates_nothing(self):
         self.assertEqual(self.client.get("/chat/messages").json(), [])
         self.assertEqual(self.client.get("/chat/snapshots").json(), [])
+        self.assertFalse(self.chat_dir.exists())
+
+    def test_the_dates_are_those_processing_and_allocation_use(self):
+        self.assertEqual(self.client.get("/chat/dates").json(),
+                         {"message_date": MESSAGE_DATE.isoformat(), "dispatch_date": DISPATCH_DATE.isoformat()})
         self.assertFalse(self.chat_dir.exists())
 
     def test_a_message_is_saved_once_per_submission(self):

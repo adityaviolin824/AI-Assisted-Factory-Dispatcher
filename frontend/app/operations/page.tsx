@@ -4,9 +4,9 @@ import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import ChatTimeline from "@/components/ChatTimeline";
 import ProcessPanel from "@/components/ProcessPanel";
-import { errorText, listMessages } from "@/lib/api";
-import { chatTime } from "@/lib/format";
-import type { ChatMessage } from "@/lib/types";
+import { errorText, listMessages, readChatDates } from "@/lib/api";
+import { calendarDate, chatTime, count } from "@/lib/format";
+import type { ChatDates, ChatMessage } from "@/lib/types";
 
 // The composer reads the remembered name from sessionStorage, which exists only in the browser.
 const Composer = dynamic(() => import("@/components/Composer"), { ssr: false });
@@ -15,6 +15,13 @@ const Composer = dynamic(() => import("@/components/Composer"), { ssr: false });
 export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [dates, setDates] = useState<ChatDates | null>(null);
+
+  // The configured dates are read once. If the backend cannot be reached, the note is left out and the
+  // conversation's own error says why.
+  useEffect(() => {
+    readChatDates().then(setDates, () => setDates(null));
+  }, []);
 
   // Everyone shares one conversation, so it is read now and every three seconds. Messages are only
   // ever added, so a reply older than the list on screen (started before a Send) is ignored.
@@ -47,10 +54,17 @@ export default function ChatPage() {
         <h1>Chat</h1>
         {messages && (
           <p className="muted">
-            {messages.length} messages{last && `, the last at ${chatTime(last.received_at_utc)}`}
+            {count(messages.length, "message")}
+            {last && `, the last at ${chatTime(last.received_at_utc)}`}
           </p>
         )}
       </div>
+      {dates && (
+        <p className="muted lede">
+          Words such as &quot;by Friday&quot; count from {calendarDate(dates.message_date)}, when the supplied chat was
+          written, not from today. Plans start from {calendarDate(dates.dispatch_date)}.
+        </p>
+      )}
       {error && (
         <p className="error" role="alert">
           {error}

@@ -17,7 +17,7 @@ Learn [how it works](#how-it-works), explore the [architecture](#product-archite
 - **Low AI running costs.** Models handle the language tasks. Allocation and structured dispatcher review run in Python without model calls. An identical saved AI request can reuse its answer without another paid call.
 - **An easier handover.** Operations staff and managers can read the original messages and recorded reasons instead of relying on one person's memory of the chat.
 
-Our total project spending so far is **70 cents** (22 October 2026, reported by the team). Individual test-run costs are listed in the [recorded results](#testing-and-recorded-results).
+Recorded per-run model costs, calls and latency are listed in the [evaluation results](#testing-and-recorded-results).
 
 Staff time savings have not yet been measured against a manual dispatcher. Workshop production costs are a separate trade-off: the historical test below achieved faster delivery with higher production cost.
 
@@ -31,26 +31,27 @@ The system combines three core capabilities:
 
 ## How it works
 
-The backend already processes saved conversations and supports final approval. The Chat screen still needs its live API connection.
+The implemented workflow is:
 
 1. **The team sends requests and corrections in Chat.** When processing starts, the system uses a saved copy of the conversation so later messages do not change the input halfway through a run.
 2. **The system identifies the work being requested.** AI reads the messages, extracts the order references and instructions, and connects related follow-up messages. Uncertain connections are left for review.
 3. **The requests are checked against the records.** Python checks order quantities, deadlines and workshop restrictions. It then calculates which workshops have the capacity to finish the work, taking their existing queues into account.
-4. **The dispatcher receives a proposed dispatch table.** Each suggestion includes a workshop, estimated delivery date, cost and reason. Requests with missing facts, conflicting instructions or no suitable workshop appear under **Needs attention**.
+4. **The dispatcher receives a proposed dispatch table.** Each suggestion includes a workshop, estimated delivery time, cost and reason. Requests with missing facts, conflicting instructions or no suitable workshop appear under **Needs attention**.
 5. **The dispatcher reviews the whole table.** They can correct facts and choose workshops. Their unfinished changes stay on the page until they click **Approve all**.
 6. **The final choices are applied together.** The approval flow keeps the dispatcher's workshop choices fixed, schedules the remaining work around them, saves the resulting table and shows what changed. It does not require another approval before saving.
+7. **An approved table can be reviewed again.** With **Review again**, the dispatcher adds new choices to the saved ones. Python plans once more and saves a new version, and the earlier version is kept.
 
 The output is a dispatch table for the team to use. It does not yet book work with workshops or update a live factory system.
 
-### Reallocation: planned
+### How reallocation works
 
-Suppose a dispatcher adds work to a workshop and increases its queue by two days. Another order may now miss its deadline. Reallocation will try to place that order elsewhere, then check the remaining orders using the updated queues. The dispatcher's own workshop choices will stay fixed.
+Suppose a dispatcher sends extra work to a workshop and lengthens its queue by two days. Another batch planned there may now miss its deadline. When the dispatcher clicks **Approve all**, Python keeps the dispatcher's own workshop choices fixed and recommends a workshop again for every other ready batch, in deadline order, using the updated queues. A batch whose earlier workshop can no longer finish on time moves to one that can. If none can, it stays under **Needs attention** with the reason.
 
-The resulting table will show which orders moved, their previous and new workshops, the delivery estimates and the reasons for the changes. The dispatcher will also have the option to **review again after reallocation**. Reallocation and any subsequent review or approval of that revised table are not implemented yet.
+The saved table shows every row that changed: its old and new outcome, workshop, delivery days and reason. **Review again** repeats this planning on an approved table when the dispatcher adds more choices, and saves a new version.
 
 ## Product architecture
 
-This planning view shows the workflow from Chat to the dispatch table. The [implementation status](#what-is-available-now) below distinguishes working features from planned ones.
+This view shows the workflow from Chat to the dispatch table. The [implementation status](#what-is-available-now) below lists what works today.
 
 ```mermaid
 ---
@@ -91,41 +92,37 @@ flowchart TB
         subgraph DISPATCHER["02 / DISPATCHER REVIEW · NEXT.JS + FASTAPI"]
             direction LR
             VIEW["See suggestions and problems<br/>with reasons and source messages"]:::screen
-            CHOOSE["Make all choices on the page<br/>Keep unfinished choices local"]:::pending
-            APPROVE["Approve all<br/>Send the complete set once"]:::pending
+            CHOOSE["Make all choices on the page<br/>Keep unfinished choices local"]:::screen
+            APPROVE["Approve all<br/>Send the complete set once"]:::screen
             VIEW --> CHOOSE --> APPROVE
         end
 
         subgraph RESULT["03 / SAVE THE DECISION TABLE · PYTHON"]
             direction LR
-            APPLY["Keep chosen workshops fixed<br/>Fit other work around them"]:::pending
-            SAVE["Save the final table immediately<br/>Show what changed and why"]:::pending
+            APPLY["Keep chosen workshops fixed<br/>Fit other work around them"]:::logic
+            SAVE["Save the final table immediately<br/>Show what changed and why"]:::logic
             APPLY --> SAVE
         end
 
-        LATER["Later: reallocate proposed work<br/>Move flexible batches if queues change<br/>Offer Review again after reallocation"]:::pending
-
-        TEAM -. "Chat-to-pipeline connection pending" .-> PROCESSING
+        TEAM -- "Process a saved snapshot" --> PROCESSING
         FACTS --> PROCESSING
         PROCESSING --> DISPATCHER
-        DISPATCHER -. "One-batch approval connection pending" .-> RESULT
-        RESULT -.-> LATER
-        LATER -. "If the dispatcher chooses Review again" .-> DISPATCHER
+        DISPATCHER -- "Approve all, once" --> RESULT
+        RESULT -- "Review again: add choices, save a new version" --> DISPATCHER
     end
 
     classDef screen fill:#183A49,stroke:#63AFC0,color:#F1F7F9,stroke-width:1.5px
     classDef ai fill:#143D36,stroke:#64B39F,color:#EDFAF5,stroke-width:1.5px
     classDef logic fill:#1C2E40,stroke:#7B9FBC,color:#EFF5FA,stroke-width:1.5px
     classDef data fill:#24342F,stroke:#87AA91,color:#F0F7F1,stroke-width:1.5px
-    classDef pending fill:#362C20,stroke:#CBA56D,color:#FFF3E0,stroke-width:1.5px,stroke-dasharray:5 4
     style PRODUCT fill:#0B141D,stroke:#334B5A,stroke-width:1px
 ```
 
 ## Backend architecture
 
-This planning view shows the processing steps, LangGraph loops, saved records and API connections. The separate reallocation loop and approval of a reallocated table remain pending.
+This view shows the processing steps, LangGraph loops, saved records and API connections. Dotted lines are data and model-call connections.
 
-The planned reallocation pass will check each flexible batch in deadline order. If no suitable workshop can finish it on time, the batch will remain in Needs attention rather than being moved repeatedly.
+**Approve all** runs one planning pass. Python places the dispatcher's chosen workshops first, then checks each flexible batch in deadline order against the queues so far. If no suitable workshop can finish a batch on time, it stays in Needs attention rather than being moved repeatedly.
 
 ```mermaid
 ---
@@ -152,7 +149,7 @@ flowchart TB
     subgraph BACKEND["BACKEND / CURRENT IMPLEMENTATION"]
         direction TB
 
-        INPUT["Saved chat / TXT + config.toml<br/>run_full_pipeline.py starts the run"]:::input
+        INPUT["Chat snapshot or saved TXT + config.toml<br/>The Chat API or run_full_pipeline.py starts the run"]:::input
         CSV[("orders.csv + workshops.csv<br/>Trusted batch facts and workshop queues")]:::data
 
         subgraph GRAPH["LANGGRAPH / RUN THE STEPS AND WAIT FOR THE DISPATCHER"]
@@ -185,21 +182,22 @@ flowchart TB
         subgraph RECORDS["LOCAL RECORDS"]
             RUNS[("Run folder<br/>manifest.json · state.json · calls/<br/>plan.json · dispatcher-plan.json")]:::data
             PAUSE[("SQLite checkpoint<br/>Keep a paused review across restarts")]:::data
+            CHAT[("Chat SQLite + snapshot folders<br/>Messages and fixed copies of the conversation")]:::data
         end
 
-        API["FastAPI · current routes<br/>GET /runs · GET /runs/{run_id}<br/>GET /reviews/{thread_id}<br/>POST /reviews/{thread_id}/answer"]:::input
+        API["FastAPI · 15 routes<br/>/chat: dates, messages, snapshots, process<br/>/runs: list, read, preview, finalize<br/>/reviews/{thread_id}: read, answer, preview, finalize"]:::input
 
-        subgraph REALLOC["PLANNED / ONE-BATCH APPROVAL AND LATER REALLOCATION"]
+        subgraph APPROVAL["APPROVE ALL / ONE PLANNING PASS AROUND THE DISPATCHER'S CHOICES"]
             direction TB
-            FIXED["Start from the original queues<br/>Place dispatcher choices first and keep them fixed"]:::pending
-            NEXT{"Another flexible batch<br/>in deadline order?"}:::pending
-            OPTIONS["Check workshops against queues so far<br/>Keep or change the previous workshop"]:::pending
-            ONTIME{"Eligible on-time option?"}:::pending
-            RESERVE["Place the batch at that workshop<br/>Add its production and rework to the queue"]:::pending
-            ATTENTION["Keep the batch in Needs attention<br/>Record why it cannot be placed"]:::pending
-            CHANGES["Save the table and show every change<br/>Old/new workshop, delivery date and reason"]:::pending
-            AGAIN{"Review again selected?"}:::pending
-            DONE["Keep the saved table"]:::pending
+            FIXED["Start from the original queues<br/>Place dispatcher choices first and keep them fixed"]:::logic
+            NEXT{"Another flexible batch<br/>in deadline order?"}:::gate
+            OPTIONS["Check workshops against queues so far<br/>Keep or change the previous workshop"]:::logic
+            ONTIME{"Eligible on-time option?"}:::gate
+            RESERVE["Place the batch at that workshop<br/>Add its production and rework to the queue"]:::logic
+            ATTENTION["Keep the batch in Needs attention<br/>Record why it cannot be placed"]:::logic
+            CHANGES["Save the table and show every change<br/>Old and new outcome, workshop, delivery days and reason"]:::logic
+            AGAIN{"Review again selected?"}:::gate
+            DONE["Keep the saved table"]:::data
 
             FIXED --> NEXT
             NEXT -->|Yes| OPTIONS --> ONTIME
@@ -219,11 +217,11 @@ flowchart TB
         PLAN -. "Write preview" .-> RUNS
         FINAL -. "Write final result" .-> RUNS
         REVIEW -. "Save paused state" .-> PAUSE
-        API -. "Read saved plans" .-> RUNS
+        API -. "Read plans, save Review again versions" .-> RUNS
         API -. "Read or resume review" .-> PAUSE
-        REVIEW -. "Future: submit the complete choice set once" .-> FIXED
-        FINAL -. "Later: explicit Reallocate action" .-> FIXED
-        AGAIN -. "Yes: optional return to dispatcher review" .-> REVIEW
+        API -. "Save messages and snapshots" .-> CHAT
+        REVIEW -- "Approve all: the complete choice set, once" --> FIXED
+        AGAIN -- "Yes: saved and new choices, save a new version" --> FIXED
     end
 
     classDef input fill:#183A49,stroke:#63AFC0,color:#F1F7F9,stroke-width:1.5px
@@ -232,8 +230,7 @@ flowchart TB
     classDef data fill:#24342F,stroke:#87AA91,color:#F0F7F1,stroke-width:1.5px
     classDef human fill:#362C20,stroke:#CBA56D,color:#FFF3E0,stroke-width:1.5px
     classDef gate fill:#253341,stroke:#93AABA,color:#F1F7FA,stroke-width:1.5px
-    classDef pending fill:#362C20,stroke:#CBA56D,color:#FFF3E0,stroke-width:1.5px,stroke-dasharray:5 4
-    style REALLOC fill:#211C16,stroke:#CBA56D,stroke-width:1px,stroke-dasharray:6 5
+    style APPROVAL fill:#111D27,stroke:#334B5A,stroke-width:1px
     style BACKEND fill:#0B141D,stroke:#334B5A,stroke-width:1px
 ```
 
@@ -242,10 +239,10 @@ flowchart TB
 | Part | Status |
 |---|---|
 | Processing and allocation | The backend reads saved chat files, checks requests and produces workshop recommendations with reasons and queue estimates. |
-| Dispatcher review | The backend pauses for the initial review. The dispatcher can submit all choices in one approval request, after which Python recalculates the plan, saves the result and returns a list of changes. |
-| Web interface | Chat and Dispatcher screens exist and call the backend. Chat saves messages, captures a fixed snapshot of the conversation and can send that snapshot through the pipeline to a paused dispatcher review (23 October 2026). Processing calls paid AI models, so the API refuses it unless it was started with `ALLOW_PAID_PROCESSING=1`. The browser tests use simulated responses; no real chat-to-review run has been made in the browser yet. |
+| Dispatcher review | The backend pauses for the initial review. The dispatcher can submit all choices in one approval request, after which Python recalculates the plan, saves the result and returns a list of changes. **Review again** opens an approved table for new choices and saves a new version. |
+| Web interface | Chat and Dispatcher screens exist and call the backend. Chat saves messages, captures a fixed snapshot of the conversation and can send that snapshot through the pipeline to a paused dispatcher review (23 October 2026). Processing calls paid AI models, so the API refuses it unless it was started with `ALLOW_PAID_PROCESSING=1`. Automated browser checks use controlled API responses; the chat bridge also has an offline pipeline integration test using saved model answers. The published evidence does not include a retained live-browser run artifact. |
 | Saved AI responses | Identical requests can reuse earlier answers. Changes to the input, model, prompt or settings may require new paid calls. |
-| Reallocation | Redistribution, review again after reallocation, and approval of the revised table are all pending. |
+| Reallocation | Part of **Approve all**: Python keeps the dispatcher's choices fixed and plans the other ready work again around them, using the updated queues. **Review again** does the same on an approved table. |
 
 ## How it is built
 
@@ -254,11 +251,11 @@ AI handles the language in the messages. Python checks the facts and calculates 
 | Technology | Role |
 |---|---|
 | Next.js, React and TypeScript | Build the Chat and Dispatcher screens. |
-| FastAPI | Lets the web interface read saved runs, answer paused reviews and submit final choices for approval. |
+| FastAPI | Lets the web interface save chat messages and snapshots, start processing, read saved runs, answer paused reviews, preview choices and approve them. |
 | LangGraph | Runs the processing steps, repeats message batches and pauses until the dispatcher answers. |
 | Python | Applies workshop rules and calculates the dispatch plan. |
 | OpenAI models | Extract requests, connect follow-ups and assess the latest instructions for each task. |
-| JSON files and SQLite | Store run records, model responses and paused reviews. The existing chat prototype stores messages separately in SQLite. |
+| JSON files and SQLite | Store run records, model responses, paused reviews, and the chat's messages and snapshots. |
 
 ### Models used for each task
 
@@ -298,7 +295,7 @@ The allocation rules were tested on 120 historical orders using the supplied sim
 
 The default policy delivered sooner and had fewer late batches in this test, but cost more and had more defective batches. The simulator requires a workshop for every batch, so the evaluation adapter chooses the least-late option when all options are late. The app instead asks the dispatcher to review the case. The [scheduling benchmark report](backend/eval_harness/results/harness_results_2026-10-15.md) includes the other policies and assumptions.
 
-These results measure the scheduling rules, not the accuracy of AI's reading of a conversation. The backend's **145 offline tests passed on 22 October 2026**; later changes have their own checks in the engineering log.
+These results measure the scheduling rules, not the accuracy of AI's reading of a conversation. The backend's **170 offline tests passed on 24 October 2026**; later changes have their own checks in the engineering log.
 
 ### Chat-to-allocation results
 
@@ -306,8 +303,8 @@ These results measure the scheduling rules, not the accuracy of AI's reading of 
 1. **Test set.** There are 100 synthetic cases in 149 chat messages. The 85 that should be allocated fit on time in one plan, as an offline check confirms. The other 15 are deliberate exceptions, such as a cancelled order or a suspended workshop. A human-reviewed answer key was frozen on 21 October 2026, before any run.
 2. **Rules written first.** Before each paid run, the expected results and the scoring rules were written down and hashed. They were not changed afterwards.
 3. **Fresh runs.** Each run processed the whole chat with an empty answer cache and the same models and settings, so every model call was new.
-4. **Score before the review** (`backend/make_run_report.py`). Each case is matched to the task the app created from its first message. A case is **correct** when the app recommends a workshop that obeys every workshop rule and meets the deadline. It is **missed** when it is sent to a person instead. It is **unsafe** when an exception receives a workshop.
-5. **Score after the review** (Test 11 only; `backend/score_dispatcher_review.py`). A simulated dispatcher who knows the answer key reviewed the paused run through the app's HTTP API. It sent one **Approve all** with 23 choices, then **Review again**, which plans the approved table again. Only rows the dispatcher approved count as allocated.
+4. **Score before the review** (`backend/make_run_report.py`). Each case is matched to the task the app created from its first message. Under the frozen headline score, a case is **correct** when it is expected to be allocated and receives a recommendation respecting the key's requested and excluded workshops. Provisional recommendations count. Full field agreement, workshop eligibility and timeliness are separate checks; a lost preference can still count as allocated. A case is **missed** when it is expected to be allocated but receives no recommendation. An allocated exception or a broken requested/excluded destination is **unsafe**.
+5. **Score after the review** (Test 11 only; `backend/score_dispatcher_review.py`). A simulated dispatcher who knows the answer key reviewed the paused run through the app's HTTP API. It sent one **Approve all** with 23 choices, then **Review again**, which plans the approved table again. Only approved rows count as allocated, with full quantity and the key's requested/excluded destinations checked. The final coverage headline does not require timeliness or every field to match; those are separate details. Split-part lateness/field details currently inspect only the main part.
 
 | | Test 10, run 1 (21 Oct) | Test 10, run 2 (21 Oct) | Test 11 (22 Oct), before review | Test 11, after review |
 |---|---:|---:|---:|---:|
@@ -322,14 +319,14 @@ These results measure the scheduling rules, not the accuracy of AI's reading of 
 
 **What the results show:**
 - The model and Python on their own did best in Test 11 (81 of 85), and the allocator broke no workshop rule in any run.
-- With the dispatcher's review, the table was perfect: everything that should be allocated was, and nothing else was.
+- With the key-informed review, every expected case was covered and no exception was allocated. All 85 allocations separately matched the compared fields and were reported on time; 26 source rows remained unresolved.
 - The "after review" column is the app's ceiling, not a measured human result, because the simulated dispatcher knew the answers.
-- The cancelled order (CASE-097) was recommended in all three runs. It could only be stopped by relabelling it as a question, because the app has no "do not allocate" choice yet. This is the most important fix.
+- The cancelled order (CASE-097) was recommended in all three historical runs; the key-informed review stopped it by changing its intent to a question. Since 24 October, a Python check in verification sends recognized possible cancellation or hold wording for a known order to dispatcher review; it never cancels an order itself. The dispatcher can then select **Cancel this request**, which leaves the request out of the plan with no queue time reserved; an undo brings it back. A free replay of Test 11's saved model answers, with no model calls, held all 15 exceptions with no unsafe allocation and kept 81 of 85 allocations. It is a replay, not a fresh run, so the table above is unchanged.
 - Scores varied from 73 to 81 across three identical setups, so a single run's score is indicative only.
 
 The [evaluation guide](evaluation/README.md) explains the test data and scoring. The [Test 10 report](backend/docs/evaluation/GOLDEN_100_RUN_REPORT.md) analyses the failures of the first two runs, and the [Test 11 report](backend/docs/evaluation/END_TO_END_TEST_2026-10-22.md) records the dispatcher's review.
 
-AI custom-created this test set after repeated project experiments. Its questions and dispatch requests span several difficulty levels, designed to resemble real-life situations and target weaknesses in our system. **Three team members divided the work and comprehensively hand-reviewed the entire set, line by line. This review was done by humans, not AI.** Their comments and the owner's final clarifications were reconciled into the [human-team golden key](backend/docs/evaluation/extended_dispatch_100_human_team_golden.json). The [review record](backend/docs/evaluation/extended_dispatch_100_REVIEW.md) preserves the source workbook, corrections and provenance.
+AI custom-created this test set after repeated project experiments. Its questions and dispatch requests span several difficulty levels, designed to resemble real-life situations and target weaknesses in our system. **Three team members divided the work and comprehensively hand-reviewed the entire set, line by line. This review was done by humans, not AI.** Their comments and the documented preference rules were reconciled into the [human-team golden key](backend/docs/evaluation/extended_dispatch_100_human_team_golden.json). The [review record](backend/docs/evaluation/extended_dispatch_100_REVIEW.md) preserves the source workbook, corrections and provenance.
 
 The [feature overview](FEATURES.md) describes the recorded capabilities and evidence. The [backend guide](backend/README.md) covers implementation details.
 
@@ -365,7 +362,7 @@ Selected [experiment notebooks and development notes](experiments/README.md) are
 |---|---|
 | `evaluation/` | Public guide to the datasets, answer key, recorded results and scoring method. |
 | `experiments/` | Earlier notebooks, selected debugging examples and the development timeline. |
-| `frontend/` | Web screens, API calls and browser tests. |
+| [`frontend/`](frontend/README.md) | Web screens, API calls, local setup and browser tests. |
 | `backend/` | Chat processing, allocation, dispatcher review and API code. |
 | `backend/config.toml` | Input paths, model settings, batch sizes and dispatch date. |
 | `backend/data/` | Orders, workshops, example conversations and the extended test dataset. |
@@ -378,4 +375,4 @@ Selected [experiment notebooks and development notes](experiments/README.md) are
 
 API keys belong in the backend environment, never in browser code. Local environment files, application databases, generated run output and backups are excluded from version control. Selected synthetic test data is included. Optional LangSmith tracing sends run data to its external service when enabled.
 
-Current work is focused on connecting the web screens to the API and testing the complete review workflow. Further model evaluation and reallocation will follow. Docker and deployment are left until the end.
+Current work focuses on integrated journey verification, known correctness gaps and further evaluation. The latest recorded checks, on 24 October 2026 after the cancellation change, passed 170 backend and 66 browser tests. Docker and deployment are left until the end.

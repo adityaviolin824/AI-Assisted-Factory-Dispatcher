@@ -19,6 +19,7 @@ export default function Composer({ onSent }: Props) {
   // One ID per send attempt of this draft. Retrying an unchanged draft reuses it, so the backend
   // saves the message once even if an earlier attempt reached it; editing the draft starts a new one.
   const submissionId = useRef<string | null>(null);
+  const canSend = !sending && sender.trim() !== "" && text.trim() !== "";
 
   function changeSender(value: string) {
     setSender(value);
@@ -47,9 +48,10 @@ export default function Composer({ onSent }: Props) {
     }
   }
 
-  // Enter starts a new line, as in the original messages; Ctrl+Enter or Cmd+Enter sends.
+  // Enter starts a new line, as in the original messages; Ctrl+Enter or Cmd+Enter sends. requestSubmit
+  // ignores a disabled Send button, so the shortcut checks the same rule itself.
   function sendOnShortcut(event: KeyboardEvent<HTMLTextAreaElement>) {
-    if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+    if (event.key === "Enter" && (event.ctrlKey || event.metaKey) && canSend) {
       event.currentTarget.form?.requestSubmit();
     }
   }
@@ -71,11 +73,11 @@ export default function Composer({ onSent }: Props) {
           readOnly={sending}
           onChange={(event) => changeText(event.target.value)}
           onKeyDown={sendOnShortcut}
-          placeholder="For example: Can someone place ORD-107? 2000 cardigans, due Mar 16."
+          placeholder="For example: Please place ORD-045, 150 vests, due Apr 09."
         />
       </label>
       <div className="composer-row">
-        <button className="primary" disabled={sending || !sender.trim() || !text.trim()}>
+        <button className="primary" disabled={!canSend}>
           {sending ? "Sending..." : "Send"}
         </button>
         <span className="hint">Saves the message for everyone. It is not processed until you process the conversation.</span>

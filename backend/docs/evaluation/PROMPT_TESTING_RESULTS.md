@@ -1,16 +1,12 @@
-# Prompt and model testing results
+# Prompt and model evaluation history
 
-This file records the paid test runs of the processing pipeline (`run_intake_and_processing.py`) from 14 Oct 2026 onwards:
-- what was run;
-- what happened;
-- what it cost;
-- what it shows.
+Recorded experiments from 14-22 October 2026 for the language-processing pipeline and dispatcher review. Each section describes the code, settings, scoring and evidence available at its experiment date. Historical counts and proposed follow-ups are not current application contracts; see the [backend guide](../../README.md) and [evaluation index](../../../evaluation/README.md).
 
-Tests are listed newest first, and each scoring key was written before the runs it scores. Earlier runs appear only as baselines; they are described in the [engineering log](../../../docs/engineering-log.md) and the follow-up linking diagnosis. Run folders are kept in `output/runs/`, which is not committed, so the important facts are copied here. Every new paid run is added to this file (see `AGENTS.md`).
+Inputs, golden-key contents, scoring criteria, numerical results and exact prompt appendices are preserved. Protocol hashes identify the original frozen pre-run snapshots, not this editorially revised Markdown. Original records remain in the local archive. Saved run folders and response caches are excluded from publication.
 
 ## Summary
 
-**Current best setting (Test 2):** every stage on `gpt-5.6-luna`, with the current intake prompt. Intake uses reasoning effort `high`; linking and verification use `medium`.
+**Selected stage configuration (Test 2, 14 October):** every stage on `gpt-5.6-luna`, with the current intake prompt. Intake uses reasoning effort `high`; linking and verification use `medium`.
 - On `dispatch_requests.txt`, it gave the best result so far: all 30 lines labelled correctly, readiness correct on 28 of 30 lines, and no clear field error.
 - A fresh run costs about the same as with every stage on `gpt-4.1-mini`, about 2 cents per 30 messages.
 - It takes about twice as long: 131 s of model time against about 70 s, because verification on Luna takes about 9 s per call.
@@ -27,7 +23,7 @@ Tests are listed newest first, and each scoring key was written before the runs 
 - 1 of the 9 expected-ready tasks was ready, and nothing unsafe; 13 of 14 tasks were held. It cost $0.008 and took 72 s.
 - Independent requests stayed separate. Short replies, reviews of lines naming no order and two rejected intake batches repeated Test 4's failures.
 
-**Hold change (Test 6):** since 15 Oct, a review naming no order or message ID holds only the tasks of the two messages before it (open next step 5).
+**Historical hold change (Test 6, 15 October):** a review without an order/message reference held tasks from the preceding two messages. Provisional warnings subsequently replaced those holds in the modules.
 - On the blocker file, 5 of the 9 expected-ready tasks became ready (1 in Test 5), with 0 unsafe, for $0.003 of verification.
 - R14 became ready without R15's QuickStitch exclusion, an error the old holds had hidden.
 - Replayed on Test 4's saved state with no model calls, the rule holds 36 of 111 tasks (107 before).
@@ -39,7 +35,7 @@ Tests are listed newest first, and each scoring key was written before the runs 
 - R25-R27 were blocked: in one batch the model copied "due Apr 13" instead of "Apr 13", which the date reader rejects.
 - **The same day, a Python fix** read the one written date inside such a copy. Replaying Test 7's saved answers with no API call then gave **30/30 readiness**, and the plan matched the key on every outcome.
 
-**Extended chat on the current code (Test 8):** one run that reused Test 4's intake and link answers. It cost $0.07 for 37 verification calls and took 8 min.
+**Extended chat on the 19 October implementation (Test 8):** one run that reused Test 4's intake and link answers. It cost $0.07 for 37 verification calls and took 8 min.
 - All 111 tasks were verified (Test 4: 4), and 79/94 match the key (61/94).
 - 19 of the 20 expected-ready tasks were ready, and 40 of 41 verified order-data conflicts were blocked with the mismatch named.
 - One silent wrong allocation: R191 (ORD-105, chat 1300 vests, CSV 200 hoodies) was recommended to W3.
@@ -62,7 +58,7 @@ Tests are listed newest first, and each scoring key was written before the runs 
 - Before the review: 81/85 correct allocations (the best so far), 14 of 15 exceptions not allocated, and CASE-097 unsafe again. It cost $0.0757 for 128 calls.
 - After one Approve all with 23 choices, and again after Review again: **85/85 and 15/15, nothing extra**, with every field matching the key and every allocation on time.
 - That is the app's ceiling with a dispatcher who knows the answers, not model accuracy.
-- The only way to stop the cancelled order was to correct its intent to "question": the app has no "do not allocate" decision.
+- The only way to stop the cancelled order was to correct its intent to "question": the app had no "do not allocate" decision then. A `cancel` decision and a Python cancellation check were added on 24 October; a free replay of this run's saved answers is in section 11 of the end-to-end report.
 - Full report: [end-to-end test](END_TO_END_TEST_2026-10-22.md).
 
 | Run (`output/runs/`) | Intake | Link and verify | Intake prompt | Labels | Readiness | Field errors | Wrong merges | Cost of a fresh run | Model time |
@@ -112,7 +108,7 @@ Prices per million tokens, from OpenAI's model pages (checked 14 Oct 2026). Reas
   - Verification was right on all 4 tasks it checked and named the order-data conflicts. Nothing unsafe became ready.
 - **On a short chat, holding a review's link candidates frees little (Test 5, offline estimate).**
   - Holding each review's 4 link candidates would still hold 12 of 14 tasks.
-  - Holding only the tasks of the two messages before an unclear line would hold 6 and free 5 of the 9 expected-ready tasks. No expected-ready task is held by an unrelated line, but one hold is unrelated: R20 ("Put 005 somewhere sensible") holds the paused ORD-036 job because R18 comes just before it. This rule is now in the modules (open next step 5).
+  - Holding only the tasks of the two messages before an unclear line would hold 6 and free 5 of the 9 expected-ready tasks. No expected-ready task is held by an unrelated line, but one hold is unrelated: R20 ("Put 005 somewhere sensible") holds the paused ORD-036 job because R18 comes just before it. That historical rule was subsequently replaced by provisional warnings.
 - **The narrower hold rule releases unrelated tasks and exposes the short-reply failures (Test 6).**
   - 5 of the 9 expected-ready tasks became ready (1 in Test 5), with 0 unsafe.
   - R14 is ready without R15's QuickStitch exclusion, because intake made R15 a task of its own. Test 5's holds had hidden this error.
@@ -353,14 +349,14 @@ A `deadline_passed` row reserves nothing, so R07 or R22 becoming ready changes n
 - Any silent error, or readiness below 28/30, counts as a regression.
 - With one run and no temperature, a difference of one line may be chance.
 
-### Extended chat on the current code (written 19 Oct 2026, before Test 8)
+### Extended chat on the 19 October implementation (written before Test 8)
 
-**Question (Aditya):** on `data/dispatch_requests_extended.txt`, how many tasks are allocated directly, how many go to review and why, and how many fail? If performance is decent, the remaining time goes to finishing the MVP.
+**Objective:** measure direct allocations, review causes and failures on `data/dispatch_requests_extended.txt` under the 19 October implementation.
 
 **Setup known before the run:**
 - A free preflight on a copy of the cache, with a blank API key, reused all 155 of Test 4's intake and link answers (74 + 81).
 - It created the same 111 tasks from 222 messages, and stopped at the first verification call, which is new because of the 18 October prompt lines.
-- Aditya chose to reuse those answers. Only verification is paid.
+- Intake and linking reused the saved answers. Only new verification requests were paid.
 
 **Expected:**
 1. **Intake and linking are identical to Test 4:** 111 tasks, 18 lines in intake review (6 rejected batches) and 40 link reviews.
@@ -376,7 +372,7 @@ A `deadline_passed` row reserves nothing, so R07 or R22 becoming ready changes n
    - **So "allocated directly" is expected to be 0-3 of 111.** Most tasks should need clarification.
 5. **Cost and time:** about $0.04-0.05 and 5-7 minutes.
 
-**"Decent", proposed before the run:**
+**Acceptance criteria recorded before the run:**
 - 0 unsafe ready;
 - at least 15 of the 20 `ok` tasks ready with the key's fields;
 - every blocked task carries a stated reason;
@@ -384,7 +380,7 @@ A `deadline_passed` row reserves nothing, so R07 or R22 becoming ready changes n
 
 ### Human-team golden set (written 21 Oct 2026, before Test 10)
 
-**Question (Aditya):** on the 100-case set, how many cases are allocated correctly, what goes wrong, and where can the pipeline improve? At most 2 paid runs, scored after allocation; the dispatcher review is not scored.
+**Objective:** score automatic allocation on the 100-case set, identify failures and measure variation. The protocol allowed at most two fresh runs and did not score dispatcher review.
 
 **Key and rules, fixed before the run:**
 - The key is `docs/evaluation/extended_dispatch_100_human_team_golden.json`, version 2, SHA-256 `e8d861875b08cd9a...`, unchanged since its freeze. The inputs match their frozen hashes (chat `942e2bc8...`, orders `7ecfe4a1...`, workshops `d7e1c97d...`), and the offline check passed again before the run (85 + 15).
@@ -402,7 +398,7 @@ A `deadline_passed` row reserves nothing, so R07 or R22 becoming ready changes n
 3. **Relative dates (CASE-061 to 069) and dispatch timing (CASE-070)** are read by Python, so they should match unless the model selects the wrong words.
 4. **Cost and time:** about 130 calls (50 intake, up to 45 link, about 34 verification), roughly $0.10-0.20 and 12-15 minutes per run.
 
-**"Decent", proposed before the run:**
+**Acceptance criteria recorded before the run:**
 - 0 unsafe allocations;
 - at least 75 of the 85 correct allocations;
 - every non-allocation carries a stated reason;
@@ -412,7 +408,7 @@ This set's wording is templated and every chat deadline equals its CSV date, so 
 
 ### End-to-end test with the dispatcher's review (written 22 Oct 2026, before Test 11)
 
-**Question (Aditya):** one fresh run of the whole application on the 100-case set: processing and allocation, then the dispatcher's review through the API, with Approve all and Review again. Record the performance before and after the review. After the review it should be perfect: every case the key allocates is allocated, and no exception is. One paid run; a second only if Claude Code judges it very important; never a third.
+**Objective:** measure automatic output and key-informed HTTP review on one fresh 100-case run, including Approve all and Review again. Target full expected-case coverage without an allocated exception. The protocol permitted a second run only if materially necessary, and no third run.
 
 **Run:**
 - One `uv run python run_full_pipeline.py` from `backend/`, with Test 10's settings and inputs.
@@ -452,7 +448,7 @@ This set's wording is templated and every chat deadline equals its CSV date, so 
 
 ## Test 11: end-to-end with the dispatcher's review (22 Oct 2026)
 
-**Question:** see the expectation above, whose section (to this heading) has SHA-256 `0a041b0f14bbecef...`, unchanged after the run. Aditya authorized one paid run, a second only if very important, and never a third. Claude Code ran one and wrote [the full report](END_TO_END_TEST_2026-10-22.md).
+**Protocol:** the original pre-run snapshot had SHA-256 `0a041b0f14bbecef...` and remained unchanged during the experiment. One paid run completed; see [the full report](END_TO_END_TEST_2026-10-22.md).
 
 - **Run:** `output/end_to_end_test_2026-10-22/runs/2026-10-22_22-31-00`, one `uv run python run_full_pipeline.py`, with Test 10's settings and an empty cache. It was traced to LangSmith, because `.env` enables tracing. `config.toml` was restored afterwards (`920d4f7f...`).
 - **Before the review**, by Test 10's rules:
@@ -476,7 +472,7 @@ This set's wording is templated and every chat deadline equals its CSV date, so 
 
 ## Test 10: two fresh runs on the human-team golden set (21 Oct 2026)
 
-**Question:** see the expectation above. Aditya authorized at most 2 paid runs, stopping after allocation, and chose a variance repeat as the second run. Claude Code ran both and wrote the report.
+**Protocol:** two fresh runs stopped after allocation. The second repeated the same settings with an empty cache to measure variation.
 
 ### Setup
 
@@ -574,7 +570,7 @@ The allocation rules made no error. The most important fix is a Python cancellat
 
 ## Test 9: a full run with the dispatcher's review through the API (20 Oct 2026)
 
-**Question.** Does the whole application work on a fresh paid run of the original chat: processing, allocation, the pause, and the dispatcher's review through the new FastAPI endpoints? Aditya asked for at most 2 paid runs. 1 was used, because nothing failed.
+**Objective:** exercise processing, allocation, the persistent pause and HTTP dispatcher review on the original chat. One fresh paid run completed under the two-run limit.
 
 - **Run:** `output/fresh-run-2026-10-20/runs/2026-10-20_22-33-28`, one run of `uv run python run_full_pipeline.py` from `backend/`. It was traced to LangSmith, because `.env` enables tracing.
 - **Config:** for this run only, `config.toml` had `chat_file = "data/dispatch_requests.txt"` and `[output] folder = "output/fresh-run-2026-10-20"`. The new folder meant an empty cache, so all 21 calls were paid. The backup was restored afterwards, and its SHA-256 matches.
@@ -603,7 +599,7 @@ The allocation rules made no error. The most important fix is a Python cancellat
 
 ## Test 8: the extended chat on the current code (19 Oct 2026)
 
-**Question:** see the expectation above. Aditya approved one run that reuses Test 4's intake and link answers.
+**Protocol:** one run reused Test 4's intake/link answers and made new verification requests.
 
 ### Setup
 
@@ -697,7 +693,7 @@ Both runs were replayed from copies of their response caches with `OPENAI_API_KE
 
 ## Test 7: a fresh run after the 18 and 19 October deadline changes (19 Oct 2026)
 
-**Question.** Do the deadline and quantity rules of 18 October and the date check of 19 October (1-A) improve the result on the 30 requests? Aditya asked for exactly one fresh run from intake to allocation, with no saved answers reused, because the prompts and code had changed since Test 2.
+**Objective:** evaluate the 18-19 October deadline, quantity and date-check changes on the 30 supplied requests. One fresh run covered intake through allocation with no saved answers reused.
 
 ### Setup
 
@@ -761,7 +757,7 @@ Both runs were replayed from copies of their response caches with `OPENAI_API_KE
 - **The new failure is mechanical.** The model added "due" to a correct date, and the date reader rejects it.
   - A Python fix would read the one written date inside the copied text. It would still have to match a date in the quote.
   - The fix would not change any prompt, so this run's saved answers could replay it at no cost. Expected result: R25-R27 ready and the plan's R25 recommendation back. This line first said 29/30, an arithmetic slip; 27 + 3 is 30.
-  - Aditya approved it, and it was implemented and replayed the same day (below).
+  - The Python change was implemented and replayed on the saved answers that day (below).
 
 ### Replay with the date fix (19 Oct 2026, no API calls)
 
@@ -789,11 +785,11 @@ Both runs were replayed from copies of their response caches with `OPENAI_API_KE
 
 - **One run.** Luna accepts no temperature, so another fresh run may answer differently. R07, R22 and R25-R27 each moved in a single batch.
 - **The file barely tests the new rules.** It has no relative delivery words and only one vague quantity, so `read_relative_date` was not exercised on live answers.
-- **The key is not official.** It is Claude Code's reading of the verification prompt and the review map.
+- **The key is not official.** It is an AI-authored interpretation of the verification prompt and review map.
 
 ## Test 6: the blocker cases file with the narrower hold rule (15 Oct 2026)
 
-**Question.** Does the two-message hold rule (open next step 5) free the unrelated tasks that Test 5 held, without making anything unsafe ready? Aditya approved exactly one rerun.
+**Objective:** test whether the historical two-message hold rule released unrelated tasks without making unsafe work ready. One rerun was made.
 
 ### Setup
 
@@ -850,7 +846,7 @@ A fresh run would cost $0.0105 and take 93 s of model time. The expectation was 
 
 ## Test 5: baseline on the blocker cases file (15 Oct 2026)
 
-**Question.** Aditya asked for a short chat file with only the blocker types of Test 4, as the default chat file, so that proposed changes can be tested cheaply. Aditya then approved exactly one baseline run with the current code.
+**Objective:** create a compact fixture for Test 4's blocker patterns and measure one baseline under the implementation then current.
 
 ### Setup
 
@@ -910,7 +906,7 @@ The prediction was $0.01-0.02. The run cost less because the holds left only one
 
 ## Test 4: the extended chat with the semi-final settings (14 Oct 2026)
 
-**Question.** Aditya kept linking at `medium`, called the settings semi-final and asked for exactly one run on `data/dispatch_requests_extended.txt`, with a full report. The full report has the exact configuration and prompts, per-line tables and the key: extended run report.
+**Objective:** measure one extended-chat run with linking at `medium`. The experiment retained configuration, prompts, request-level tables and the development key in its local detailed report.
 
 ### Setup
 
@@ -961,7 +957,7 @@ Verifying all 111 tasks would add about 37 calls, $0.05 and 6-7 minutes (an esti
 
 ## Test 3: the demo with Luna linking at medium, then high (14 Oct 2026)
 
-**Question.** Aditya asked to run the demo with every stage on Luna. Next, Aditya asked to raise one of the two other stages to effort `high` and see whether that solves the current problems. Aditya allowed at most two or three paid runs in all.
+**Objective:** compare all-Luna linking at `medium` and `high` on the seven-message development fixture. Two paid linking runs were made within the three-run maximum.
 
 ### Setup
 
@@ -1004,7 +1000,7 @@ A follow-up that refers back with "that" cannot quote its target.
 **Cause (supported, not yet proven):**
 - Three model settings refused L0007 for the same reason, and the higher effort applied the rule more strictly.
 - This points to the link prompt's standard of explicitness, not to model capability or effort.
-- Only a changed link prompt or a rule in code can test this, and both are design decisions for Aditya.
+- Testing a changed linking criterion requires a defined prompt or code rule and a separately evaluated experiment.
 - The strictness also has value: this stage is what should stop a wrong merge such as Prompt 1's R19, which `gpt-4.1-mini` linking accepted.
 
 ### Cost and time
@@ -1034,7 +1030,7 @@ The test cost $0.0025 in all. For comparison, `gpt-4.1-mini` linking in run `13-
 
 ## Test 2: every stage on Luna, current prompt (14 Oct 2026)
 
-**Question.** Linking and verification had just moved to `gpt-5.6-luna` at effort `medium` (see the [engineering log](../../../docs/engineering-log.md)). Aditya asked for one run on `dispatch_requests.txt` only, to see whether performance is better. Aditya chose the current intake prompt over Prompt 2, so the run is also the like-for-like check that Test 1 lacked.
+**Objective:** evaluate one all-Luna run on `dispatch_requests.txt` after linking/verification moved to `medium` effort. Retaining the existing intake prompt supplied the like-for-like comparison missing from Test 1.
 
 ### Setup
 
@@ -1114,29 +1110,29 @@ The stage costs are rounded separately, so they add up to $0.0179.
 - It has the best readiness so far (28/30) and is the only run without a clear field error, with labels 30/30.
 - Its two misses are cautious: each asks the dispatcher a question. The worst earlier errors were silent: R12's missing exclusion (all `gpt-4.1-mini`) and R19's wrong merge (Prompt 1).
 - **Test 1's open question is settled.** The current prompt on Luna also labelled 30/30, so R02's recovery came from the intake model. There is no measured reason to switch to Prompt 2, and the current prompt sends fewer tokens.
-- Whether R07 and R22 should be blocked is a decision for Aditya (see the open next steps). Changing the verification prompt would make every verification request new and paid.
+- Expected readiness for R07 and R22 was an unresolved rubric question at this experiment date (see historical follow-up actions). Changing the verification prompt would make every verification request new and paid.
 
 ### Limits
 
 - **One run.** Luna accepts no temperature, so a fresh run may answer differently. Running again with the same `[output] folder` would only reuse these answers.
 - **No follow-ups.** This file has none, so the run does not test Luna's linking, the stage that blocks the demo.
-- **The key is not official.** It is Claude Code's reading of the verification prompt and the review map. R07 and R22 are lines where a stricter reading is defensible.
+- **The key is not official.** It is an AI-authored interpretation of the verification prompt and review map. R07 and R22 are lines where a stricter reading is defensible.
 - **Mixed comparison with the all-mini run.** That comparison changes both the intake and the verification model. Only the comparison with the Prompt 2 run isolates one stage (verification).
 
 ## Test 1: two rewritten intake prompts (14 Oct 2026)
 
-**Question.** Aditya supplied two rewritten intake prompts, Prompt 1 and Prompt 2 (exact text in Appendices A and B), and asked whether either improves intake, especially the labelling of follow-ups. For background, see the follow-up linking diagnosis.
+**Objective:** compare two intake prompt variants, preserved exactly in Appendices A and B, particularly for follow-up classification.
 
 **Answer.** Prompt 2 is the better of the two, and Prompt 1 should not be used as written. Neither was shown to beat the current prompt, and Test 2 later confirmed this on `dispatch_requests.txt`.
 
 ### Setup
 
-- **Runs:** four full runs of `uv run python run_intake_and_processing.py` from `backend/`, as Aditya chose: each prompt on the demo chat and on `data/dispatch_requests.txt`.
+- **Runs:** four executions of `uv run python run_intake_and_processing.py` from `backend/`: each prompt on the development conversation and on `data/dispatch_requests.txt`.
   - Intake used `gpt-5.6-luna` with reasoning effort `high`.
   - Linking and verification used `gpt-4.1-mini` at temperature 0.
   - Each intake call had 3 new messages and 2 context messages; each verification call had 3 tasks.
 - **Prompt swap:** for each run, a temporary script edited two files, always starting from a backup.
-  - It copied the prompt, exactly as Aditya pasted it, into `INTAKE_PROMPT` in `order_processing_into_tasks/model_prompts.py`, and it set `chat_file` in `config.toml`.
+  - It copied the exact experimental prompt into `INTAKE_PROMPT` in `order_processing_into_tasks/model_prompts.py`, and it set `chat_file` in `config.toml`.
   - Before each run, an import check confirmed that `INTAKE_PROMPT` equalled the pasted text and that the link and verify prompts were unchanged. Each run's `manifest.json` records the prompt it used.
   - After the fourth run, both files were copied back. Their SHA-256 hashes match the originals, the 13 unit tests pass, and the code still uses the current prompt.
 - **Saved answers:** a request identical to an earlier one reuses its saved answer.
@@ -1268,7 +1264,7 @@ Prompt 1 should not be used as written.
 
 **Recommendation at the time:** keep the current prompt in the code. Prompt 2 was the candidate for a change, but only after a like-for-like check; Test 2 made that check and found no reason to switch. The next paid step most likely to change the demo outcome is the link stage, not the intake prompt.
 
-**Prediction check:** before the runs, Claude Code expected both prompts to risk over-labelling R15, R19 and R29, and Prompt 2 more than Prompt 1.
+**Pre-run prediction:** both prompts were expected to risk over-labelling R15, R19 and R29, especially Prompt 2.
 - R19 did fail, but only with Prompt 1.
 - R15 and R29 stayed requests with both prompts.
 - R18, which was not on the risk list, failed with Prompt 1.
@@ -1281,7 +1277,9 @@ Prompt 1 should not be used as written.
 - **Ready counts are noisy.** They moved by about two between runs because of verification alone, and a count can miss a wrong merge entirely.
 - **The expected labels are not official.** They come from the project's review map, which calls itself "a preparation aid, not an official answer key".
 
-## Open next steps (each needs Aditya's approval; step 5 is done in code)
+## Historical follow-up actions
+
+This list records the development decisions following Tests 1-8. It is not a current backlog: provisional warnings replaced holds, and dispatcher preview/approval/reallocation were later implemented. Current priorities are in the [project plan](../../../docs/project-plan.md).
 
 1. **Decide the link rule for follow-ups like L0007.** This is the step that blocks the demo (Test 3). Options:
    - Loosen the link prompt, so that a follow-up that refers back ("for that") may attach to the single candidate whose latest evidence comes just before it. A prompt change makes every link request new and paid.
@@ -1289,18 +1287,18 @@ Prompt 1 should not be used as written.
    - Keep the strict prompt, and let the dispatcher resolve such reviews in the planned review workflow.
 
    Any rule must still stop a wrong merge like Prompt 1's R19.
-2. **Decide R07 and R22** (Aditya will discuss this later).
+2. **Resolve the R07/R22 rubric interpretation.**
    - Should a bare order line with a deadline count as an allocation request?
    - Should verification ask about order status or stage, which this experiment does not check? A deterministic status check in code, part of the future live flow, is an alternative to asking the model.
    - Any change to the verification prompt makes every verification request new and paid. Verification at `high` was not tried; at `high`, linking became stricter.
 3. **Ordinal dates (no API cost), after step 1.** Let the date reader accept "30th October", with tests. This was found in section 13 of the diagnosis and confirmed offline in Test 3.
 4. **Measure Luna's variation.** Set `[output] folder` to a new folder, so no saved answer is reused, and repeat the `dispatch_requests.txt` run, about 2 cents per run. One run cannot show how stable the labels and readiness answers are.
 5. **Scope the holds (from Test 4; code only). Done in the modules on 15 Oct 2026 and measured in Test 6.**
-   - Aditya chose the two-message rule after Test 5: a review naming no order or message ID holds only the tasks of the two messages before it (`HOLD_WINDOW = 2`). Named orders and message IDs, the same-order spread and task reviews are unchanged. Notebook 05 keeps the old rule. The architecture note is in the [system design](../../../docs/system-design.md).
+   - The implementation after Test 5 used the two-message rule: a review naming no order or message ID holds only the tasks of the two messages before it (`HOLD_WINDOW = 2`). Named orders and message IDs, the same-order spread and task reviews are unchanged. Notebook 05 keeps the old rule. The architecture note is in the [system design](../../../docs/system-design.md).
    - The first proposal, holding each review's link candidates, was estimated at 46 of Test 4's tasks verified instead of 4, but it would still hold 12 of Test 5's 14.
    - Replays of the implemented rule on the saved states (no model calls): Test 5 holds 6 of 14 tasks instead of 13, and 8 would be verified. Test 4 holds 36 of 111 instead of 107, and 75 would be verified.
    - Risk: an unnamed correction to a task more than two messages back no longer holds that task. The correction still goes to review.
-   - **Test 6, the one rerun on the blocker file that Aditya approved.** Expected, written before the run and scored with the blocker key:
+   - **Test 6, one rerun on the blocker fixture.** Expected, written before the run and scored with the blocker key:
      - all 15 intake and link answers are reused; about 3 verify calls (8 tasks, 3 per call), under $0.01;
      - 6 held and 8 verified; at most 5 ready (R01, R03's ORD-040 job, R05, R14 and R26); R04, R15 and R16 not ready, and 0 unsafe ready;
      - R14 may be ready without its QuickStitch exclusion, because R15 became a task of its own. The key scores that as a field error, but a plan could then pick QuickStitch.

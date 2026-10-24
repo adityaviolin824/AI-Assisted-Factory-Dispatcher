@@ -2,14 +2,14 @@
 # copy of the decisions and calculate the review again; print a review; save the approved result.
 #
 # Review flow: pipeline_graph.dispatcher_review -> [apply_answer] -> correct, complete, add_batch,
-#              choose_workshop, accept_late, warnings_checked or clear -> dispatcher_plan.build_dispatcher_plan.
+#              choose_workshop, accept_late, warnings_checked, cancel or clear -> dispatcher_plan.build_dispatcher_plan.
 #              pipeline_graph.save_review -> dispatcher_plan.finalize_review -> [save_dispatcher_files].
 # Review again: fastapi_routes/runs.py -> [review_saved_plan] -> [apply_answer] on the saved plan.
 # Came from:   notebook 06, Part 8b (show: Part 4a; PRINT_WIDTH: Part 1). The helpers take the
 #              decisions and the run's tasks as arguments instead of the notebook's globals, and every
 #              refusal is a ValueError. approve and release are gone: the dispatcher approves the whole
-#              shown review once. verified_tasks_by_id, complete, add_batch, answer_problem, valid_field,
-#              apply_decision, apply_answer, changed_rows and review_saved_plan are new.
+#              shown review once. verified_tasks_by_id, complete, add_batch, cancel, answer_problem,
+#              valid_field, apply_decision, apply_answer, changed_rows and review_saved_plan are new.
 # Reads:       the run folder's state.json (verified_tasks_by_id); review_saved_plan also reads the
 #              saved dispatcher-decisions.json and dispatcher-plan.json.
 # Writes:      only save_dispatcher_files: dispatcher-decisions.json and dispatcher-plan.json in the run
@@ -35,7 +35,7 @@ PRINT_WIDTH = 120
 # after the helper it calls. add_batch takes no task_id: Python names the added batch.
 DECISION_FIELDS = {"correct": ["facts", "resolves"], "complete": ["facts"], "add_batch": ["facts", "workshop_id"],
                    "choose_workshop": ["workshop_id"], "accept_late": ["max_days"], "warnings_checked": ["row_ids"],
-                   "clear": []}
+                   "cancel": [], "clear": []}
 # The fields each decision must give; the others are optional.
 REQUIRED_FIELDS = {"choose_workshop": ["workshop_id"], "warnings_checked": ["row_ids"]}
 # What each field must be, as a refusal states it.
@@ -60,10 +60,15 @@ def verified_tasks_by_id(run_dir):
 
 
 def entry_for(decisions, tasks, task_id):
-    """Return the decision entry of one task, created on first use with the task's version in this run."""
+    """Return the decision entry of one task, created on first use with the task's version in this run.
+
+    A cancelled task takes no other decision until clear undoes the cancellation.
+    """
     if task_id not in tasks:
         raise ValueError(f"{task_id} is not a verified task of run {decisions['source_run']}.")
     entry = decisions["decisions"].setdefault(task_id, {"source_version": tasks[task_id]["version"]})
+    if entry.get("cancelled"):
+        raise ValueError(f"{task_id} is cancelled: undo the cancellation with clear first.")
     return entry, tasks[task_id]
 
 
@@ -158,6 +163,18 @@ def warnings_checked(decisions, tasks, task_id, row_ids):
     entry["warnings_checked"] = sorted(set(entry.get("warnings_checked", [])) | set(row_ids))
 
 
+def cancel(decisions, tasks, task_id):
+    """Mark a request cancelled (24 October 2026): Python does not plan it, so it reserves no queue time,
+    and approval never approves it. It replaces the task's earlier decisions; clear undoes it. A batch
+    the dispatcher added is removed with clear instead.
+    """
+    if task_id not in tasks:
+        raise ValueError(f"{task_id} is not a verified task of run {decisions['source_run']}.")
+    if tasks[task_id].get("added"):
+        raise ValueError(f"cancel {task_id}: remove an added batch with clear instead.")
+    decisions["decisions"][task_id] = {"source_version": tasks[task_id]["version"], "cancelled": True}
+
+
 def clear(decisions, task_id):
     """Undo: remove a task's whole decision entry."""
     decisions["decisions"].pop(task_id, None)
@@ -180,8 +197,9 @@ def answer_problem(answer, tasks):
 
     An answer is {"decisions": [...], "then": "review_again", "approve_all" or "finalize"}. Approve all
     takes no decisions. With review_again, accepted lateness comes alone, because any other decision can
-    change the estimate it accepts; finalize checks that estimate after the whole batch instead. The
-    values themselves (facts, workshop IDs) are checked when the review is calculated.
+    change the estimate it accepts; finalize checks that estimate after the whole batch instead. A
+    cancelled task takes no other decision in the same answer, whatever their order. The values
+    themselves (facts, workshop IDs) are checked when the review is calculated.
     """
     if not isinstance(answer, dict) or set(answer) != {"decisions", "then"}:
         return 'An answer must be {"decisions": [...], "then": "review_again", "approve_all" or "finalize"}.'
@@ -195,6 +213,7 @@ def answer_problem(answer, tasks):
     if (answer["then"] == "review_again" and len(entries) > 1
             and any(entry.get("decision") == "accept_late" for entry in entries)):
         return "Send accept_late alone: other decisions can change the lateness it accepts."
+    cancelled = {entry.get("task_id") for entry in entries if entry.get("decision") == "cancel"}
     for entry in entries:
         name, task_id = entry.get("decision"), entry.get("task_id")
         if not isinstance(name, str) or name not in DECISION_FIELDS:
@@ -205,6 +224,8 @@ def answer_problem(answer, tasks):
         elif not isinstance(task_id, str) or task_id not in tasks:
             return f"{name}: {task_id!r} is not a verified task or added batch of this run."
         label = name if name == "add_batch" else f"{name} {task_id}"
+        if name != "cancel" and task_id in cancelled:
+            return f"{label}: the same answer cancels {task_id}, so send no other decision for it."
         fields = DECISION_FIELDS[name]
         unknown = sorted(set(entry) - {"decision", "task_id"} - set(fields))
         if unknown:
@@ -232,6 +253,8 @@ def apply_decision(decisions, tasks, review, entry):
         accept_late(decisions, tasks, review, task_id, entry.get("max_days"))
     elif name == "warnings_checked":
         warnings_checked(decisions, tasks, task_id, entry["row_ids"])
+    elif name == "cancel":
+        cancel(decisions, tasks, task_id)
     else:
         clear(decisions, task_id)
 

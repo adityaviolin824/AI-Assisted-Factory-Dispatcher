@@ -71,6 +71,15 @@ class FinalPlanScore(unittest.TestCase):
                                      "CASE-4": "missed allocation"})
         self.assertEqual(extra, [])
 
+    def test_a_cancelled_row_is_never_allocated(self):
+        # As CASE-097 after the dispatcher cancels it (24 October 2026): never final, so never approved.
+        key = {"cases": [case(7, "needs_clarification")]}
+        final = table(("T:L7:J1", "ORD-7", None, "cancelled", None))
+        scores, extra = score_final_plan(key, state(7), final, ORDERS, {})
+        self.assertEqual([(score["decision"], score["outcome"]) for score in scores],
+                         [("correct non-allocation", "cancelled")])
+        self.assertEqual(extra, [])
+
 
 class KeyInformedChoices(unittest.TestCase):
     def test_each_wrong_case_gets_the_decision_that_fixes_it(self):

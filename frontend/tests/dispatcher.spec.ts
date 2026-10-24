@@ -30,9 +30,9 @@ function worklistRows(page: Page) {
 test("filter counts add up to all rows", async ({ page }) => {
   await openRun(page, makePlan());
   await expect(page.getByRole("group", { name: "Worklist filter" })).toHaveText(
-    "All (4)Needs attention (2)Suggested (1)Approved (0)No request (1)",
+    "All (4)Needs attention (2)Suggested (1)Approved (0)No request or cancelled (1)",
   );
-  await page.getByRole("button", { name: "No request (1)" }).click();
+  await page.getByRole("button", { name: "No request or cancelled (1)" }).click();
   await expect(worklistRows(page)).toHaveCount(1);
   await expect(worklistRows(page)).toContainText("L0003");
 });
@@ -153,6 +153,16 @@ test("a slow answer for an earlier run cannot replace the current run", async ({
   await aborted;
   await expect(page.getByText("planned from 2026-04-02")).toBeVisible();
   await expect(page.getByText("planned from 2026-04-01")).toHaveCount(0);
+});
+
+test("a run of one message is counted in the singular", async ({ page }) => {
+  await serve(page, "/runs", [{ ...RUN, messages: 1 }, OTHER_RUN]);
+  await page.goto("/dispatcher");
+  await expect(page.getByLabel("Saved run").locator("option")).toHaveText([
+    "Choose a run",
+    "R1: chat.txt (1 message)",
+    "R2: other-chat.txt (4 messages)",
+  ]);
 });
 
 test("a long run name fits a phone screen", async ({ page }) => {

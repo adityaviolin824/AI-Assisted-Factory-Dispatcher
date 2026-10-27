@@ -51,11 +51,12 @@ The saved table shows every row that changed: its old and new outcome, workshop,
 
 ## Product architecture
 
-This view follows one request from the chat to a saved dispatch table. Read it from top to bottom. The colours show who does the work: teal for the operations team, green for AI, blue for Python and amber for the dispatcher. The only loop, **Review again**, reopens a saved table. The [implementation status](#what-is-available-now) below lists current capabilities.
+This view follows a request from chat to a saved dispatch table. Read it from top to bottom. Teal represents the team frontend, green AI, blue Python and amber the dispatcher. **Review again** is optional and saves a new version. The [implementation status](#what-is-available-now) below lists current capabilities.
 
 ```mermaid
 ---
 config:
+  layout: dagre
   theme: base
   look: classic
   markdownAutoWrap: false
@@ -90,7 +91,7 @@ flowchart TB
         subgraph S2["STEP 2 / UNDERSTAND AND PLAN"]
             direction LR
             EXTRACT["AI extracts requests<br/>and links follow-ups"]:::ai
-            VERIFY["AI reads the latest instructions<br/>Python checks the order facts"]:::logic
+            VERIFY["AI checks requests and missing facts<br/>Python checks the order details"]:::logic
             PLAN["Python checks workshop rules,<br/>queues and deadlines,<br/>then ranks the options"]:::logic
             FACTS[("orders.csv<br/>workshops.csv")]:::data
             EXTRACT --> VERIFY --> PLAN
@@ -100,24 +101,22 @@ flowchart TB
         subgraph S3["STEP 3 / DISPATCHER REVIEW"]
             direction LR
             READ["Read suggestions, reasons<br/>and Needs attention"]:::human
-            CHOOSE["Correct facts, choose workshops,<br/>add or cancel batches<br/>(kept on the page, unsaved)"]:::human
-            CHECK["Optional: Check<br/>workshop options<br/>(saves nothing)"]:::human
-            APPROVE["Approve all<br/>(every choice, once)"]:::human
-            READ --> CHOOSE --> CHECK --> APPROVE
+            CHOOSE["Keep or change suggestions<br/>correct facts, choose workshops,<br/>add or cancel batches"]:::human
+            APPROVE["Approve all<br/>one approval submits any edits"]:::human
+            READ --> CHOOSE --> APPROVE
         end
 
         subgraph S4["STEP 4 / REPLAN AND SAVE"]
             direction LR
-            REPLAN["Keep the dispatcher's workshops;<br/>replan other ready work<br/>from the starting queues"]:::logic
-            SAVE["Save the dispatch table<br/>and decision history"]:::logic
-            CHANGES["Show what changed<br/>and why"]:::logic
-            REPLAN --> SAVE --> CHANGES
+            REPLAN["Apply edits and replan if needed<br/>keep chosen workshops fixed;<br/>replan other ready work"]:::logic
+            SAVE["Save the dispatch table,<br/>reasons and decision history;<br/>show what changed"]:::data
+            AGAIN["Review again (optional)<br/>edit the saved table;<br/>save a new version"]:::human
+            REPLAN --> SAVE -.-> AGAIN
         end
 
         S1 -- "fixed snapshot" --> S2
         S2 -- "draft dispatch table" --> S3
-        S3 -- "complete choice set" --> S4
-        S4 -. "Review again: new choices, new version" .-> S3
+        S3 -- "Approve all" --> S4
     end
 
     classDef screen fill:#183A49,stroke:#63AFC0,color:#F1F7F9,stroke-width:1.5px
@@ -128,23 +127,26 @@ flowchart TB
     style PRODUCT fill:#0B141D,stroke:#334B5A,stroke-width:1px
 ```
 
-Ordinary edits make no request. **Check workshop options** explicitly calculates the full choice set without saving or resuming the graph; **Approve all** calculates and saves immediately, with no mandatory second approval. With no choices, **Approve all** saves the table as shown. A choice set that cannot be applied is refused as a whole, and nothing is saved. **Review again** reopens saved choices; another preview or approval performs the next calculation. The dispatcher can also add a batch for a known order during a paused review or through **Review again**.
+There is one **Approve all** button. Edits stay unsaved on the page until approval. **Check workshop options** is an optional preview of their effect and saves nothing. With edits, approval applies them together, replans once and saves immediately. Without edits, it saves the table as shown. A refused set leaves the saved plan unchanged and the review open with the reason. There is no mandatory second approval.
+
+**Review again** reopens the saved table for further edits; approval saves a new version and keeps the earlier one. The dispatcher can add a batch for a known order during the initial review or through **Review again**. Replanning starts from the original queues and counts each batch once.
 
 Automatic choices enforce workshop rules. Manual destinations may override them, with the consequences recorded. Cancelled requests reserve no queue time; a saved table may retain unresolved rows. The result is a decision table, not workshop bookings or live production updates.
 
 ## Backend architecture
 
-This view follows the same journey in code. Each row is one stage, with the API routes, LangGraph nodes and Python functions it uses. Rows 2, 3 and 5 belong to one LangGraph thread: `run_graph` stops at `dispatcher_review`, and `resume_graph` continues it when the dispatcher approves. Only `link_items`, `extract_batch` and `verify_tasks` can call AI models, through the saved-answer cache; every other step is Python and makes no model call. Teal boxes are web pages and API routes, amber boxes are the paused review and its approval, and dotted lines show model calls and input data.
+This view shows the decision logic: AI reads and links chat windows, Python verifies and plans batches, and the dispatcher reviews the result. The loops show repeated message processing, planning the next batch, optional workshop previews and Review again. API routes and storage internals are covered in the implementation guides.
 
 ```mermaid
 ---
 config:
+  layout: dagre
   theme: base
   look: classic
   markdownAutoWrap: false
   themeVariables:
     fontFamily: system-ui, sans-serif
-    fontSize: 15px
+    fontSize: 17px
     primaryTextColor: "#EAF2F5"
     textColor: "#EAF2F5"
     lineColor: "#839BA8"
@@ -155,86 +157,71 @@ config:
   flowchart:
     curve: basis
     wrappingWidth: 320
-    nodeSpacing: 30
-    rankSpacing: 50
+    nodeSpacing: 28
+    rankSpacing: 45
 ---
 flowchart TB
-    subgraph BACKEND["BACKEND / THE SAME STEPS IN CODE"]
+    subgraph BACKEND["BACKEND / CHAT TO A REVIEWED DISPATCH PLAN"]
         direction TB
 
-        subgraph B1["1 / CHAT / Next.js Operations page and FastAPI /chat"]
+        subgraph B1["1 / READ AND LINK THE CHAT / AI"]
             direction LR
-            MSG["POST /chat/messages<br/>save to chat SQLite"]:::screen
-            SNAP["POST /chat/snapshots<br/>write a fixed TXT copy"]:::screen
-            RUN["POST /chat/snapshots/{snapshot_id}/process<br/>run_graph in the background<br/>(only with ALLOW_PAID_PROCESSING=1)"]:::screen
-            MSG --> SNAP --> RUN
+            EXTRACT["Read the next chat window<br/>extract requests and follow-ups"]:::ai
+            LINK["Create tasks and link related messages<br/>including later follow-ups"]:::ai
+            MORE{"More unread<br/>messages?"}:::ai
+            EXTRACT --> LINK --> MORE
+            MORE -- "Yes: next window" --> EXTRACT
         end
 
-        subgraph B2["2 / PROCESS MESSAGES / LangGraph nodes 1-5"]
+        subgraph B2["2 / VERIFY AND ROUTE / AI AND PYTHON"]
             direction LR
-            START["start_run<br/>new run folder"]:::logic
-            LINK["link_items<br/>new task, or AI links<br/>a follow-up to its task"]:::ai
-            EXTRACT["extract_batch<br/>AI extracts requests"]:::ai
-            VERIFY["verify_tasks<br/>AI assesses instructions;<br/>Python checks the facts"]:::logic
-            SAVEOUT["save_outputs<br/>state.json and counts"]:::logic
-            MODEL["OpenAI models<br/>via RecordedModel cache"]:::ai
-            START --> LINK
-            LINK -- "unread" --> EXTRACT
-            EXTRACT --> LINK
-            LINK -- "all read" --> VERIFY --> SAVEOUT
-            LINK -.-> MODEL
-            EXTRACT -.-> MODEL
-            VERIFY -.-> MODEL
+            VERIFY["AI reviews meaning and task evidence<br/>Python checks IDs, dates, workshops<br/>and cancellation or hold wording"]:::logic
+            ROUTE{"Task outcome"}:::logic
+            READY["Ready allocation tasks"]:::logic
+            UNCLEAR["Needs attention<br/>missing or conflicting facts,<br/>unclear links or instructions"]:::human
+            RECORD["Reference and non-allocation records<br/>no workshop allocated"]:::data
+            VERIFY --> ROUTE
+            ROUTE -- "Allocation + complete facts" --> READY
+            ROUTE -- "Clarification needed" --> UNCLEAR
+            ROUTE -- "No allocation needed" --> RECORD
         end
 
-        subgraph B3["3 / PLAN AND PAUSE / LangGraph nodes 6-7"]
-            direction LR
-            CSV[("orders.csv<br/>workshops.csv")]:::data
-            PLAN["plan_allocation<br/>route, check rules, rank;<br/>save plan.json; first review"]:::logic
-            PAUSE["dispatcher_review<br/>interrupt(): pause, state kept<br/>in checkpoint SQLite"]:::human
-            CSV -.-> PLAN --> PAUSE
+        subgraph B3["3 / ALLOCATE READY BATCHES / PYTHON / EARLIEST DEADLINE FIRST"]
+            direction TB
+            FACTS[("Order and workshop facts")]:::data
+            RULES["Check deadline, status, category,<br/>batch cap and request constraints<br/>Estimate queue + production<br/>+ expected rework + pickup<br/>remove late workshop options"]:::logic
+            OPTIONS{"Any on-time<br/>option?"}:::logic
+            PROPOSE["Rank by the request's priority<br/>default: avoid lateness<br/>or explicit cost / quality preference<br/>Propose workshop with a reason<br/>reserve planning queue time"]:::logic
+            HOLD["Needs dispatcher decision<br/>past deadline or no on-time option<br/>no automatic queue reservation"]:::human
+            FACTS -.-> RULES
+            RULES -- "Deadline still ahead" --> OPTIONS
+            RULES -- "Deadline passed" --> HOLD
+            OPTIONS -- "Yes" --> PROPOSE
+            OPTIONS -- "No" --> HOLD
+            PROPOSE -- "Next ready batch" --> RULES
+            HOLD -- "Next ready batch" --> RULES
         end
 
-        subgraph B4["4 / DISPATCHER REVIEW / Next.js Dispatcher page and FastAPI /reviews"]
+        subgraph B4["4 / REVIEW, REPLAN AND SAVE / DISPATCHER AND PYTHON"]
             direction LR
-            READ["GET /reviews/{thread_id}<br/>read the paused review"]:::screen
-            LOCAL["Stage choices in page memory<br/>inspect returned options"]:::screen
-            PREVIEW["POST .../preview (optional)<br/>apply_answer outside the graph;<br/>saves nothing"]:::screen
-            FINAL["POST .../finalize<br/>submit the whole choice set"]:::screen
-            UNCHANGED["POST .../answer<br/>approve_all with no decisions"]:::screen
-            READ --> LOCAL
-            LOCAL -- "Check options" --> PREVIEW
-            PREVIEW -- "Return unsaved draft" --> LOCAL
-            LOCAL -- "Approve with choices" --> FINAL
-            LOCAL -- "Approve without choices" --> UNCHANGED
+            REVIEW["Inspect allocations and Needs attention<br/>correct facts or choose a workshop<br/>add or cancel a batch"]:::human
+            PREVIEW["Check workshop options (optional)<br/>Python recalculates the draft<br/>nothing is saved"]:::logic
+            APPLY["Check and apply the choices<br/>keep chosen workshops fixed<br/>replan other ready work if needed"]:::logic
+            SAVE["Final dispatch table<br/>reasons, source evidence and changes<br/>keep earlier saved versions"]:::data
+            REVIEW -- "Try the current edits" --> PREVIEW
+            PREVIEW -- "Inspect options and keep editing" --> REVIEW
+            REVIEW -- "Approve all" --> APPLY
+            APPLY -- "Accepted choices" --> SAVE
+            APPLY -- "Refused: show reason" --> REVIEW
+            SAVE -. "Review again (optional)" .-> REVIEW
         end
 
-        subgraph B5["5 / REPLAN AND SAVE / resume_graph, Python only"]
-            direction LR
-            APPLY["dispatcher_review resumes<br/>apply_answer checks the set;<br/>a refusal pauses again"]:::human
-            BUILD["build_dispatcher_plan<br/>dispatcher's workshops first,<br/>then other ready work by deadline,<br/>from the starting queues"]:::logic
-            SAVE["save_review<br/>finalize_review +<br/>save_dispatcher_files"]:::human
-            FILES[("Run folder<br/>dispatcher-plan.json<br/>dispatcher-decisions.json<br/>plan-history/")]:::data
-            APPLY -- "With choices" --> BUILD --> SAVE --> FILES
-            APPLY -- "No choices: approve shown review" --> SAVE
-        end
-
-        subgraph B6["6 / REVIEW AGAIN / FastAPI /runs, outside the graph"]
-            direction LR
-            AGAIN["POST /runs/{run_id}/preview<br/>or /finalize"]:::screen
-            SAVED["review_saved_plan<br/>saved decisions + new choices,<br/>then apply_answer"]:::logic
-            VERSION["preview saves nothing;<br/>finalize saves a new version,<br/>the earlier one stays in plan-history/"]:::logic
-            AGAIN --> SAVED --> VERSION
-        end
-
-        B1 -- "snapshot messages" --> B2
-        B2 -- "verified tasks" --> B3
-        B3 -- "paused review and thread ID" --> B4
-        B4 -- "Approve all: resume_graph" --> B5
-        B5 -- "Optional: Review again on the saved table" --> B6
+        B1 -- "All messages read and linked" --> B2
+        B2 -- "Only ready allocation tasks" --> B3
+        B2 -- "Hold and reference rows" --> B4
+        B3 -- "Proposed allocations and held batches" --> B4
     end
 
-    classDef screen fill:#183A49,stroke:#63AFC0,color:#F1F7F9,stroke-width:1.5px
     classDef ai fill:#143D36,stroke:#64B39F,color:#EDFAF5,stroke-width:1.5px
     classDef logic fill:#1C2E40,stroke:#7B9FBC,color:#EFF5FA,stroke-width:1.5px
     classDef human fill:#362C20,stroke:#CBA56D,color:#FFF3E0,stroke-width:1.5px
@@ -242,11 +229,15 @@ flowchart TB
     style BACKEND fill:#0B141D,stroke:#334B5A,stroke-width:1px
 ```
 
-When the dispatcher has made choices, **Approve all** sends them once to `POST /reviews/{thread_id}/finalize`, which recalculates once and saves through `save_review`. With no choices, the page sends `approve_all` to `POST /reviews/{thread_id}/answer`, which saves the review as shown without recalculating. A refused choice set leaves accepted decisions and plan files unchanged; the graph pauses again with the refusal. Previews and saved-plan **Review again** calculate outside the graph, and previews write nothing.
+Extraction and linking repeat for each chat window. Verification runs after all messages have been processed. Missing facts, conflicting instructions and uncertain links remain visible for the dispatcher; they do not trigger an invented clarification conversation or an automatic rerun of the AI stages. Reference and non-task records are retained without allocation.
 
-The shared review functions rebuild from the starting queues. Manual destinations remain fixed, including recorded rule or lateness overrides; ordinary automatic choices enforce eligibility and on-time feasibility. Explicit lateness acceptance is checked against the recalculated estimate. Cancelled requests are excluded before routing and reserve nothing. A saved table can still contain unresolved rows.
+Python checks whether each workshop can make the batch, can take it given its capacity and queue, and is allowed to take it. It plans ready batches in deadline order, updating working queue copies after each proposed allocation. Late or ineligible options are removed before ranking. The default ranking avoids lateness and then favors shorter delivery time; an explicit cost or quality preference selects the corresponding ranking objective. This is a change of ranking objective, not an arbitrary adjustment to quality weights. A configured objective can override the per-request preference.
 
-The change report detects added/removed rows or changes to outcome, workshop or delivery estimate and includes their before/after reasons. Reason-only changes do not create a change-report row. Neither approval path books workshop work or updates live production queues.
+The dispatcher can correct the facts or make a manual workshop choice. **Check workshop options** optionally recalculates the whole draft and returns to review without saving. **Approve all** applies the submitted choices, replans when needed and saves immediately, without a mandatory second approval or another AI pass. Replanning starts from the original queues, fixes manual destinations first and plans the remaining ready work around them. Cancelled requests reserve no queue time. Manual workshop choices are honored, with any rule or lateness override recorded in the reason. A refused choice set leaves the accepted decisions and saved plan unchanged and returns its reason to the open review.
+
+**Review again** optionally reopens a saved plan. New choices use the same Python calculations and save a new version; earlier versions remain available. The saved table may still contain unresolved rows. Saving a plan does not book work at workshops or update live production queues.
+
+The drawing groups logical responsibilities rather than expanding every implementation node. The processing loop and review pause are in `backend/app_full_pipeline/pipeline_graph.py`; routing, allocation and shared review calculations are in `backend/task_routing/`, `backend/task_allocation_to_workshops/` and `backend/dispatcher_review/`. The preview and saved-plan review loops use shared Python functions outside the paused graph.
 
 ## What is available now
 

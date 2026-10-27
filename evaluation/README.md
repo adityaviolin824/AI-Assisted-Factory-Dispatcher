@@ -110,7 +110,7 @@ All three runs used the same inputs and settings and started with empty answer c
 | Unsafe allocations | 1 | 1 | 1 | **0** |
 | Cost, time | $0.0728, 10 min 52 s | $0.0700, 10 min 1 s | $0.0757, 9 min 23 s | no model calls |
 
-The "after review" result demonstrates recovery capability with answer-key access. All 85 allocations separately matched the compared fields and were reported on time, while 26 source rows remained unresolved. Human effort and usability were not measured. The cancelled order (CASE-097) could only be stopped by relabelling it as a question: the app has no "do not allocate" choice yet. See the [Test 11 report](../backend/docs/evaluation/END_TO_END_TEST_2026-10-22.md).
+The "after review" result demonstrates recovery capability with answer-key access. All 85 allocations separately matched the compared fields and were reported on time, while 26 source rows remained unresolved. Human effort and usability were not measured. At the time of Test 11 on 22 October, the cancelled order (CASE-097) could only be stopped by relabelling it as a question. An explicit cancellation decision and conservative wording check were implemented on 24 October; their saved-answer replay is reported separately below. See the [Test 11 report](../backend/docs/evaluation/END_TO_END_TEST_2026-10-22.md).
 
 ### Recorded results: run 2 (21 October 2026)
 

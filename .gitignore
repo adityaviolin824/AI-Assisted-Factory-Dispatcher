@@ -179,6 +179,9 @@ AGENTS.md
 /backend/docs/evaluation/archive/
 /backend/testing_runs/
 
+# Local presentation pages published as claude.ai artifacts, with their data copies.
+/artifacts/
+
 
 # Source code, documentation, shared Git configuration, dependency lockfiles,
 # Dockerfiles, .dockerignore and Compose files remain available to commit.

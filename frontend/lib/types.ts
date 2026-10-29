@@ -183,6 +183,28 @@ export type Review = Plan & {
 
 export type RunDetails = { run_id: string; plan: Plan | null; dispatcher_plan: Review | null };
 
+// One stage's model calls (eval_run_report/run_summary.cost_row), or the "total" row for all stages.
+// "this_run" covers the calls this run paid for; "fresh" prices every answered call, as a run with no
+// saved answers would pay. Token counts are those of the paid calls. A null cost means a model in it
+// has no listed price.
+export type StageUsage = {
+  stage: string;
+  models: string[];
+  calls: number;
+  paid: number;
+  failed: number;
+  input_tokens: number;
+  cached_tokens: number;
+  output_tokens: number;
+  cost_this_run: number | null;
+  cost_fresh: number | null;
+  seconds_this_run: number;
+  seconds_fresh: number;
+};
+
+// GET /runs/{run_id}/usage: numbers from the run's call records only, with no prompt or answer.
+export type RunUsage = { run_id: string; prices_checked: string; stages: StageUsage[] };
+
 export type ReviewEnvelope = { status: "waiting" | "finished"; review: Review; refused: string | null };
 
 // A preview of the dispatcher's choices (POST /reviews/{thread_id}/preview): the draft that finalize

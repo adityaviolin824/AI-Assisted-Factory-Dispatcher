@@ -87,4 +87,13 @@ Optional LangSmith tracing records graph execution, including cached runs. The h
 - Authentication, clarification replies, multiple channels, voice, live assignments and production tracking are not implemented.
 - Docker and deployment remain deferred.
 
-The [project plan](docs/project-plan.md) defines next work. The [engineering log](docs/engineering-log.md) retains dated investigation and verification evidence; [experiments](experiments/README.md) preserves historical notebook stages rather than current application contracts.
+## Planned extensions
+
+The [further implementation roadmap](FURTHER_IMPLEMENTATION.md), recorded 28 October 2026, proposes:
+
+- Shared order/workshop records in PostgreSQL, with authenticated workshop updates for dated closures and permitted capacity changes. Automatic planning would check affected production dates and recheck changes before approval.
+- Local PII filtering before model calls and external tracing, while preserving operational identifiers and source-evidence checks.
+- Basic prompt-injection detection with visible review, measured false positives and optional later evaluation of a local encoder classifier.
+- A sanitized public evidence bundle for reproducing recorded model-cost estimates without publishing full run records.
+
+These extensions are not implemented or measured. A database alone does not provide workshop access controls, current availability or live booking guarantees. The [project plan](docs/project-plan.md) defines priorities. The [engineering log](docs/engineering-log.md) retains dated investigation and verification evidence; [experiments](experiments/README.md) preserves historical notebook stages rather than current application contracts.

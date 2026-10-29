@@ -11,6 +11,7 @@ import type {
   ReviewEnvelope,
   RunDetails,
   RunSummary,
+  RunUsage,
   Snapshot,
 } from "./types";
 
@@ -44,6 +45,17 @@ export function listRuns() {
 
 export function readRun(runId: string, signal?: AbortSignal) {
   return request<RunDetails>(`/runs/${encodeURIComponent(runId)}`, { signal });
+}
+
+// A saved run's model calls, tokens and estimated model cost, calculated by the backend from its call
+// records. Reading it makes no model call.
+export function readRunUsage(runId: string) {
+  return request<RunUsage>(`/runs/${encodeURIComponent(runId)}/usage`);
+}
+
+// The same usage numbers, as an address the browser can download.
+export function runUsageLink(runId: string) {
+  return `${BASE}/runs/${encodeURIComponent(runId)}/usage`;
 }
 
 export function readReview(threadId: string, signal?: AbortSignal) {

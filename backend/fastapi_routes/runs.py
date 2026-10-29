@@ -1,7 +1,7 @@
 # runs.py: HTTP endpoints for saved runs (output/runs/<start time>/).
 #
-# GET /runs and GET /runs/{run_id} only read files: no processing, no planning again and no model call.
-# Review again (22 October 2026) changes a run's approved dispatcher plan: preview calculates the new
+# GET /runs, GET /runs/{run_id} and GET /runs/{run_id}/usage only read files: no processing, no planning
+# again and no model call. Review again (22 October 2026) changes a run's approved dispatcher plan: preview calculates the new
 # choices on top of the saved ones and saves nothing; finalize saves the result as a new version,
 # and plan-history/ keeps the earlier one. Both calculate in Python: no model call.
 import json
@@ -10,6 +10,7 @@ from fastapi import APIRouter, HTTPException
 
 from dispatcher_review.dispatcher_decisions import review_saved_plan, save_dispatcher_files
 from dispatcher_review.dispatcher_plan import finalize_review
+from eval_run_report.run_summary import PRICES, PRICES_CHECKED, stage_costs
 from order_processing_into_tasks.settings_and_data import RUNS_DIR
 
 router = APIRouter(tags=["runs"])
@@ -63,6 +64,20 @@ def read_run(run_id: str):
     run_dir = saved_run_dir(run_id)
     return {"run_id": run_id, "plan": read_json(run_dir / "plan.json"),
             "dispatcher_plan": read_json(run_dir / "dispatcher-plan.json")}
+
+
+@router.get("/runs/{run_id}/usage")
+def read_run_usage(run_id: str):
+    """Return one saved run's model calls, tokens, estimated model cost and model time, per stage.
+
+    Calculated by stage_costs from the run's calls/*.json records. Only counts, tokens, dollars and
+    seconds are returned: no prompt, chat text or model answer. "this_run" figures cover the calls
+    this run paid for; "fresh" figures price every answered call, as a run with no saved answers would
+    pay. A cost is None when a model has no listed price.
+    """
+    run_dir = saved_run_dir(run_id)
+    calls = [read_json(path) for path in sorted((run_dir / "calls").glob("*.json"))]
+    return {"run_id": run_id, "prices_checked": PRICES_CHECKED, "prices": PRICES, "stages": stage_costs(calls)}
 
 
 @router.post("/runs/{run_id}/preview")

@@ -381,3 +381,5 @@ Selected [experiment notebooks and development notes](experiments/README.md) are
 API keys belong in the backend environment, never in browser code. Local environment files, application databases, generated run output and backups are excluded from version control. Selected synthetic test data is included. Optional LangSmith tracing sends run data to its external service when enabled.
 
 Current work focuses on integrated journey verification, known correctness gaps and further evaluation. The latest recorded checks, on 24 October 2026 after the cancellation change, passed 170 backend and 66 browser tests. Docker and deployment are left until the end.
+
+The [further implementation roadmap](FURTHER_IMPLEMENTATION.md) records planned shared operational data and workshop-maintained closure dates, local PII filtering, basic prompt-injection checks and public cost evidence. These extensions are separate from the implemented capabilities and recorded results above.

@@ -8,7 +8,9 @@ import type {
   Review,
   RunDetails,
   RunSummary,
+  RunUsage,
   Snapshot,
+  StageUsage,
   SummaryRow,
   Task,
 } from "@/lib/types";
@@ -177,6 +179,37 @@ export const MESSAGES: ChatMessage[] = [
     received_at_utc: "2026-10-21T01:05:00+00:00",
   },
 ];
+
+function stageUsage(stage: string, calls: number, paid: number, costs: [number, number], seconds: [number, number]): StageUsage {
+  return {
+    stage,
+    models: ["gpt-5.6-luna"],
+    calls,
+    paid,
+    failed: 0,
+    input_tokens: paid * 3000,
+    cached_tokens: paid * 500,
+    output_tokens: paid * 800,
+    cost_this_run: costs[0],
+    cost_fresh: costs[1],
+    seconds_this_run: seconds[0],
+    seconds_fresh: seconds[1],
+  };
+}
+
+// A run that paid for 3 of its 10 calls; the other 7 came from saved answers.
+export function makeUsage(): RunUsage {
+  return {
+    run_id: RUN.run_id,
+    prices_checked: "2026-10-14",
+    stages: [
+      stageUsage("intake", 4, 1, [0.0007, 0.0028], [40, 160]),
+      stageUsage("link", 2, 0, [0, 0.001], [0, 30]),
+      stageUsage("verify", 4, 2, [0.0014, 0.0034], [85.4, 171]),
+      stageUsage("total", 10, 3, [0.0021, 0.0072], [125.4, 361]),
+    ],
+  };
+}
 
 export function makeSnapshot(changes: Partial<Snapshot> = {}): Snapshot {
   return {

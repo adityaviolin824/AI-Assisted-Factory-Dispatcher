@@ -5,6 +5,8 @@ Run from backend/:  uv run python -m unittest discover -s tests -v
 What they prove, on a run of the supplied chat file paused for the dispatcher in a temporary SQLite file:
 - GET /runs lists the saved runs and GET /runs/{run_id} returns a run's plan.json, then its
   dispatcher-plan.json once approved; an unknown run ID, or a path such as "..", is refused with 404;
+- GET /runs/{run_id}/usage returns stage_costs of the run's call records with the price table and its
+  date, and nothing else: a run answered from saved answers paid nothing, but has a fresh-run cost;
 - GET /reviews/{thread_id} returns the paused review; POST /reviews/{thread_id}/answer applies an edit,
   returns apply_answer's own refusal message with nothing changed, and after approve_all returns the
   final review that was saved; a finished or unknown thread gets 404;
@@ -39,6 +41,7 @@ from test_processing_modules import undefined_names
 import main
 from dispatcher_review.dispatcher_decisions import apply_answer
 from dispatcher_review.dispatcher_plan import finalize_review
+from eval_run_report.run_summary import PRICES, PRICES_CHECKED, stage_costs
 from fastapi_routes import dispatcher, runs
 
 # ORD-008: in review in the first review, with a late option at W1.
@@ -92,6 +95,22 @@ class Endpoints(unittest.TestCase):
         self.assertEqual((missing.status_code, missing.json()), (404, {"detail": "No saved run no-such-run."}))
         with self.assertRaises(HTTPException):
             runs.read_run("..")  # only a saved run folder's name is read
+
+    def test_run_usage_is_counted_from_the_call_records(self):
+        calls = [read_json(path) for path in sorted((self.run_dir / "calls").glob("*.json"))]
+        usage = self.client.get(f"/runs/{self.run_dir.name}/usage").json()
+        # Only the price table and stage_costs' counts, tokens, dollars and seconds: no prompt or answer.
+        self.assertEqual(usage, {"run_id": self.run_dir.name, "prices_checked": PRICES_CHECKED, "prices": PRICES,
+                                 "stages": stage_costs(calls)})
+        # The test run was answered entirely from saved answers: it paid nothing, but a fresh run would pay.
+        total = usage["stages"][-1]
+        self.assertEqual((total["stage"], total["calls"], total["paid"], total["cost_this_run"]),
+                         ("total", len(calls), 0, 0))
+        self.assertGreater(total["cost_fresh"], 0)
+        missing = self.client.get("/runs/no-such-run/usage")
+        self.assertEqual((missing.status_code, missing.json()), (404, {"detail": "No saved run no-such-run."}))
+        with self.assertRaises(HTTPException):
+            runs.read_run_usage("..")  # only a saved run folder's name is read
 
     def test_a_paused_review_is_shown_answered_and_approved(self):
         self.assertEqual(self.client.get(f"/reviews/{self.thread_id}").json(), self.first_review)

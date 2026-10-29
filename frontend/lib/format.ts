@@ -13,6 +13,17 @@ export function amount(value: number | null | undefined) {
   return value == null ? "-" : value.toFixed(2);
 }
 
+// A model cost in US dollars, such as "$0.0757".
+export function dollars(value: number | null | undefined) {
+  return value == null ? "-" : `$${value.toFixed(4)}`;
+}
+
+// Model time, such as "9 min 18 s".
+export function duration(seconds: number) {
+  const whole = Math.round(seconds);
+  return `${Math.floor(whole / 60)} min ${whole % 60} s`;
+}
+
 export function listText(values: string[]) {
   return values.length ? values.join(", ") : "none";
 }

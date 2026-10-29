@@ -1,6 +1,6 @@
 import { expect, type Page, type Route, test } from "@playwright/test";
 import type { Plan } from "@/lib/types";
-import { makePlan, OTHER_RUN, RUN, runDetails } from "./fixtures";
+import { makePlan, makeUsage, OTHER_RUN, RUN, runDetails } from "./fixtures";
 
 // Every backend request is answered by the test. A request without its own route is aborted, so
 // these tests never reach a real FastAPI server. (A later route takes precedence over this one.)
@@ -200,4 +200,61 @@ test("a run named in the address opens directly", async ({ page }) => {
 test("choosing a run puts it in the address", async ({ page }) => {
   await openRun(page, makePlan());
   await expect(page).toHaveURL(/\/dispatcher\?run=R1$/);
+});
+
+function usagePanel(page: Page) {
+  return page.getByRole("region", { name: "Model usage and cost" });
+}
+
+test("model usage is read only when its section is opened, and separates paid and saved answers", async ({ page }) => {
+  const usageRequests: string[] = [];
+  page.on("request", (request) => {
+    if (request.url().endsWith("/usage")) {
+      usageRequests.push(request.url());
+    }
+  });
+  await serve(page, `/runs/${RUN.run_id}/usage`, makeUsage());
+  await openRun(page, makePlan());
+  await expect(page.getByRole("table", { name: "Worklist" })).toBeVisible();
+  expect(usageRequests).toHaveLength(0);
+
+  await usagePanel(page).getByText("Show calls, tokens and cost").click();
+  const facts = usagePanel(page).locator("dl");
+  await expect(facts).toContainText("Estimated model cost this run$0.0021");
+  await expect(facts).toContainText("Paid model calls3 of 10 calls; 7 reused saved answers at no new cost");
+  await expect(facts).toContainText("Model time this run2 min 5 s");
+  await expect(facts).toContainText("With no saved answers$0.0072, 6 min 1 s of model time");
+  await expect(facts).toContainText("Dispatcher review and approvalNo model calls, $0");
+  await expect(usagePanel(page)).toContainText("prices checked on 14 October 2026");
+  const total = usagePanel(page).getByRole("table", { name: "Model usage by stage" }).getByRole("row", { name: /Total/ });
+  await expect(total).toContainText("gpt-5.6-luna1039,0001,5002,400$0.0021$0.0072");
+  await expect(usagePanel(page).getByRole("link", { name: /Download usage as JSON/ })).toHaveAttribute(
+    "href",
+    "/api/backend/runs/R1/usage",
+  );
+  expect(usageRequests).toHaveLength(1);
+});
+
+test("model usage that cannot be read is shown as unavailable", async ({ page }) => {
+  await serve(page, `/runs/${RUN.run_id}/usage`, { detail: "No saved run R1." }, 404);
+  await openRun(page, makePlan());
+  await usagePanel(page).getByText("Show calls, tokens and cost").click();
+  await expect(usagePanel(page)).toContainText("Model usage is unavailable: No saved run R1.");
+  await expect(usagePanel(page).locator("dl")).toHaveCount(0);
+});
+
+test("a model without a listed price has an unavailable cost, never $0", async ({ page }) => {
+  const usage = makeUsage();
+  for (const stage of usage.stages) {
+    stage.cost_this_run = null;
+    stage.cost_fresh = null;
+  }
+  await serve(page, `/runs/${RUN.run_id}/usage`, usage);
+  await openRun(page, makePlan());
+  await usagePanel(page).getByText("Show calls, tokens and cost").click();
+  await expect(usagePanel(page).locator("dl")).toContainText(
+    "Estimated model cost this rununavailable: a model in this run has no listed price",
+  );
+  const total = usagePanel(page).getByRole("row", { name: /Total/ });
+  await expect(total).toContainText("2,400--");
 });

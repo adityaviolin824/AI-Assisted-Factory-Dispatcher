@@ -9,6 +9,7 @@ import ReviewBar from "@/components/ReviewBar";
 import RunPicker from "@/components/RunPicker";
 import TaskDetails from "@/components/TaskDetails";
 import TaskTable from "@/components/TaskTable";
+import UsagePanel from "@/components/UsagePanel";
 import {
   errorText,
   finalize,
@@ -417,6 +418,8 @@ export default function DispatcherPage() {
           <QueueTable plan={shown} profiles={details.plan?.workshop_profiles} />
         </>
       )}
+      {/* The key gives each run its own panel, so another run's usage is never shown. */}
+      {details && <UsagePanel key={details.run_id} runId={details.run_id} />}
     </>
   );
 }

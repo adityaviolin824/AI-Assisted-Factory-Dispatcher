@@ -1,6 +1,6 @@
 # Project plan
 
-Updated: 24 October 2026. This document separates implemented capabilities, recorded verification and remaining work for SweaterCo Dispatch Copilot. The [backend guide](../backend/README.md) and [frontend guide](../frontend/README.md) describe operation; the [system design](system-design.md) defines the current contracts.
+Updated: 28 October 2026 for the future implementation roadmap; recorded verification dates remain unchanged. This document separates implemented capabilities, recorded verification and remaining work for SweaterCo Dispatch Copilot. The [backend guide](../backend/README.md) and [frontend guide](../frontend/README.md) describe operation; the [system design](system-design.md) defines the current contracts.
 
 ## Product objective
 
@@ -30,6 +30,8 @@ The application saves decision tables. It does not book workshop work, track pro
 4. **Evaluate generalization and human effort.** Freeze unseen conversations before further tuning, repeat selected comparisons and measure dispatcher performance without answer-key access.
 5. **Prepare reproducible handover.** Retain input identity, settings, scoring versions, selected sanitized evidence and setup requirements. Containerization and deployment remain the final phase.
 
+The [further implementation roadmap](../FURTHER_IMPLEMENTATION.md) records the next product extensions: workshop-maintained availability in a proposed PostgreSQL operational store, local PII filtering, basic prompt-injection checks and a public cost evidence bundle. They remain planned work; core correctness and the required evaluation retain priority.
+
 These are priorities, not authorization for paid model calls or implementation of every proposed experiment.
 
 ## Dispatcher contract
@@ -56,9 +58,23 @@ For example, 3 starting queue days plus 2 production days and 0.02 expected rewo
 
 Live assignments require current order/workshop facts, a consistent workload snapshot and an atomic commit of assignment, reservation and history. Confirmation must recheck changed facts, repeated submissions must not reserve twice, and failure must preserve the last valid state. A graph checkpoint stores workflow progress and cannot replace this operational transaction.
 
-Queue ownership must be defined before implementation: a workshop total that already includes application assignments must not have those assignments added again. Per-batch remaining work, including external work, is a candidate design. SQLite is the initial relational-store direction; the operational schema and transaction service do not exist.
+Queue ownership must be defined before implementation: a workshop total that already includes application assignments must not have those assignments added again. Per-batch remaining work, including external work, is a candidate design. PostgreSQL is now the proposed shared operational-store direction for access by workshop staff and dispatchers; SQLite remains a local alternative and continues to support the existing chat/checkpoint flow. The operational schema and transaction service do not exist.
 
 Future acceptance checks include changed status/capacity between preview and commit, duplicate confirmation, rollback, external work and progress updates without double counting. These checks concern future live operations, not the implemented file-based reallocation.
+
+### Workshop availability and self-service updates
+
+An authenticated workshop screen should let staff record their own temporary closures and permitted capacity changes through the backend API. A one-week closure must affect automatic eligibility when the proposed production period overlaps it; checking only the dispatch date is insufficient. Date boundaries, calendars and reopening behavior need an explicit policy before calendar-aware estimates are implemented. Administrative suspension and other workshops' data remain outside workshop-edit permissions.
+
+Retain versions and an audit history, recheck relevant changes before approval, and flag existing affected work without silently transferring accepted assignments. Preserve the current manual-override contract while defining future operational authorization. The [roadmap](../FURTHER_IMPLEMENTATION.md#1-shared-operational-data-and-workshop-availability) records alternatives and acceptance checks. Keep supplied CSVs and the historical simulator unchanged.
+
+## Planned privacy, injection checks and public evidence
+
+- **Local PII filtering:** start with defined contact/identifier patterns and stable aliases; evaluate local entity recognition only if required. Protect model calls and external tracing, preserve order facts and exact-source checks, and measure misses, unnecessary masking and added latency.
+- **Basic prompt-injection checks:** begin with an explainable local signature set and visible review of flagged input. Aho-Corasick is an optional matching optimization; a local encoder classifier needs separate evaluation. Preserve legitimate corrections and do not describe these checks as complete protection.
+- **Public cost evidence:** export selected sanitized usage records and the historical price/calculation method. The retained 22 October run reproduces a $0.0757 model-usage estimate for 128 calls; raw run folders remain excluded. Keep historical estimates, local response reuse, provider-cached input and human review costs distinct.
+
+Implementation details, verification criteria and the proposed sequence are centralized in [Further implementation](../FURTHER_IMPLEMENTATION.md). No privacy/security measurement, database implementation or new paid run is established by this planning update.
 
 ## Decisions and limits
 

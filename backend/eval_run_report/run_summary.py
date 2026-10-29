@@ -11,6 +11,8 @@ from collections import Counter
 # docs/evaluation/PROMPT_TESTING_RESULTS.md. Reasoning tokens are billed as output tokens.
 PRICES = {"gpt-5.6-luna": {"input": 0.20, "cached_input": 0.02, "output": 1.20},
           "gpt-4.1-mini": {"input": 0.40, "cached_input": 0.10, "output": 1.60}}
+# The date PRICES was checked, shown beside every cost estimate made with it.
+PRICES_CHECKED = "2026-10-14"
 STAGES = ("intake", "link", "verify")
 # Plan outcomes in the order a reader needs them: what was allocated, what needs a person, the rest.
 OUTCOMES = ("recommendation", "provisional_recommendation", "review_required", "deadline_passed",

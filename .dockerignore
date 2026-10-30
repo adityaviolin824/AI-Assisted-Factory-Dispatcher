@@ -14,6 +14,9 @@ backend/.claude/
 backend/.venv/
 backend/output/
 **/__pycache__/
+# Local translation model weights (config.toml [translation], 1.8 GB). MLX runs on Apple silicon only,
+# so a Linux container would need translation switched off or another runtime.
+backend/models/
 
 # Not used by the API. The notebooks hold their own outputs and chat storage, and the tests read them.
 backend/experimentation_notebooks/

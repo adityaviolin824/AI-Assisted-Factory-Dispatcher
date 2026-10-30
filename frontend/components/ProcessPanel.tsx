@@ -6,9 +6,9 @@ import type { Snapshot } from "@/lib/types";
 
 type Props = { messageCount: number };
 
-// The start-run path. "Process conversation" first captures the chat as a fixed snapshot and asks
-// for confirmation, because processing calls paid AI models; "Start processing" then runs the
-// pipeline on exactly that snapshot. Messages sent later go into the next snapshot.
+// The start-run path, in two steps. "Prepare chat for dispatch" captures the chat as a fixed snapshot,
+// with no AI call, and asks for confirmation, because processing calls paid AI models; "Start dispatch
+// workflow" then runs the pipeline on exactly that snapshot. Messages sent later go into the next snapshot.
 export default function ProcessPanel({ messageCount }: Props) {
   // Newest first: the first snapshot is the current one, the others are earlier runs.
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
@@ -68,22 +68,22 @@ export default function ProcessPanel({ messageCount }: Props) {
     }
   }
 
-  // One primary button at a time: "Start processing" takes over while a snapshot waits for it.
+  // One primary button at a time: "Start dispatch workflow" takes over while a snapshot waits for it.
   const waitingToStart = current?.processing === "not_started";
 
   return (
-    <section className="process-panel" aria-label="Process conversation">
-      <h2>Process conversation</h2>
+    <section className="process-panel" aria-label="Dispatch workflow">
+      <h2>Dispatch workflow</h2>
       <p className="muted">
-        The AI reads the messages into requests, then Python checks every workshop and makes a plan for the
-        dispatcher.
+        First prepare a fixed copy of the chat; this makes no AI call. Then start the workflow: the AI reads the
+        messages into requests, and Python checks every workshop and makes a plan for the dispatcher.
       </p>
       <button
         className={waitingToStart ? undefined : "primary"}
         disabled={busy || messageCount === 0 || current?.processing === "running"}
         onClick={capture}
       >
-        Process conversation
+        Prepare chat for dispatch
       </button>
       {error && (
         <p className="error" role="alert">
@@ -140,7 +140,7 @@ function SnapshotState({ snapshot, busy, onStart }: StateProps) {
         <>
           <p>Processing sends these messages to paid AI models and takes several minutes.</p>
           <button className="primary" disabled={busy} onClick={onStart}>
-            Start processing
+            Start dispatch workflow
           </button>
         </>
       )}
@@ -159,8 +159,8 @@ function SnapshotState({ snapshot, busy, onStart }: StateProps) {
       )}
       {snapshot.processing === "failed" && (
         <p className="error" role="alert">
-          Processing failed: {snapshot.error ?? "the backend gave no reason."} Process the conversation again to
-          retry.
+          Processing failed: {snapshot.error ?? "the backend gave no reason."} Prepare the chat again and start the
+          workflow to retry.
         </p>
       )}
     </div>

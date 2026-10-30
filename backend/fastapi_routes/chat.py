@@ -10,18 +10,26 @@
 # was started with ALLOW_PAID_PROCESSING=1. It answers at once and runs in the background; the
 # snapshot's processing.json records how far it got, and the page reads the snapshot again until
 # processing finished or failed.
+# POST /chat/transcriptions (29 October 2026) turns one short recording from the Record button into
+# text for the message box. It calls a paid model, so it needs ALLOW_PAID_PROCESSING=1 as well; it
+# saves nothing, and the worker checks and edits the text before Send.
+# Send translates a message with Chinese characters into English on this computer first, when
+# config.toml [translation] is on (30 October 2026); that is free and needs no switch.
 import json
 import os
 from pathlib import Path
 
 from dotenv import load_dotenv
-from fastapi import APIRouter, BackgroundTasks, HTTPException
+from fastapi import APIRouter, BackgroundTasks, HTTPException, UploadFile
 from langgraph.checkpoint.sqlite import SqliteSaver
+from openai import OpenAIError
 from pydantic import BaseModel
 
 from app_full_pipeline.pipeline_graph import CHECKPOINT_FILE, run_graph
 from order_intake_from_chat import chat_storage
 from order_intake_from_chat.read_chat_messages import read_messages
+from order_intake_from_chat.transcribe_speech import transcribe
+from order_intake_from_chat.translate_message import needs_translation, translate_to_english
 from order_processing_into_tasks.settings_and_data import BACKEND_DIR, MESSAGE_DATE
 from task_allocation_to_workshops.allocation_settings_and_data import DISPATCH_DATE
 
@@ -32,6 +40,12 @@ PAID_PROCESSING_OFF = ("Processing is switched off because it calls paid AI mode
                        "ALLOW_PAID_PROCESSING=1 to allow it.")
 # The status of a snapshot that nobody has asked to process.
 NOT_STARTED = {"processing": "not_started", "run_id": None, "thread_id": None, "error": None}
+# The refusal of voice input under the same switch.
+VOICE_OFF = ("Voice input is switched off because it calls a paid AI model. Start the API with "
+             "ALLOW_PAID_PROCESSING=1 to allow it, or type the message.")
+# The largest recording accepted. The page stops recording after one minute, about 0.5 MB of compressed
+# browser audio; this keeps an unexpectedly long upload from becoming a large paid call.
+MAX_AUDIO_BYTES = 5_000_000
 
 
 class NewMessage(BaseModel):
@@ -137,15 +151,18 @@ def list_messages():
 
 @router.post("/chat/messages")
 def send_message(message: NewMessage):
-    """Save one message and return it, as the mock chat's Send does. It makes no model call.
+    """Save one message and return it, as the mock chat's Send does. It makes no paid model call.
 
+    A message with Chinese characters is saved as its English translation when translation is on.
     An empty name or text, or a name with a colon or a line break, is refused with 422 and the mock's
-    own message.
+    own message; so is a translation that did not keep the order and workshop IDs.
     """
     chat_storage.initialize_storage(chat_storage.DATABASE)
+    text = message.raw_text
     try:
-        return chat_storage.save_message(chat_storage.DATABASE, message.submission_id, message.sender,
-                                         message.raw_text)
+        if needs_translation(text):
+            text = translate_to_english(text)
+        return chat_storage.save_message(chat_storage.DATABASE, message.submission_id, message.sender, text)
     except ValueError as error:
         raise HTTPException(status_code=422, detail=str(error))
 
@@ -197,3 +214,26 @@ def process_snapshot(snapshot_id: str, background_tasks: BackgroundTasks):
     write_status(folder, processing="running", server_process=os.getpid())
     background_tasks.add_task(process_in_background, folder)
     return snapshot(folder)
+
+
+@router.post("/chat/transcriptions")
+def transcribe_recording(audio: UploadFile):
+    """Return {"text"}: one recording from the Record button, as text in the language spoken.
+
+    Paid model call: refused with 403 unless the server was started with ALLOW_PAID_PROCESSING=1, and
+    with 413 for a recording over MAX_AUDIO_BYTES. Nothing is saved. A failed model call answers 502
+    with only the error's type, because a model API error can quote part of the API key.
+    """
+    if os.environ.get("ALLOW_PAID_PROCESSING") != "1":
+        raise HTTPException(status_code=403, detail=VOICE_OFF)
+    recording = audio.file.read()
+    if len(recording) > MAX_AUDIO_BYTES:
+        raise HTTPException(status_code=413, detail="The recording is too long. Record up to one minute.")
+    # OPENAI_API_KEY comes from backend/.env, as for processing.
+    load_dotenv(BACKEND_DIR / ".env", override=False)
+    try:
+        text = transcribe(recording, audio.filename)
+    except OpenAIError as error:
+        raise HTTPException(status_code=502, detail=f"Transcription failed ({type(error).__name__}). "
+                                                    "Type the message instead.") from error
+    return {"text": text}

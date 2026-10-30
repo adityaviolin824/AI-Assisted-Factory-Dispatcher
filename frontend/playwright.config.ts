@@ -10,7 +10,11 @@ export default defineConfig({
   testDir: "./tests",
   use: {
     baseURL: "http://127.0.0.1:3000",
-    launchOptions: { executablePath: chromiumPath },
+    // The fake microphone lets the Record button record in tests, with no permission prompt.
+    launchOptions: {
+      executablePath: chromiumPath,
+      args: ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"],
+    },
   },
   // The tests answer every /api/backend request themselves, so only Next.js has to run.
   webServer: {

@@ -13,6 +13,7 @@ import type {
   RunSummary,
   RunUsage,
   Snapshot,
+  Transcript,
 } from "./types";
 
 const BASE = "/api/backend";
@@ -127,6 +128,14 @@ export function sendMessage(message: NewMessage) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(message),
   });
+}
+
+// Turns one voice recording into text for the message box; it saves nothing. It calls a paid model, so
+// the backend refuses it unless the API was started with ALLOW_PAID_PROCESSING=1.
+export function transcribe(audio: Blob, fileName: string) {
+  const form = new FormData();
+  form.append("audio", audio, fileName);
+  return request<Transcript>("/chat/transcriptions", { method: "POST", body: form });
 }
 
 export function listSnapshots() {

@@ -1,6 +1,6 @@
 # Product and technical overview
 
-Updated: 24 October 2026. SweaterCo Dispatch Copilot turns operations messages into an explainable workshop dispatch table. The [backend guide](../backend/README.md), [frontend guide](../frontend/README.md) and [system design](system-design.md) document the implemented behavior.
+Updated: 30 October 2026. SweaterCo Dispatch Copilot turns operations messages into an explainable workshop dispatch table. The [backend guide](../backend/README.md), [frontend guide](../frontend/README.md) and [system design](system-design.md) document the implemented behavior.
 
 ## The problem
 
@@ -10,8 +10,8 @@ The application keeps original messages beside recommendations, calculates the a
 
 ## Current workflow
 
-1. Operations staff send named messages in Chat and capture a fixed conversation snapshot.
-2. Language models extract owned messages, identify jobs, connect supported follow-ups and assess current task evidence.
+1. Operations staff send named messages in Chat, typed or dictated. A dictated message appears as text to check and edit before sending. With translation on, a message in Chinese is saved as its English translation, made on the computer itself. **Prepare chat for dispatch** captures a fixed conversation snapshot.
+2. After **Start dispatch workflow**, language models extract owned messages, identify jobs, connect supported follow-ups and assess current task evidence.
 3. Python checks order identity, quantities, dates, restrictions and readiness. Uncertain or unsupported input remains visible.
 4. The scheduler calculates workshop eligibility, delivery, cost and tentative shared queues in deadline order.
 5. LangGraph preserves the initial dispatcher review in a SQLite checkpoint.
@@ -52,7 +52,7 @@ Unresolved follow-ups produce provisional warnings instead of persistent holds. 
 | Supplied 30-request development set | Test 7 replay after a Python date fix: 30/30 readiness agreement; Test 9 fresh run: 29/30 readiness agreement. | Different experiments; a saved-answer replay is not a fresh language sample or 30 automatic allocations. |
 | Human-reviewed 100-case set | Three fresh automatic runs: 73, 80 and 81 of 85 expected allocations; 14/15 exceptions held in each. A 24 October replay of Test 11's saved answers with the cancellation check: 81 of 85 and 15/15. | Existing broad allocation score; lost preferences can count as allocated. CASE-097 cancellation was unsafe in all three runs; the replay reuses the same model answers, so it is not a fresh run. |
 | Key-informed API review | 85/85 expected allocations and 15/15 exceptions after 23 choices in Test 11. | Recovery capability with answer-key access, not autonomous accuracy or a human usability study. Twenty-six source rows remained unresolved. |
-| Implementation checks | Latest recorded 24 October baseline, after the cancellation change: 170 backend and 66 browser tests; type checking, lint and build passed. | Checked code/interaction properties; some fixtures are local and browser API replies are simulated. |
+| Implementation checks | Latest recorded 30 October baseline, after local translation: 176 backend and 72 browser tests; type checking, lint and build passed. | Checked code/interaction properties; some fixtures are local, browser API replies are simulated and voice tests use a fake microphone. |
 
 See the [evaluation guide](../evaluation/README.md) for datasets, scoring definitions, costs, latency, failure evidence and complete results. The final coverage headline does not require timeliness or every field to match; split-part detail checks currently inspect only the main part. Test 11 separately reported all 85 allocations on time with matching fields.
 
@@ -64,8 +64,11 @@ See the [evaluation guide](../evaluation/README.md) for datasets, scoring defini
 - Measure human dispatcher correctness, unsafe decisions, completion time and review effort without answer-key access.
 - Improve per-run reproducibility and protect unsaved choices across internal navigation.
 - Define chat/CSV deadline discrepancy handling; the current checked chat date can override the CSV date without an automatic mismatch alert.
+- Measure voice transcription on real speech, especially order IDs, quantities, dates and workshop names.
+- Add local filtering of names of people and addresses before model calls and tracing. Prompt-injection checks remain planned.
+- Keep the original Chinese beside its translation, recognize Chinese and English hold wording, and evaluate translation on a reviewed bilingual test set; it was checked on 12 made-up messages only.
 
-Authentication, clarification replies, voice, multiple channels, live assignment transactions, progress/queue ownership and operational transfers are future extensions. Docker and deployment follow core functionality and evaluation.
+Authentication, clarification replies, local speech recognition, multiple channels, live assignment transactions, progress/queue ownership and operational transfers are future extensions. Docker and deployment follow core functionality and evaluation.
 
 ## Engineering decisions to defend
 
@@ -77,5 +80,8 @@ Authentication, clarification replies, voice, multiple channels, live assignment
 - Manual destinations remain authoritative while their consequences are recorded.
 - Workflow checkpoints preserve review progress; they do not replace future operational transactions.
 - Historical simulation, fresh model runs, cached replays and assisted review answer different evaluation questions.
+- Voice produces an editable transcript, not a message, so a misheard order ID, quantity or date is checked by the worker before anything is processed. The recording goes to OpenAI only when paid calls are allowed and is not stored.
+- Chinese is translated at Send, on the host and behind a switch, so processing and its English-only checks receive English, no message text leaves the host and English-only use is unaffected. Python refuses a translation that changes an order or workshop ID. The 8-bit model was chosen by measurement: 11 of 12 test translations matched the unquantized model, with 2.2 GB instead of 3.7 GB of memory.
+- Model usage is counted from each run's own call records, so reused answers show as costing nothing in that run, beside the cost the same run would have with no saved answers.
 
 Development used AI assistance for implementation, investigation and documentation. The human dataset review is recorded separately in the [review provenance](../backend/docs/evaluation/extended_dispatch_100_REVIEW.md).

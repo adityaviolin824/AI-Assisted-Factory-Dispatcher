@@ -10,6 +10,9 @@ What they prove, with the chat, the runs and the checkpoint file in a temporary 
 - GET /chat/dates gives the message date and dispatch date that processing and allocation use;
 - POST /chat/messages saves a message, saves nothing new for a repeated submission ID, and refuses an
   invalid name, empty text or a missing field with 422 and the mock's own message;
+- with translation on, a message with Chinese characters is saved as its English translation, and an
+  English message or any message with translation off is saved as written without translating; a
+  translation that changed an order or workshop ID is refused with 422 and nothing is saved;
 - POST /chat/snapshots refuses an empty chat with 400, and captures the whole conversation: the TXT
   exactly as saved, each message's R label and L message ID, and "not_started"; later messages go
   into the next snapshot only; snapshots are listed newest first, and an unknown ID gets 404;
@@ -21,9 +24,13 @@ What they prove, with the chat, the runs and the checkpoint file in a temporary 
   sent or while another one runs; nothing starts then;
 - a failed run reads "failed" with only the error's type, and the error is raised again; a run left
   "running" by an earlier server process reads "failed" and blocks nothing;
+- POST /chat/transcriptions is refused with 403 unless ALLOW_PAID_PROCESSING=1 and with 413 for an
+  over-long recording, returns the transcript and saves nothing; a failed model call answers 502 with
+  only the error's type; transcribe sends the recording to the configured model with the language
+  hints and the CSV files' workshop and product names;
 - every name the modules use is defined or imported.
-No API client is ever created, every network connection is refused, backend/.env is never loaded and
-nothing is sent to LangSmith.
+No API client is ever created, the translation model is never loaded, every network connection is
+refused, backend/.env is never loaded and nothing is sent to LangSmith.
 """
 import contextlib
 import importlib
@@ -42,6 +49,7 @@ from zoneinfo import ZoneInfo
 
 from fastapi.testclient import TestClient
 from langgraph.checkpoint.sqlite import SqliteSaver
+from openai import OpenAIError
 
 from notebook_reference import CHAT_FILE, top_level_definitions
 from test_dispatcher_review import block_network, pinned_review_settings
@@ -50,7 +58,7 @@ from test_processing_modules import logic, module_definitions, offline_modules, 
 
 import main
 from fastapi_routes import chat, dispatcher, runs
-from order_intake_from_chat import chat_storage
+from order_intake_from_chat import chat_storage, transcribe_speech, translate_message
 from order_processing_into_tasks.settings_and_data import MESSAGE_DATE
 from task_allocation_to_workshops.allocation_settings_and_data import DISPATCH_DATE
 
@@ -62,6 +70,11 @@ MOVED = ["DISPLAY_TIMEZONE", "initialize_storage", "save_message", "read_message
 NEW = ["CHAT_DIR", "DATABASE", "SNAPSHOTS_DIR"]
 # One line of the supplied chat file: "R01 [07:53] Chen: Need scarves ...".
 CHAT_LINE = re.compile(r"^R\d+ \[(\d\d):(\d\d)\] ([^:]+): (.*)$")
+
+
+def refuse_model_load():
+    """Stand-in for translate_message.load_model: the tests never load the 4 GB translation model."""
+    raise AssertionError("the translation model was loaded")
 
 
 def setUpModule():
@@ -112,7 +125,8 @@ class Endpoints(unittest.TestCase):
                                     (chat, "CHECKPOINT_FILE", self.checkpoint_file),
                                     (dispatcher, "CHECKPOINT_FILE", self.checkpoint_file),
                                     (runs, "RUNS_DIR", self.work_dir / "runs"),
-                                    (chat, "load_dotenv", lambda *args, **kwargs: None)):
+                                    (chat, "load_dotenv", lambda *args, **kwargs: None),
+                                    (translate_message, "load_model", refuse_model_load)):
             self.enterContext(mock.patch.object(target, name, value))
         self.enterContext(mock.patch.dict(os.environ))
         os.environ.pop("ALLOW_PAID_PROCESSING", None)
@@ -167,6 +181,27 @@ class Endpoints(unittest.TestCase):
                 self.assertEqual((response.status_code, response.json()["detail"]), (422, detail))
         missing = self.send({"sender": "Chen", "raw_text": "hello"})
         self.assertEqual(missing.status_code, 422)  # FastAPI's own check: no submission_id
+        self.assertEqual(self.client.get("/chat/messages").json(), [])
+
+    def test_a_chinese_message_is_saved_in_english_when_translation_is_on(self):
+        chinese = "请把ORD-045安排到W6。"
+        with mock.patch.object(translate_message, "run_model", return_value=" Please place ORD-045 at W6.\n") as run_model:
+            with mock.patch.object(translate_message, "TRANSLATION_ON", False):
+                off = self.send(message(raw_text=chinese)).json()
+            with mock.patch.object(translate_message, "TRANSLATION_ON", True):
+                on = self.send(message(raw_text=chinese)).json()
+                english = self.send(message(raw_text="Please allocate ORD-061.")).json()
+        self.assertEqual([off["raw_text"], on["raw_text"], english["raw_text"]],
+                         [chinese, "Please place ORD-045 at W6.", "Please allocate ORD-061."])
+        run_model.assert_called_once_with(chinese)  # never for English, nor with translation off
+
+    def test_a_translation_that_changed_an_id_is_refused_and_nothing_is_saved(self):
+        with (mock.patch.object(translate_message, "TRANSLATION_ON", True),
+              mock.patch.object(translate_message, "run_model", return_value="Please place ORD-45 at W6.")):
+            refused = self.send(message(raw_text="请把ORD-045安排到W6。"))
+        self.assertEqual(refused.status_code, 422)
+        self.assertIn("did not keep the order and workshop IDs exactly (Please place ORD-45 at W6.)",
+                      refused.json()["detail"])
         self.assertEqual(self.client.get("/chat/messages").json(), [])
 
     def test_a_snapshot_captures_the_whole_conversation_once(self):
@@ -271,11 +306,53 @@ class Endpoints(unittest.TestCase):
         with mock.patch.object(chat, "run_graph", return_value=({"run_dir": "runs/x"}, [], "thread-2", {})):
             self.assertEqual(self.process(self.capture()["snapshot_id"]).status_code, 200)
 
+    def transcribe(self, recording=b"recorded audio"):
+        """Post one recording, as the Record button does; return the response."""
+        return self.client.post("/chat/transcriptions", files={"audio": ("speech.webm", recording, "audio/webm")})
+
+    def test_a_recording_is_transcribed_only_with_permission_and_nothing_is_saved(self):
+        with mock.patch.object(chat, "transcribe", return_value="Please place ORD-045 at W6.") as transcribe:
+            refused = self.transcribe()
+            self.assertEqual((refused.status_code, refused.json()["detail"]), (403, chat.VOICE_OFF))
+            os.environ["ALLOW_PAID_PROCESSING"] = "1"
+            too_long = self.transcribe(b"x" * (chat.MAX_AUDIO_BYTES + 1))
+            self.assertEqual(too_long.status_code, 413)
+            self.assertEqual(transcribe.call_count, 0)
+            answered = self.transcribe()
+            self.assertEqual((answered.status_code, answered.json()), (200, {"text": "Please place ORD-045 at W6."}))
+            transcribe.assert_called_once_with(b"recorded audio", "speech.webm")
+        # The text only goes back to the page: no message, snapshot or recording is saved.
+        self.assertFalse(self.chat_dir.exists())
+
+    def test_a_failed_transcription_shows_only_the_error_type(self):
+        os.environ["ALLOW_PAID_PROCESSING"] = "1"
+        with mock.patch.object(chat, "transcribe", side_effect=OpenAIError("Incorrect API key provided: sk-abc")):
+            failed = self.transcribe()
+        self.assertEqual((failed.status_code, failed.json()["detail"]),
+                         (502, "Transcription failed (OpenAIError). Type the message instead."))
+
+
+class Transcription(unittest.TestCase):
+    """transcribe_speech.transcribe, with the OpenAI client replaced: no client is created."""
+
+    def test_the_recording_goes_to_the_configured_model_with_language_and_name_hints(self):
+        client = mock.Mock()
+        client.audio.transcriptions.create.return_value = mock.Mock(text="ORD-045 to Nimble Needle")
+        with mock.patch.object(transcribe_speech, "OpenAI", return_value=client):
+            self.assertEqual(transcribe_speech.transcribe(b"recorded audio", "speech.webm"), "ORD-045 to Nimble Needle")
+        client.audio.transcriptions.create.assert_called_once_with(
+            model="gpt-transcribe", file=("speech.webm", b"recorded audio"), languages=["en", "zh"],
+            keywords=transcribe_speech.KEYWORDS)
+        # The hints are spelled as the CSV files spell them.
+        for word in ("ORD-", "W6", "Nimble Needle", "Crewneck sweater"):
+            self.assertIn(word, transcribe_speech.KEYWORDS)
+
 
 class EveryNameIsDefined(unittest.TestCase):
 
     def test_no_module_uses_an_undefined_name(self):
-        for module_name in ("order_intake_from_chat.chat_storage", "fastapi_routes.chat", "main"):
+        for module_name in ("order_intake_from_chat.chat_storage", "order_intake_from_chat.transcribe_speech",
+                            "order_intake_from_chat.translate_message", "fastapi_routes.chat", "main"):
             with self.subTest(module=module_name):
                 self.assertEqual(undefined_names(importlib.import_module(module_name)), set())
 

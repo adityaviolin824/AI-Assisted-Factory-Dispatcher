@@ -1,6 +1,6 @@
 # System design
 
-Updated: 24 October 2026. This document describes the implemented application and marks future operational extensions separately. The [backend guide](../backend/README.md) owns script/API details, the [frontend guide](../frontend/README.md) describes the web interface, and the [project plan](project-plan.md) lists remaining work.
+Updated: 30 October 2026. This document describes the implemented application and marks future operational extensions separately. The [backend guide](../backend/README.md) owns script/API details, the [frontend guide](../frontend/README.md) describes the web interface, and the [project plan](project-plan.md) lists remaining work.
 
 ## 1. What each part is responsible for
 
@@ -96,11 +96,49 @@ A greedy pass is not global optimization. Expected rework and workshop defect ra
 
 ## 5. HTTP, storage and processing boundaries
 
-FastAPI exposes 15 application routes across chat, saved runs and dispatcher reviews. Next.js forwards same-origin `/api/backend/...` requests to the configured API. There is one conversation and one dispatcher, without authentication or a live assignment ledger.
+FastAPI exposes 17 application routes across chat, saved runs and dispatcher reviews. Next.js forwards same-origin `/api/backend/...` requests to the configured API. There is one conversation and one dispatcher, without authentication or a live assignment ledger.
 
-Chat stores messages in local SQLite and exports immutable snapshots with source mappings. Sending and snapshot capture make no model call. Explicit processing is refused unless `ALLOW_PAID_PROCESSING=1`; a background task processes the snapshot to its first review pause. Duplicate processing and overlapping processing requests are refused. Process interruption is reported as failure rather than indefinitely running.
+Chat stores messages in local SQLite and exports immutable snapshots with source mappings. Sending and snapshot capture make no paid model call; with translation on, Send translates a message containing Chinese with a local model and saves the English ([decision](#local-translation-decision-30-october-2026)). Explicit processing is refused unless `ALLOW_PAID_PROCESSING=1`; a background task processes the snapshot to its first review pause. Duplicate processing and overlapping processing requests are refused. Process interruption is reported as failure rather than indefinitely running.
+
+Voice transcription is the only other paid route and is refused under the same setting. It returns the text of one recording and stores nothing; the worker edits that text and sends it as an ordinary message, so processing applies the same evidence and verification checks to it.
 
 JSON files store processing/plan records; a separate SQLite checkpoint stores the LangGraph pause. Neither database is an operational factory queue. Input signatures protect reviews against changed order/workshop files or dispatch date.
+
+### Voice input decision, 29 October 2026
+
+**Problem:** some workers can state a request faster by speaking than by typing. The [multilingual research](../MULTILINGUAL_INPUT_RESEARCH.md) recommends a local recognizer, after typed bilingual input.
+
+**Decision:** the Chat page's **Record** button sends one recording to `POST /chat/transcriptions`, which passes it to OpenAI's `gpt-transcribe` with English and Mandarin language hints and workshop/product names as keywords. The transcript appears in the message box for the worker to check and edit before **Send**. The decision was approved on 29 October with three conditions: the audio goes to OpenAI; the route is a second paid route behind the existing `ALLOW_PAID_PROCESSING` switch; English is the supported language and Mandarin is experimental, because the Python cancellation, date and quantity checks read English wording.
+
+**Alternatives considered:** a local recognizer such as Qwen3-ASR keeps audio on the host and has no per-call charge, but needs a model download, a local runtime and measurement; it remains the research direction. Browser speech recognition was rejected because its processing location is unspecified and differs between browsers. Sending the transcript directly as a message was rejected because a misheard order ID, quantity or date would then be processed without anyone checking it.
+
+**Assumptions:** one short request per recording (the page stops after one minute; the API refuses more than 5 MB). The worker reads the transcript before sending. The provider and API key already used for processing are acceptable for audio. OpenAI listed $0.0045 per minute of audio when checked on 29 October 2026.
+
+**Expected effect:** correctness: unchanged after Send, because a transcript becomes an ordinary message; the new risk is a recognition error the worker does not notice. Latency: one provider call per recording, not yet measured. Evaluation: accuracy on real speech, especially order IDs, quantities, dates and workshop names, is unmeasured; reading a sample of the supplied requests aloud in a separately authorized test would measure it. Privacy: audio, including any spoken names or addresses, reaches OpenAI; the planned text PII filter cannot act on it.
+
+### Model usage view, 29 October 2026
+
+**Problem:** each run's model calls, tokens and estimated cost were recorded in its call files but visible only through `make_run_report.py`, not where the dispatcher reviews the run.
+
+**Decision:** `GET /runs/{run_id}/usage` returns `stage_costs` for the run's call records with the stored price table and its check date. The Dispatcher's **Model usage and cost** panel requests it only when opened.
+
+**Alternatives considered:** writing usage into `plan.json` would change saved run files; showing `run_report.md` would expose plan text and depend on the report having been generated. The planned public evidence bundle remains separate, for readers without the run folders.
+
+**Assumptions and limits:** costs come from the stored price table (checked 14 October 2026), not a provider invoice. Reused answers cost nothing in that run; the panel also shows the cost with no saved answers. Model time is the sum of call durations, not elapsed time.
+
+**Expected effect:** no model call, no written file and no prompt or answer text in the response. Opening the panel reads the run's call files once; for the 19 October run that is 192 call records and a response under 1.5 KB.
+
+### Local translation decision, 30 October 2026
+
+**Problem:** a worker can now type or dictate Chinese, but intake, processing and the Python cancellation, date and quantity checks read English.
+
+**Decision:** when `config.toml` `[translation]` is on, Send translates a message containing Chinese characters into English on the application host and saves the English. Tencent's Hy-MT2-1.8B (Apache 2.0), converted to 8-bit MLX on the host from the official weights, translates with the model card's instruction and greedy decoding. Python refuses the Send when the order or workshop IDs differ between the original and the English. The worker reads the Chinese in the message box before Send; the chat shows the English after it. The original is not stored. Originally enabled on 30 October, translation is disabled by default from 31 October. Its MLX runtime is an optional dependency extra; ordinary English setup and execution do not require it. The code and optional model setup remain available.
+
+**Alternatives considered:** an OpenAI translation call would add a per-message charge, a third paid route and text leaving the host. Translating at **Record** would translate the transcript before the worker's edits and miss typed Chinese. Keeping the Chinese beside the English, as the [research](../MULTILINGUAL_INPUT_RESEARCH.md) recommends, needs a chat database change and a two-language message display; it is deferred to keep the first increment small. Direct Chinese interpretation by the processing models is unmeasured and would bypass the English-only checks. Unquantized weights (3.7 GB peak memory) and a 4-bit conversion (1.3 GB, 4 of 12 test translations identical to unquantized) were measured against the selected 8-bit conversion (2.2 GB, 11 of 12 identical). Published community MLX conversions were not used.
+
+**Assumptions:** an Apple silicon host, because MLX runs only there; simplified Chinese; the model stays loaded after the first Chinese Send; order and workshop IDs written as `ORD-045` and `W6`.
+
+**Expected effect:** correctness: processing receives English, and a translation that loses, changes or adds an ID cannot be saved. Mistranslated quantities, dates, negation or intent are not detected, and without the stored original the dispatcher cannot compare. In testing, 换别的车间 ("switch to another workshop") became "has been transferred to another workshop", and 暂停 became "Suspended", which the cancellation check does not recognize; it has never recognized English hold wording either. Latency: about 2.6 s for the first Chinese Send after start-up, including loading, then a median 0.27 s on an M2 Pro; English Sends, processing runs and API start-up are unchanged, because `mlx-lm` is imported only at the first Chinese Send (the import alone takes about 1.3 s). Evaluation: 12 made-up messages only; the research's bilingual test suite is still needed before claiming Chinese support. Cost: no per-message charge. Privacy: message text stays on the host.
 
 <a id="6-planned-dispatcher-review-and-reallocation"></a>
 
@@ -174,13 +212,13 @@ Optional LangSmith tracing can transmit chat, state, plans and dispatcher choice
 | Page | Implemented purpose | Remaining boundary |
 |---|---|---|
 | Introduction | Explain the product, show a worked example and recorded evaluation figures, and link into the application. | Figures are fixed recorded evidence, not live performance. |
-| Chat | Save named messages, show history and scenario dates, capture snapshots, process explicitly and open the resulting review. | One conversation; no source-linked clarification reply loop or voice. |
-| Dispatcher | Read runs, inspect source evidence and options, stage decisions, preview, approve, review again and show changes. | No authentication, workshop booking or live production tracking. |
+| Chat | Save named messages, optionally dictate a message for checking before Send, save a Chinese message as its local English translation, show history and scenario dates, prepare a fixed snapshot (**Prepare chat for dispatch**), start the dispatch workflow explicitly and open the resulting review. | One conversation; no source-linked clarification reply loop. Voice sends audio to OpenAI, is unmeasured on real speech and treats Mandarin as experimental. A translated message keeps only the English. |
+| Dispatcher | Read runs, inspect source evidence and options, stage decisions, preview, approve, review again, show changes and show each run's model usage and estimated cost. | No authentication, workshop booking or live production tracking. Cost figures are estimates, not invoices. |
 
-The dark/light visual system is implemented in shared CSS. React preserves source identities and backend-calculated values. Unsupported information queries remain explicit outcomes rather than fabricated answers. Added channels, voice and operational charts must use the same backend rules and recorded facts if implemented later.
+The dark/light visual system is implemented in shared CSS. React preserves source identities and backend-calculated values. Unsupported information queries remain explicit outcomes rather than fabricated answers. Dictated text reaches processing only as a sent message, so it follows the same backend rules. Added channels and operational charts must also use the same backend rules and recorded facts if implemented later.
 
 ## 9. Evidence and limits
 
-The latest recorded suite, on 24 October 2026 after the cancellation change, passed 170 offline backend tests and 66 Playwright tests, with type checking, lint and the frontend build passing. Counts refer to that record, not a new documentation-only run. Some regression checks require local source notebooks or saved outputs absent from a clean public checkout. Browser tests simulate API responses; a chat bridge test also uses the real pipeline with saved model answers.
+The latest recorded suite, on 30 October 2026 after local translation, passed 176 offline backend tests and 72 Playwright tests, with type checking, lint and the frontend build passing. Counts refer to that record, not a new documentation-only run. Voice tests use a fake browser microphone and simulated transcription replies; no real speech or paid transcription has been tested. Translation tests replace the model's answer; the real model was checked separately on 12 made-up messages. Some regression checks require local source notebooks or saved outputs absent from a clean public checkout. Browser tests simulate API responses; a chat bridge test also uses the real pipeline with saved model answers.
 
 The [scheduler benchmark](../backend/eval_harness/results/harness_results_2026-10-15.md) reports normal/shock results under the unchanged six official metrics plus separately labelled tardiness measures. The [evaluation guide](../evaluation/README.md) separates those results from conversation interpretation, key-informed dispatcher recovery and explanation quality. Historical cancellation failures prompted a conservative source guard and an explicit dispatcher cancellation. A replay of Test 11's saved answers, with no model calls, held all 15 exceptions with no unsafe allocation; no fresh paid run has measured it. Broader semantic coverage, contextual linking, held-out generalization and measured human effort remain open. DeepEval reference material is not integrated.

@@ -71,7 +71,7 @@ export default function IntroductionPage() {
         </li>
         <li>
           <span>
-            <strong>Process the conversation.</strong> The AI turns messages into requests. Python checks each
+            <strong>Start the dispatch workflow.</strong> The AI turns messages into requests. Python checks each
             workshop, ranks them and reserves queue time.
           </span>
         </li>

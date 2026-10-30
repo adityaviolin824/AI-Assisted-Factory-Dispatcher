@@ -44,6 +44,34 @@ intake = "high"
 link = "medium"
 verify = "medium"
 
+[voice]
+# Speech-to-text for the Chat page's Record button (29 Oct 2026). gpt-transcribe is the model OpenAI
+# recommends; it costs $0.0045 per minute of audio (checked 29 Oct 2026). Like processing, it is
+# refused unless the API was started with ALLOW_PAID_PROCESSING=1. The recording is not saved.
+model = "gpt-transcribe"
+# The languages a worker may speak, as ISO-639-1 codes; the model receives them as hints. Only English
+# messages have been tested through processing; Mandarin is experimental.
+languages = ["en", "zh"]
+
+[translation]
+# Chinese -> English at the Chat page's Send (30 Oct 2026). When on, a message containing Chinese
+# characters is translated on this computer and the English is saved, so intake and processing read
+# English; English messages are saved unchanged. Off saves every message as written, as before.
+# It runs only at Send, never during processing, so it slows only the Send of a Chinese message.
+# It is free: no message leaves this computer.
+# Optional translation is off for the English dispatch workflow; keep the implementation available.
+enabled = false
+# Tencent's Hy-MT2-1.8B (Apache 2.0), run by mlx-lm on Apple silicon, quantized to 8 bits on this
+# computer: 2.2 GB of memory once loaded by the first translation, against 3.7 GB unquantized, and
+# 11 of 12 test translations word for word the same (4 bits: 1.3 GB, 4 of 12; 30 Oct 2026).
+# Download it once and convert it, from backend/ (models/ is ignored by Git):
+#   HF_HOME=models/.hf-home uv run hf download tencent/Hy-MT2-1.8B --local-dir models/Hy-MT2-1.8B
+#     --include "*.json" --include "*.jinja" --include "model.safetensors" --include "LICENSE.txt"
+#     --exclude "train/*"
+#   HF_HUB_OFFLINE=1 uv run mlx_lm.convert --hf-path models/Hy-MT2-1.8B --mlx-path models/Hy-MT2-1.8B-8bit
+#     -q --q-bits 8
+model_folder = "models/Hy-MT2-1.8B-8bit"
+
 [batches]
 # The sliding window of the item extraction:
 target_size = 3   # new messages extracted per model call

@@ -204,12 +204,12 @@ test("processing waits for a confirmation about paid models, then links the run 
   );
   await page.goto("/operations");
 
-  await page.getByRole("button", { name: "Process conversation" }).click();
+  await page.getByRole("button", { name: "Prepare chat for dispatch" }).click();
   await expect(page.getByText("Snapshot of 2 messages")).toBeVisible();
   await expect(page.getByText("Processing sends these messages to paid AI models")).toBeVisible();
   expect(processRequests).toHaveLength(0);
 
-  await page.getByRole("button", { name: "Start processing" }).click();
+  await page.getByRole("button", { name: "Start dispatch workflow" }).click();
   await expect(page.getByText("Processing. This takes several minutes")).toBeVisible();
   await page.clock.fastForward(5000);
   await expect(page.getByRole("link", { name: "Open in Dispatcher" })).toHaveAttribute(
@@ -244,11 +244,71 @@ test("a failed status read is shown, and processing is still followed", async ({
   await expect(page.locator("p.error")).toHaveCount(0);
 });
 
-test("Process conversation is disabled while the chat is empty", async ({ page }) => {
+test("Prepare chat for dispatch is disabled while the chat is empty", async ({ page }) => {
   await serveMessages(page, []);
   await page.goto("/operations");
   await expect(page.getByText("No messages yet.")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Process conversation" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Prepare chat for dispatch" })).toBeDisabled();
+});
+
+function messageBox(page: Page) {
+  return page.getByRole("textbox", { name: "Message", exact: true });
+}
+
+// Answers POST /chat/transcriptions with `answer`; returns the recordings it received.
+async function serveTranscription(page: Page, answer: { status?: number; json: object }) {
+  const uploads: Request[] = [];
+  await page.route("**/api/backend/chat/transcriptions", (route) => {
+    uploads.push(route.request());
+    return route.fulfill(answer);
+  });
+  return uploads;
+}
+
+async function recordOnce(page: Page) {
+  await page.getByRole("button", { name: "Record", exact: true }).click();
+  await expect(page.getByText("Recording. Speak one request")).toBeVisible();
+  await page.getByRole("button", { name: "Stop recording" }).click();
+}
+
+test("a recording becomes text in the message box to check, and is never sent by itself", async ({ page }) => {
+  await serveMessages(page, MESSAGES);
+  const sends = await recordSends(page, saved);
+  const uploads = await serveTranscription(page, { json: { text: "Please place ORD-045, 150 vests." } });
+  await page.goto("/operations");
+  await messageBox(page).fill("Urgent:");
+  await recordOnce(page);
+  await expect(messageBox(page)).toHaveValue("Urgent: Please place ORD-045, 150 vests.");
+  await expect(page.getByText("Check the transcript before Send, especially order IDs")).toBeVisible();
+  expect(uploads).toHaveLength(1);
+  expect(uploads[0].headers()["content-type"]).toContain("multipart/form-data");
+  expect(uploads[0].postDataBuffer()?.toString("latin1")).toContain('filename="speech.');
+  expect(sends).toHaveLength(0);
+});
+
+test("a Mandarin transcript is marked experimental", async ({ page }) => {
+  await serveMessages(page, MESSAGES);
+  await serveTranscription(page, { json: { text: "ORD-045 要150件，不要用W7。" } });
+  await page.goto("/operations");
+  await recordOnce(page);
+  await expect(messageBox(page)).toHaveValue("ORD-045 要150件，不要用W7。");
+  await expect(page.getByText("Mandarin is experimental")).toBeVisible();
+});
+
+test("a refused transcription keeps the typed text and says why", async ({ page }) => {
+  await serveMessages(page, MESSAGES);
+  await serveTranscription(page, {
+    status: 403,
+    json: { detail: "Voice input is switched off because it calls a paid AI model." },
+  });
+  await page.goto("/operations");
+  await messageBox(page).fill("Typed text");
+  await recordOnce(page);
+  await expect(page.locator("p.error")).toHaveText(
+    "Not transcribed: Voice input is switched off because it calls a paid AI model.",
+  );
+  await expect(messageBox(page)).toHaveValue("Typed text");
+  await expect(page.getByRole("button", { name: "Record", exact: true })).toBeEnabled();
 });
 
 test("the chat fits a phone screen", async ({ page }) => {

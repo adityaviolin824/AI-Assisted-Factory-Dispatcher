@@ -11,7 +11,8 @@ import type { ChatDates, ChatMessage } from "@/lib/types";
 // The composer reads the remembered name from sessionStorage, which exists only in the browser.
 const Composer = dynamic(() => import("@/components/Composer"), { ssr: false });
 
-// The shared chat where staff send requests, and the start of a run: Send, then Process conversation.
+// The shared chat where staff send requests, and the start of a run: Send, then Prepare chat for dispatch
+// and Start dispatch workflow.
 export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[] | null>(null);
   const [error, setError] = useState<string | null>(null);

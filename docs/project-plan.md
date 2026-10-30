@@ -1,6 +1,6 @@
 # Project plan
 
-Updated: 28 October 2026 for the future implementation roadmap; recorded verification dates remain unchanged. This document separates implemented capabilities, recorded verification and remaining work for SweaterCo Dispatch Copilot. The [backend guide](../backend/README.md) and [frontend guide](../frontend/README.md) describe operation; the [system design](system-design.md) defines the current contracts.
+Updated: 31 October 2026 for workshop-informed dispatch priorities and English-only default configuration. Local Chinese translation was implemented on 30 October, after the 29 October model-usage view and voice input. This document separates implemented capabilities, recorded verification and remaining work for SweaterCo Dispatch Copilot. The [backend guide](../backend/README.md) and [frontend guide](../frontend/README.md) describe operation; the [system design](system-design.md) defines the current contracts.
 
 ## Product objective
 
@@ -12,7 +12,7 @@ The application saves decision tables. It does not book workshop work, track pro
 
 | Area | Implemented behavior | Boundary |
 |---|---|---|
-| Operations chat | Save named messages, read history, capture a fixed snapshot, display configured dates and explicitly start processing. | One shared conversation. Processing requires paid-processing permission on the API server. |
+| Operations chat | Save named messages, optionally dictate a message and check it before sending, save a Chinese message as its local English translation, read history, capture a fixed snapshot (**Prepare chat for dispatch**), display configured dates and explicitly start processing (**Start dispatch workflow**). | One shared conversation. Processing and voice transcription require paid-processing permission on the API server; voice sends audio to OpenAI, is unmeasured on real speech and treats Mandarin as experimental. Translation keeps only the English, checks only order and workshop IDs and runs on Apple silicon only. |
 | Interpretation | Extract owned messages, identify separate jobs, link supported follow-ups, verify task evidence and retain unresolved input. | Semantic errors remain; source coverage and valid schemas do not prove correct interpretation. |
 | Allocation | Check workshop rules, calculate delivery/cost/queue effects and rank candidates in deadline order. | Fixed CSV inputs and tentative queues; no guarantee of a globally optimal plan. |
 | Dispatcher review | Correct facts, complete requests, add batches, choose destinations and acknowledge applicable warnings. | A valid order identity is required. Failed source records are not all directly repairable. |
@@ -20,19 +20,26 @@ The application saves decision tables. It does not book workshop work, track pro
 | Approval and reallocation | **Approve all** applies choices once, places manual destinations first, replans flexible work, saves and reports changes. | Saved tables can contain unresolved rows. No second approval is required. |
 | Review again | Apply further choices to a saved table and save a new version from the original queue snapshot. | Earlier manual destinations remain fixed unless changed or cleared; other rows may move. |
 | HTTP and web interface | FastAPI serves chat, runs and reviews; Next.js provides introduction, Chat and Dispatcher pages. | No authentication, operational assignment service or multi-dispatcher coordination. |
+| Model usage | The Dispatcher shows each saved run's calls, reused answers, tokens, model time and estimated cost by stage, from its call records. | Estimates from a stored price table, not an invoice; model time sums call durations. |
 | Evaluation | Historical scheduler benchmark, request experiments, a reviewed 100-case key and automatic/assisted scores. | Development-set results and key-informed corrections are distinct from held-out accuracy and measured human performance. |
 
 ## Current priorities
 
-1. **Verify the integrated user journey.** Exercise Chat, snapshots, processing handoff, the matching review, preview, approval and Review again. Preserve source mappings, refusal feedback and existing run evidence.
-2. **Resolve observed correctness gaps.** Three historical golden runs expose unsafe cancellation interpretation. The 24 October source sends recognized cancellation/hold wording to review and lets the dispatcher cancel the request; a saved-answer replay held CASE-097, but broader wording and a fresh run remain to be measured. Internal links can discard unsaved choices. The dispatch-versus-delivery comma check can ask an unnecessary date question.
-3. **Strengthen evaluation.** Consolidate all 30 supplied requests by required behavior; score decisions and explanation faithfulness separately; specify stronger scoring and test its boundary cases before future comparisons.
-4. **Evaluate generalization and human effort.** Freeze unseen conversations before further tuning, repeat selected comparisons and measure dispatcher performance without answer-key access.
-5. **Prepare reproducible handover.** Retain input identity, settings, scoring versions, selected sanitized evidence and setup requirements. Containerization and deployment remain the final phase.
+Current product work prioritizes workshop-informed dispatch and a clear, usable interface. The earlier evaluation-first and PII-first implementation sequences are superseded.
 
-The [further implementation roadmap](../FURTHER_IMPLEMENTATION.md) records the next product extensions: workshop-maintained availability in a proposed PostgreSQL operational store, local PII filtering, basic prompt-injection checks and a public cost evidence bundle. They remain planned work; core correctness and the required evaluation retain priority.
+1. **Deepen business value in one dispatch workflow.** Scope workshop-maintained availability, temporary capacity and remaining-queue reports in SQL, connected to affected batches, Python recalculation and dispatcher review. This is proposed work; storage choice and the first bounded contract remain to be settled.
+2. **Verify the connected workflow.** Preserve Chat, snapshots, processing, preview, approval, Review again and historical evidence. Check changed workshop facts, queue ownership and repeated review; fix consequential defects in the selected flow.
+3. **Protect presentation and interface quality.** Prepare a coherent business episode, polished workshop/dispatcher interfaces, a reliable demonstration and backup, concise architecture explanation and presentation rehearsal.
+4. **Use existing evaluation evidence.** Consolidate required submission material and retain limitations. No new dataset, model sweep, supplementary benchmark or usability study is scheduled as a separate sprint workstream; functional/regression verification of changed code remains required.
+5. **Prepare handover, then consider deployment.** Retain input identity, settings, evidence and setup requirements. Containerization and deployment remain the final phase.
 
-These are priorities, not authorization for paid model calls or implementation of every proposed experiment.
+Chinese/bilingual expansion, PII filtering and additional prompt-injection checks are deferred. Translation is disabled by default through its existing configuration; the implementation is retained. The [further implementation roadmap](../FURTHER_IMPLEMENTATION.md) preserves earlier technical research.
+
+On 29 October 2026, the in-app model-usage view and cloud voice input were implemented. The subsequent PII-first extension order is superseded by the 31 October sprint priorities.
+
+On 30 October 2026, local Chinese-to-English translation at **Send** was implemented ahead of that order: Tencent's Hy-MT2-1.8B, 8-bit, on the host through MLX, behind a `config.toml` switch. A translation that changes an order or workshop ID is refused; the English replaces the original. The [system design](system-design.md#local-translation-decision-30-october-2026) records the decision.
+
+Bilingual review, local dictation and Singlish/code-switching remain deferred research. Current source behavior and historical verification remain distinct from those proposals.
 
 ## Dispatcher contract
 
@@ -70,11 +77,19 @@ Retain versions and an audit history, recheck relevant changes before approval, 
 
 ## Planned privacy, injection checks and public evidence
 
-- **Local PII filtering:** start with defined contact/identifier patterns and stable aliases; evaluate local entity recognition only if required. Protect model calls and external tracing, preserve order facts and exact-source checks, and measure misses, unnecessary masking and added latency.
-- **Basic prompt-injection checks:** begin with an explainable local signature set and visible review of flagged input. Aho-Corasick is an optional matching optimization; a local encoder classifier needs separate evaluation. Preserve legitimate corrections and do not describe these checks as complete protection.
-- **Public cost evidence:** export selected sanitized usage records and the historical price/calculation method. The retained 22 October run reproduces a $0.0757 model-usage estimate for 128 calls; raw run folders remain excluded. Keep historical estimates, local response reuse, provider-cached input and human review costs distinct.
+- **Local PII filtering:** the first scope is names of people and addresses (decided 29 October 2026). Free-text names and addresses need local entity recognition, such as Presidio with a local NLP model, which is a new dependency requiring approval; validating the masked input needs an authorized paid run. Use stable aliases, protect model calls and external tracing, preserve order facts and exact-source checks, and measure misses, unnecessary masking and added latency. Voice recordings reach the transcription model before any text filter.
+- **Basic prompt-injection checks:** kept as future work (29 October 2026). Begin with an explainable local signature set and visible review of flagged input. Aho-Corasick is an optional matching optimization; a local encoder classifier needs separate evaluation. Preserve legitimate corrections and do not describe these checks as complete protection.
+- **Public cost evidence:** the in-app usage view is implemented (29 October 2026). Still planned: export selected sanitized usage records and the historical price/calculation method. The retained 22 October run reproduces a $0.0757 model-usage estimate for 128 calls; raw run folders remain excluded. Keep historical estimates, local response reuse, provider-cached input and human review costs distinct.
 
 Implementation details, verification criteria and the proposed sequence are centralized in [Further implementation](../FURTHER_IMPLEMENTATION.md). No privacy/security measurement, database implementation or new paid run is established by this planning update.
+
+## Planned Chinese-English communication
+
+Enable workers to write requirements and understand clarification in Chinese or English while preserving the facts needed for workshop capability, capacity/queue and permission checks. The [research and workflow](../MULTILINGUAL_INPUT_RESEARCH.md) recommends typed bilingual input/review before voice and records local translation/ASR candidates, licenses, runtime uncertainty and evaluation design. This is mostly researched scope, not a measured language capability. Two parts are implemented: cloud dictation (29 October 2026), where OpenAI `gpt-transcribe` produces an editable transcript before **Send**, and local Chinese-to-English translation at **Send** (30 October 2026), which saves only the English and was checked on 12 made-up messages.
+
+Keep the original source beside a labeled derived translation (the current translation replaces it), compare direct multilingual interpretation with translation assistance, and extend cancellation/date/quantity validation before enabling Chinese automatic processing. Provide clarification in the worker's language; keep Python calculations and dispatcher authority unchanged. Protect both language views before external interpretation/tracing. Local dictation would replace the cloud call behind the same editable transcript, text fallback and no automatic approval.
+
+Evaluate independently reviewed operational facts, negation/exclusions, follow-up ownership, unnecessary reviews, unsafe actions, translation/explanation faithfulness, speaker-separated voice results and latency. Singlish, Singapore English pronunciation and Mandarin-English code-switching are separate evaluation categories. Required coursework evaluation and known correctness work retain priority; Docker and deployment remain last.
 
 ## Decisions and limits
 
@@ -110,7 +125,7 @@ The final evaluation should include at least 10 individual failure analyses, uns
 
 ### Verification status
 
-Latest recorded results, 24 October 2026 after the cancellation change: 170 offline backend tests and 66 frontend Playwright tests passed; type checking, lint and the frontend build passed. Some backend checks require local notebooks or saved runs excluded from the public repository. Browser tests use controlled API responses; the chat bridge also has an offline real-pipeline test using saved model answers. These checks do not establish live operational safety or unseen semantic accuracy and were not rerun for documentation editing.
+Latest recorded results, 30 October 2026 after local translation: 176 offline backend tests and 72 frontend Playwright tests passed; type checking, lint and the frontend build passed. Some backend checks require local notebooks or saved runs excluded from the public repository. Browser tests use controlled API responses; the chat bridge also has an offline real-pipeline test using saved model answers. Voice tests use a fake browser microphone and simulated transcription replies, so no real speech or paid transcription has been tested. Translation tests replace the model's answer; the real model was checked separately on 12 made-up messages. These checks do not establish live operational safety or unseen semantic accuracy and were not rerun for documentation editing.
 
 DeepEval examples are local reference material, not an integrated evaluation service. Select semantic metrics only for actual language tasks; exact structured lookups do not justify retrieval metrics.
 
@@ -124,4 +139,4 @@ The original brief requires a final evaluation report with metric rationale, dat
 
 ## Deferred work and records
 
-Authentication, multiple live channels, voice, operational assignment transactions, workshop notifications, live queue ownership and general-purpose question answering remain future work. Docker and deployment follow core correctness and evaluation. The [engineering log](engineering-log.md) records dated causes, changes and verification; the [evaluation guide](../evaluation/README.md) indexes measured results.
+Authentication, multiple live channels, local speech recognition and measured voice accuracy, operational assignment transactions, workshop notifications, live queue ownership and general-purpose question answering remain future work. Docker and deployment follow core correctness and evaluation. The [engineering log](engineering-log.md) records dated causes, changes and verification; the [evaluation guide](../evaluation/README.md) indexes measured results.

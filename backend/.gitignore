@@ -21,6 +21,9 @@ demo_fastapi_backend/
 # Run folders and saved model answers written by the processing modules (config.toml [output]).
 /output/
 /temp/
+# Downloaded and converted local model weights and their download records (config.toml [translation]);
+# several GB, made with the commands in config.toml.
+/models/
 
 # Keep Python source, notebooks, pyproject.toml and uv.lock available to commit.
 

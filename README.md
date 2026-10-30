@@ -17,7 +17,7 @@ Learn [how it works](#how-it-works), explore the [architecture](#product-archite
 - **Low AI running costs.** Models handle the language tasks. Allocation and structured dispatcher review run in Python without model calls. An identical saved AI request can reuse its answer without another paid call.
 - **An easier handover.** Operations staff and managers can read the original messages and recorded reasons instead of relying on one person's memory of the chat.
 
-Recorded per-run model costs, calls and latency are listed in the [evaluation results](#testing-and-recorded-results).
+Recorded per-run model costs, calls and latency are listed in the [evaluation results](#testing-and-recorded-results). The Dispatcher page also shows each saved run's model calls, tokens and estimated cost.
 
 Staff time savings have not yet been measured against a manual dispatcher. Workshop production costs are a separate trade-off: the historical test below achieved faster delivery with higher production cost.
 
@@ -33,7 +33,7 @@ The system combines three core capabilities:
 
 The implemented workflow is:
 
-1. **The team sends requests and corrections in Chat.** When processing starts, the system uses a saved copy of the conversation so later messages do not change the input halfway through a run.
+1. **The team sends requests and corrections in Chat.** Messages can be typed or dictated; a dictated message appears as text to check and edit before sending. When the dispatch workflow starts, the system uses a saved copy of the conversation so later messages do not change the input halfway through a run.
 2. **The system identifies the work being requested.** AI reads the messages, extracts the order references and instructions, and connects related follow-up messages. Uncertain connections are left for review.
 3. **The requests are checked against the records.** Python checks order quantities, deadlines and workshop restrictions. It then calculates which workshops have the capacity to finish the work, taking their existing queues into account.
 4. **The dispatcher receives a proposed dispatch table.** Each suggestion includes a workshop, estimated delivery time, cost and reason. Requests with missing facts, conflicting instructions or no suitable workshop appear under **Needs attention**.
@@ -246,6 +246,9 @@ The drawing groups logical responsibilities rather than expanding every implemen
 | Processing and allocation | The backend reads saved chat files, checks requests and produces workshop recommendations with reasons and queue estimates. |
 | Dispatcher review | The backend pauses for the initial review. The dispatcher can submit all choices in one approval request, after which Python recalculates the plan, saves the result and returns a list of changes. **Review again** opens an approved table for new choices and saves a new version. |
 | Web interface | Chat and Dispatcher screens exist and call the backend. Chat saves messages, captures a fixed snapshot of the conversation and can send that snapshot through the pipeline to a paused dispatcher review (23 October 2026). Processing calls paid AI models, so the API refuses it unless it was started with `ALLOW_PAID_PROCESSING=1`. Automated browser checks use controlled API responses; the chat bridge also has an offline pipeline integration test using saved model answers. The published evidence does not include a retained live-browser run artifact. |
+| Voice input | **Record** turns one short spoken request into text in the message box, to check and edit before sending (29 October 2026). The recording goes to OpenAI's `gpt-transcribe` and is not stored; the API refuses it unless started with `ALLOW_PAID_PROCESSING=1`. English is supported and Mandarin is experimental. Accuracy on real speech has not been measured. |
+| Chinese translation | Optional and disabled by default. With the switch in `backend/config.toml` on and the optional runtime/model installed, **Send** saves a message containing Chinese as its English translation, so processing reads English (implemented 30 October 2026). Tencent's Hy-MT2-1.8B runs locally (8-bit, Apple silicon), with no per-message charge. A translation that changes an order or workshop ID is refused. The original Chinese is not kept, and translation was checked on 12 made-up messages only. |
+| Model usage | The Dispatcher shows each saved run's model calls, reused answers, tokens, model time and estimated cost by stage, from the run's call records (29 October 2026). The figures are estimates from a stored price table, not invoices. |
 | Saved AI responses | Identical requests can reuse earlier answers. Changes to the input, model, prompt or settings may require new paid calls. |
 | Reallocation | Part of **Approve all**: Python keeps the dispatcher's choices fixed and plans the other ready work again around them, using the updated queues. **Review again** does the same on an approved table. |
 
@@ -256,10 +259,11 @@ AI handles the language in the messages. Python checks the facts and calculates 
 | Technology | Role |
 |---|---|
 | Next.js, React and TypeScript | Build the Chat and Dispatcher screens. |
-| FastAPI | Lets the web interface save chat messages and snapshots, start processing, read saved runs, answer paused reviews, preview choices and approve them. |
+| FastAPI | Lets the web interface save chat messages and snapshots, transcribe a recording, start processing, read saved runs and their model usage, answer paused reviews, preview choices and approve them. |
 | LangGraph | Runs the processing steps, repeats message batches and pauses until the dispatcher answers. |
 | Python | Applies workshop rules and calculates the dispatch plan. |
-| OpenAI models | Extract requests, connect follow-ups and assess the latest instructions for each task. |
+| OpenAI models | Extract requests, connect follow-ups, assess the latest instructions for each task and transcribe optional voice input. |
+| MLX (`mlx-lm`, optional) | Runs local translation on Apple silicon; excluded from the default English installation. |
 | JSON files and SQLite | Store run records, model responses, paused reviews, and the chat's messages and snapshots. |
 
 ### Models used for each task
@@ -271,6 +275,8 @@ The processing models are configured in [backend/config.toml](backend/config.tom
 | Intake: identify requests and follow-ups in the chat | `gpt-5.6-luna` | High |
 | Linking: attach a follow-up to the right task | `gpt-5.6-luna` | Medium |
 | Verification: assess the latest instructions and their evidence | `gpt-5.6-luna` | Medium |
+| Voice: turn one recording into editable message text | `gpt-transcribe` | None; English and Mandarin language hints |
+| Translation: Chinese message to English at Send (local, optional) | Tencent `Hy-MT2-1.8B`, 8-bit | None |
 
 Python checks the model's proposed facts. Python also calculates dates, workshop eligibility, queues, costs, rankings and allocations. Structured dispatcher review and final approval make no model calls.
 
@@ -287,7 +293,7 @@ These explanation calls belong to the notebook prototype. They are separate from
 
 A saved answer is reused only when the processing stage, model, prompt, settings, input and response format match. The answer is still checked, and the dispatch plan is calculated again. Allocation and structured dispatcher review do not make model calls.
 
-Each run keeps its input messages, settings, tasks, model-call records and allocation plan. A separate report script summarizes outcomes, processing time and model cost. With an answer key, it can also score the run. These records help explain why a request was allocated, left unresolved or interpreted incorrectly.
+Each run keeps its input messages, settings, tasks, model-call records and allocation plan. A separate report script summarizes outcomes, processing time and model cost, and the Dispatcher page shows the same per-stage usage for each saved run. With an answer key, the script can also score the run. These records help explain why a request was allocated, left unresolved or interpreted incorrectly.
 
 ## Testing and recorded results
 
@@ -300,7 +306,7 @@ The allocation rules were tested on 120 historical orders using the supplied sim
 
 The default policy delivered sooner and had fewer late batches in this test, but cost more and had more defective batches. The simulator requires a workshop for every batch, so the evaluation adapter chooses the least-late option when all options are late. The app instead asks the dispatcher to review the case. The [scheduling benchmark report](backend/eval_harness/results/harness_results_2026-10-15.md) includes the other policies and assumptions.
 
-These results measure the scheduling rules, not the accuracy of AI's reading of a conversation. The backend's **170 offline tests passed on 24 October 2026**; later changes have their own checks in the engineering log.
+These results measure the scheduling rules, not the accuracy of AI's reading of a conversation. The backend's **176 offline tests passed on 30 October 2026**; later changes have their own checks in the engineering log.
 
 ### Chat-to-allocation results
 
@@ -357,7 +363,7 @@ npm run dev
 
 Open `http://127.0.0.1:3000`. The API documentation is at `http://127.0.0.1:8000/docs`.
 
-Starting these servers does not process a conversation or call an AI model. A fresh clone has no local run output or review checkpoints, so its run list starts empty. The [published results](evaluation/README.md) can be read without running the pipeline. Processing a new conversation is a separate action that can make paid calls; read the [backend guide](backend/README.md) before starting a run.
+Starting these servers does not process a conversation or call an AI model. A fresh clone has no local run output or review checkpoints, so its run list starts empty. The [published results](evaluation/README.md) can be read without running the pipeline. Processing a new conversation is a separate action that can make paid calls; read the [backend guide](backend/README.md) before starting a run. Processing and voice input both call paid models, so the API refuses them unless it was started with `ALLOW_PAID_PROCESSING=1`. Translation is disabled by default and MLX is excluded from the default installation. Optional local translation needs the extra and model setup described in the [backend guide](backend/README.md#translation), on Apple silicon.
 
 Selected [experiment notebooks and development notes](experiments/README.md) are included for reading through the earlier work. The original working notebooks, supplied reference documents and saved test snapshots remain local. Some comparison tests require those local files.
 
@@ -380,6 +386,10 @@ Selected [experiment notebooks and development notes](experiments/README.md) are
 
 API keys belong in the backend environment, never in browser code. Local environment files, application databases, generated run output and backups are excluded from version control. Selected synthetic test data is included. Optional LangSmith tracing sends run data to its external service when enabled.
 
-Current work focuses on integrated journey verification, known correctness gaps and further evaluation. The latest recorded checks, on 24 October 2026 after the cancellation change, passed 170 backend and 66 browser tests. Docker and deployment are left until the end.
+## Suggested improvements
 
-The [further implementation roadmap](FURTHER_IMPLEMENTATION.md) records planned shared operational data and workshop-maintained closure dates, local PII filtering, basic prompt-injection checks and public cost evidence. These extensions are separate from the implemented capabilities and recorded results above.
+Current work focuses on integrated journey verification, known correctness gaps and further evaluation. The latest recorded checks, on 30 October 2026 after local translation, passed 176 backend and 72 browser tests. Docker and deployment are left until the end.
+
+**Factory evaluation with dispatcher oversight (proposed).** The strongest next evidence of operational usefulness would come from evaluating a frozen version alongside real dispatchers on actual factory conversations and current order and workshop records. Begin in shadow mode: compare recommendations with independently reviewed dispatcher judgments while dispatchers retain operational control. Check message interpretation, follow-up links, allocate-or-hold decisions, evidence behind explanations, and whether workshops can make the batch, can take it given capacity and queues, and are allowed to take it. Measure unsafe recommendations, unnecessary reviews, corrections and review time against a manual workflow. Measure actual delivery, lateness, cost and quality separately if a later operational pilot is undertaken. Add inspected failures to the golden regression set, while reserving a separate untouched sample for evaluating the next frozen version. This would extend the current simulator and synthetic tests; no factory evaluation or dispatcher time-saving measurement has been performed.
+
+The [further implementation roadmap](FURTHER_IMPLEMENTATION.md) records planned shared operational data and workshop-maintained closure dates, local filtering of people's names and addresses, basic prompt-injection checks and a public cost evidence bundle. The [multilingual research](MULTILINGUAL_INPUT_RESEARCH.md) adds a proposed bilingual review workflow that keeps the original beside the translation, followed by local dictation in place of the current cloud transcription and evaluated Singlish/code-switching support. These extensions are separate from the implemented capabilities and recorded results above.

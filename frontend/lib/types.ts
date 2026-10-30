@@ -233,6 +233,9 @@ export type ChatMessage = { message_id: number; sender: string; raw_text: string
 // The dates from config.toml that processing uses, such as "2026-04-01" (GET /chat/dates).
 export type ChatDates = { message_date: string; dispatch_date: string };
 
+// The text of one voice recording, in the language spoken (POST /chat/transcriptions). Nothing is saved.
+export type Transcript = { text: string };
+
 // One send attempt. Sending it again with the same submission_id saves nothing new.
 export type NewMessage = { submission_id: string; sender: string; raw_text: string };
 

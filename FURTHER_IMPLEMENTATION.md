@@ -1,8 +1,10 @@
 # Further implementation
 
-Updated: 28 October 2026.
+**Current product priority, 31 October 2026:** deepen the workshop-update-to-dispatcher workflow and improve interface quality. Chinese/bilingual expansion, PII filtering and additional injection checks are deferred. Existing evaluation evidence is retained. This roadmap preserves earlier technical research; its previous PII-first and multilingual implementation sequence is superseded. The workshop extension remains proposed. Translation is disabled by default, with its implementation retained.
 
-This roadmap records proposed product improvements for SweaterCo Dispatch Copilot. It supports the dispatcher's three core checks: whether a workshop can make a batch, can take it given capacity and workload, and is allowed to take it. The items below are planned work, not implemented capabilities or measured improvements.
+Updated: 29 October 2026. Multilingual research added after reviewing current publisher documentation. Later that day, the in-app model-usage view (section 4) and cloud voice input (section 5) were implemented, the first PII scope was set (section 2) and injection checks were kept as future work (section 3). On 30 October, local Chinese-to-English translation at Send was implemented (section 5). Historical results are unchanged.
+
+This roadmap records proposed product improvements for SweaterCo Dispatch Copilot. It supports the dispatcher's three core checks: whether a workshop can make a batch, can take it given capacity and workload, and is allowed to take it. The items below are planned work, not implemented capabilities or measured improvements, except the parts marked as implemented in sections 4 and 5.
 
 The current application reads fixed CSV order/workshop records, calculates tentative queues and saves reviewed dispatch tables. SQLite supports chat and workflow checkpoints; JSON files retain run evidence and plan versions. Saving a table does not book production capacity. Current priorities and evaluation requirements remain in the [project plan](docs/project-plan.md); [capabilities and evidence](FEATURES.md) separates implementation from historical results.
 
@@ -45,9 +47,13 @@ Live bookings require a separate assignment/reservation transaction, duplicate-s
 
 ### Purpose and proposed approach
 
-Reduce unnecessary personal information sent to language models and external tracing services. Detection must run locally, without a public detection API. Begin with a defined scope such as email addresses, phone numbers and specifically supported personal identifiers, using compiled patterns and consistent replacement aliases. Use known-value mappings for structured personal fields where available.
+Reduce unnecessary personal information sent to language models and external tracing services. Detection must run locally, without a public detection API. Use consistent replacement aliases, and known-value mappings for structured personal fields where available.
 
-Names and addresses in free text may need local entity recognition. Presidio with a local NLP model is an option to evaluate if the initial scope requires it; it is not a selected dependency. Pattern matching alone must not be described as complete PII detection, and reversible aliases do not make the data anonymous.
+**Scope decision (29 October 2026):** the first implementation targets names of people and addresses. Contact patterns such as email addresses and phone numbers can follow as compiled patterns.
+
+Names and addresses in free text cannot be found reliably by compiled patterns, so this scope needs local entity recognition. Presidio with a local NLP model is the candidate to evaluate; adding it is a new dependency that needs approval, and it is not yet selected. Any masking changes the text the models receive, so validating it on the existing conversations needs a separately authorized paid run. Pattern matching alone must not be described as complete PII detection, and reversible aliases do not make the data anonymous.
+
+Voice recordings are outside this text filter: a recording reaches the transcription model before any text exists to filter (section 5).
 
 ### Integration requirements and verification
 
@@ -63,6 +69,8 @@ The first implementation should avoid another network call. Measure detection mi
 ## 3. Basic prompt-injection checks
 
 ### Purpose and proposed approach
+
+**Timing decision (29 October 2026):** these checks remain future work. The final presentation describes them as a planned control, not an implemented one.
 
 Add a local detection layer for attempts to change the model's role, bypass its task or expose unrelated information. Current prompts already treat source evidence as data, and Python checks response structure, source membership and scheduling rules. These controls do not establish complete resistance to manipulated interpretations.
 
@@ -90,6 +98,8 @@ The 22 October 2026 end-to-end experiment has 128 saved paid call records for 10
 
 The [experiment record](backend/docs/evaluation/END_TO_END_TEST_2026-10-22.md#8-cost-and-time) retains the public summary. The [calculator](backend/eval_run_report/run_summary.py) applies the stored prices to token usage. Detailed run reports and call records exist locally under the ignored output directory; publication of this roadmap does not publish those raw records.
 
+**Implemented part: in-app usage view (29 October 2026).** `GET /runs/{run_id}/usage` and the Dispatcher's **Model usage and cost** panel show each saved run's calls, reused answers, tokens, model time and estimated cost per stage. The calculator above counts them from the run's call records with the stored price table, whose check date (14 October 2026) is shown. The response contains numbers and model names only. On the 19 October run it reports 192 calls, 37 of them paid, $0.0705 for this run and $0.1434 with no saved answers. This serves local inspection only: the 22 October experiment is not among the app's saved runs, and nothing is published. The sanitized public bundle below is still to be prepared.
+
 ### Evidence to retain and verify
 
 - Publish selected usage-only records or a sanitized table with run identity, model, stage, calls, input/output tokens, provider-cached input, price-table date, timings and the calculation method. Exclude source conversations, personal identifiers, credentials and sensitive response contents.
@@ -97,17 +107,42 @@ The [experiment record](backend/docs/evaluation/END_TO_END_TEST_2026-10-22.md#8-
 - Check the exported totals against the retained call records and keep the original historical report unchanged. Treat LangSmith as optional supporting evidence rather than a prerequisite for inspection.
 - Report fresh runs, saved-answer replays and human-assisted review separately. Updating pricing assumptions must not silently rewrite historical estimates.
 
-## 5. Implementation sequence and presentation scope
+## 5. Chinese-English support, translation and optional dictation
+
+### Purpose and research decision
+
+Workers should be able to express requirements and understand clarification in a language they know. Plan typed Chinese and English, a labeled translation beside the original, and bilingual review information first. Add short, editable local voice dictation afterward. Singlish and Mandarin-English mixtures remain experimental until evaluated on representative speech and task meaning.
+
+**Implemented part: cloud voice input (29 October 2026).** Ahead of this sequence, an approved increment added short editable dictation through OpenAI instead of a local recognizer. **Record** sends one recording to `POST /chat/transcriptions`, which uses `gpt-transcribe` with English and Mandarin language hints, and the transcript appears in the message box for the worker to check before **Send**. It follows the dictation rules below: an editable original-language transcript, text fallback, and no automatic sending, processing or approval. It departs from the local-execution rule: audio leaves the host for OpenAI, which is why the route is refused unless the API runs with `ALLOW_PAID_PROCESSING=1`, and why nothing is stored. English is the supported language. Mandarin is experimental because the cancellation, date and quantity checks read English only. Accuracy, latency and cost on real speech are unmeasured; OpenAI listed $0.0045 per minute when checked on 29 October 2026. The [system design](docs/system-design.md#voice-input-decision-29-october-2026) records the alternatives. Local recognition remains the planned replacement behind the same editable flow.
+
+**Implemented part: local translation at Send (30 October 2026).** With `[translation]` on in `backend/config.toml`, **Send** translates a message containing Chinese characters into English with the research's first candidate, Hy-MT2-1.8B, converted to 8 bits and run on the host through MLX, and saves the English. A translation that loses, changes or adds an order or workshop ID is refused. It follows the local-execution rule and has no per-message charge. It departs from the first rule below: the English replaces the original instead of sitting beside it. Quantities, dates, negation and intent are not validated after translation; it was checked on 12 made-up messages. The [system design](docs/system-design.md#local-translation-decision-30-october-2026) records the decision.
+
+The [multilingual research](MULTILINGUAL_INPUT_RESEARCH.md) compares local translation and speech models, regional alternatives, licenses, runtime evidence and evaluation limitations. Its initial trial shortlist is Hy-MT2-1.8B for translation and Qwen3-ASR-0.6B for later dictation, with larger/regional comparisons only when measured failures justify them. Hy-MT2-1.8B is now installed for the translation above; no speech model is installed.
+
+### Required behavior and acceptance boundaries
+
+- Preserve original messages and source IDs. Keep machine translations as derived information; a translated sentence is not an exact quotation from the source. Redacted processing snapshots must remain consistent with source validation and tracing protection.
+- Compare direct Chinese interpretation against translation-assisted interpretation before choosing the processing path. Translation may support the interface without becoming an obligatory semantic conversion before allocation.
+- Extend the English-oriented date, quantity and cancellation checks explicitly. Preserve negation, workshop exclusions, corrections and follow-up ownership; possible cancellation asks for review and never automatically cancels work.
+- Provide bilingual structured facts, clarification and stable warning templates. A worker must not need English fluency to verify their Chinese request. Python retains all scheduling calculations, and dispatcher-only corrections/overrides retain their existing authority.
+- Later dictation must produce an editable original-language transcript before **Send**, with text fallback. Sending, processing and approval stay separate; a voice or sender label does not confer permissions.
+- Keep ASR/translation local to the chosen application host (the cloud voice increment above is the recorded exception), protect original and translated PII before external calls/traces, and evaluate injection checks in both languages. English classifier performance does not establish Mandarin protection.
+- Evaluate operational-field accuracy, unsafe automatic actions, unnecessary reviews, explanation faithfulness, worker correction/review effort and median/p95 latency. Use independent bilingual review and unseen speakers; do not relabel existing English golden-set scores as multilingual results.
+
+The research defines a phased workflow and a proposed test suite; it contains no measured Singlish or voice result, and translation is measured only on the 12 made-up messages above. These extensions remain deferred under the current product priorities.
+
+## 6. Implementation sequence and presentation scope
 
 The immediate priorities remain known correctness gaps, integrated workflow verification and the required final evaluation. Plan the extensions in bounded increments:
 
-1. Specify the PII scope, operational permissions, closure/calendar rules and measurable acceptance criteria.
-2. Prepare the sanitized cost evidence from existing records without a new model run.
-3. Add and verify local PII filtering, then basic injection checks, preserving interpretation and source-evidence behavior. Evaluate an encoder only if the measured benefit justifies it.
+1. Specify operational permissions, closure/calendar rules and measurable acceptance criteria. The first PII scope, names of people and addresses, was set on 29 October 2026.
+2. Prepare the sanitized cost evidence from existing records without a new model run. The in-app usage view is implemented; the public bundle remains.
+3. Add and verify local PII filtering for names and addresses, preserving interpretation and source-evidence behavior. Basic injection checks follow later; evaluate an encoder only if the measured benefit justifies it.
 4. Prototype workshop availability and operational data changes in the experiment notebook workflow before integrating a shared store and workshop interface. Validate equivalent snapshots before introducing live updates or bookings.
-5. Address operational transactions, concurrency and permissions before live use. Containerization and deployment remain the final phase.
+5. Use the multilingual research to scope bilingual review with the original kept beside the existing local translation, then local dictation in place of the current cloud transcription. Verify original evidence, language-aware guards and outbound privacy before enabling Chinese automatic processing; evaluate Singlish separately.
+6. Address operational transactions, concurrency and permissions before live use. Containerization and deployment remain the final phase.
 
-For the final presentation, describe these as future improvements: workshop-maintained availability in a shared operational store, local privacy filtering, measured injection checks and independently inspectable cost records. Do not imply that PostgreSQL, a workshop portal, PII redaction, an injection classifier or live production bookings are already implemented.
+For the final presentation, the in-app usage view, cloud voice input and local translation can be shown as implemented, with their limits: cost figures are estimates from a stored price table, voice sends audio to OpenAI and is unmeasured on real speech, and translation keeps only the English and checks only order and workshop IDs. Describe these as future improvements: workshop-maintained availability in a shared operational store, local privacy filtering, injection checks, a public cost evidence bundle and Chinese-English communication with local dictation. Do not imply that PostgreSQL, a workshop portal, PII redaction, an injection classifier, evaluated multilingual support, bilingual review, local speech recognition or live production bookings are already implemented.
 
 ## Technical references
 

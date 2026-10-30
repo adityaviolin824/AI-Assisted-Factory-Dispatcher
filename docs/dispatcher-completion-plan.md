@@ -44,7 +44,7 @@ Reallocation is this recalculation within approval/re-review; separate disabled 
 | Review again | 22 October | 141 backend and 49 browser tests passed. |
 | Workshop choices override open processing flags | 23 October | 149 backend tests passed, including four new regressions. |
 
-These counts record successive historical increments, not different current suite totals. The latest recorded 24 October baseline, after the cancellation change, is 170 backend and 66 browser tests, with type checking, lint and build passing. No tests were rerun to edit this record.
+These counts record successive historical increments, not different current suite totals. The 24 October baseline, after the cancellation change, was 170 backend and 66 browser tests, with type checking, lint and build passing. The latest recorded baseline, on 30 October after local translation, is 176 backend and 72 browser tests. No tests were rerun to edit this record.
 
 ## Verification boundaries
 

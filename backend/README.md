@@ -2,7 +2,7 @@
 
 Backend for [AI-Assisted-Factory-Dispatcher](../README.md), the repository for SweaterCo Dispatch Copilot.
 
-Implementation reference updated: 24 October 2026. Python modules serve the command-line scripts and the FastAPI application in `main.py`. The web interface uses chat/snapshot processing, saved runs and dispatcher review endpoints. Notebooks 05 and 06 are historical references; intentional differences are declared in the module tests.
+Implementation reference updated: 30 October 2026. Python modules serve the command-line scripts and the FastAPI application in `main.py`. The web interface uses chat/snapshot processing, saved runs and dispatcher review endpoints. Notebooks 05 and 06 are historical references; intentional differences are declared in the module tests.
 
 **One-batch final approval, implemented 21 October:** the dispatcher completes all choices locally, with no per-click mutation, recalculation or persisted edits. One **Approve all** submits the set through `POST /reviews/{thread_id}/finalize`; Python keeps the dispatcher's destinations, schedules flexible work, saves immediately and returns the final dispatch table plus changed rows. **Check workshop options** (22 October 2026) sends the same set to `POST /reviews/{thread_id}/preview`, which runs that calculation and returns the draft and its changed rows, or the refusal, without saving, approving or resuming anything. **Review again** (22 October 2026) reopens an approved plan: `POST /runs/{run_id}/preview` and `POST /runs/{run_id}/finalize` add new choices to the saved ones, plan once from the original queues and save a new version, keeping the earlier one in `plan-history/`. The lower-level per-answer/empty-approval API described below is retained for terminal and programmatic use; the web interface uses batch finalization. Approve all and Review again are the app's reallocation: there is no separate step. Docker comes at the absolute end.
 
@@ -10,7 +10,7 @@ For the earlier notebook stages, see the [experiment guide](../experiments/READM
 
 The backend turns factory chat into checked tasks and deterministic workshop allocation previews. It answers whether a workshop can make a batch, can take it given capacity and queue, and is allowed to take it. For most requests, avoiding lateness and reducing delivery time come first; explicit quality and cost preferences select their recorded policies. A general rule for delicate or expensive work still needs defined inputs and evaluation.
 
-Committed workshop assignments remain future work. Reallocation is implemented within Approve all and Review again. The [web interface](../frontend/README.md) captures shared messages and snapshots through the chat API and explicitly starts processing. The earlier Streamlit chat is a historical storage/behavior reference.
+Committed workshop assignments remain future work. Reallocation is implemented within Approve all and Review again. The [web interface](../frontend/README.md) captures shared messages and snapshots through the chat API and explicitly starts processing. It can also turn one short recording into editable message text ([voice input](#voice-input), 29 October 2026) and show each saved run's model usage. The earlier Streamlit chat is a historical storage/behavior reference.
 
 Notebook 06 now provides read-only dispatcher views of a saved plan, cached explanations for allocation/review items and a TXT export. Information questions stay outside allocation and make no explanation-model call. Parts 1-7 only read the plan. Part 8 (19 October 2026) prototypes the dispatcher review loop with no model call: typed decisions correct a deadline or order ID, choose an eligible workshop, accept lateness or approve rows, and every review recalculates from the original queues with approved work placed first. It writes only `dispatcher-decisions.json` and `dispatcher-plan.json` in the run folder, and only once a decision is entered. Part 9 (19 October) shows both views on one Gradio screen inside Jupyter: each decision goes into Part 8's decisions, so the latest decision counts, and recalculates the plan and queues at once with Part 8's calculation; it makes no model call, and Parts 8d to 8f save the decisions. Gradio is a `dev` dependency, installed by `uv sync`. Its implementation notes record the scope, original paid run and offline checks. The notebook stays unchanged as the reference: its Part 8 per-row approval is the earlier prototype, and the [dispatcher review modules](#dispatcher-review-modules) replace it with one final approval.
 
@@ -22,8 +22,8 @@ Run commands from `backend/`, using the project-local `uv` environment.
 |---|---|---|
 | `uv run python run_full_pipeline.py` | Configured chat file to processing, allocation and a paused dispatcher review in one LangGraph run; prints the review and its thread ID. | Cache misses can make paid calls. |
 | `uv run python resume_dispatcher_review.py <thread ID> [<answer.json>]` | Show a paused review again, or send it one answer. | None. |
-| `uv run fastapi dev main.py` | Local HTTP API: list and read saved runs, show and answer a paused review by thread ID, save the operations chat and capture snapshots of it (in `output/chat/`); open `http://127.0.0.1:8000/docs`. | None: processing a chat snapshot is refused. |
-| `ALLOW_PAID_PROCESSING=1 uv run fastapi dev main.py` | The same API, where `POST /chat/snapshots/{snapshot_id}/process` also runs the pipeline on one snapshot in the background, up to a paused dispatcher review (23 October 2026, `fastapi_routes/chat.py`). The chat page shows the run and links to its review. | Cache misses can make paid calls. |
+| `uv run fastapi dev main.py` | Local HTTP API: list and read saved runs, show and answer a paused review by thread ID, save the operations chat and capture snapshots of it (in `output/chat/`); open `http://127.0.0.1:8000/docs`. | None paid: processing a chat snapshot and transcribing a recording are refused. A Chinese message is translated by the local model when translation is on. |
+| `ALLOW_PAID_PROCESSING=1 uv run fastapi dev main.py` | The same API, where `POST /chat/snapshots/{snapshot_id}/process` also runs the pipeline on one snapshot in the background, up to a paused dispatcher review (23 October 2026, `fastapi_routes/chat.py`), and `POST /chat/transcriptions` turns one recording into text (29 October 2026). The chat page shows the run and links to its review. | Cache misses can make paid calls; every transcription is a paid call. |
 | `uv run python run_intake_and_processing.py` | Processing only, for prompt/model experiments. | Cache misses can make paid calls. |
 | `uv run python run_allocation.py output/runs/<start time>` | Replan one explicitly named saved processing run. Without a folder, list available runs. | None. |
 | `uv run python -m eval_harness.run_harness_evaluation` | Historical scheduler comparison beside the unchanged course simulator. | None. |
@@ -34,20 +34,47 @@ Obtain approval before any run that could make paid model calls. A previously fr
 
 ## HTTP API
 
-FastAPI exposes 15 application routes. Interactive schema documentation is available at `/docs` when the API is running.
+FastAPI exposes 17 application routes. Interactive schema documentation is available at `/docs` when the API is running.
 
 | Routes | Purpose | Model calls |
 |---|---|---|
 | `GET /chat/dates` | Configured message and dispatch dates. | None. |
-| `GET`, `POST /chat/messages` | Shared history and explicit message storage. | None. |
+| `GET`, `POST /chat/messages` | Shared history and explicit message storage. With `[translation]` on, a message with Chinese characters is saved as its English translation ([translation](#translation)). | None paid: a Chinese message is translated by a local model. |
+| `POST /chat/transcriptions` | Turn one recording (up to 5 MB) into text for the message box; saves nothing. Requires `ALLOW_PAID_PROCESSING=1`. | Paid: one transcription call per request, never cached. |
 | `GET`, `POST /chat/snapshots`; `GET /chat/snapshots/{snapshot_id}` | List, capture and inspect fixed conversation inputs. | None. |
 | `POST /chat/snapshots/{snapshot_id}/process` | Background processing to the first dispatcher pause; requires `ALLOW_PAID_PROCESSING=1`. | Cache misses can be paid. |
 | `GET /runs`; `GET /runs/{run_id}` | Read saved runs and their automatic/dispatcher plans. | None. |
+| `GET /runs/{run_id}/usage` | Calls, tokens, estimated cost and model time per stage, counted from the run's call records; numbers only, no prompt or answer text. | None. |
 | `POST /runs/{run_id}/preview`, `/finalize` | Preview or save further decisions on an approved plan. | None. |
 | `GET /reviews/{thread_id}` | Read a paused review. | None. |
 | `POST /reviews/{thread_id}/answer`, `/preview`, `/finalize` | Lower-level answers, explicit unsaved preview and one-batch approval. | None. |
 
 An HTTP 200 can contain a business refusal in `refused`; clients must inspect it. Unknown runs/threads return 404. Preview saves nothing. Initial finalization resumes the paused graph; saved-plan Review again calls the same planning functions outside it. One snapshot can be processed once, with only one active processing job in this single-dispatcher application.
+
+## Voice input
+
+`POST /chat/transcriptions` (29 October 2026) receives one recording from the Chat page's **Record** button as the form field `audio`.
+
+- It answers 403 unless the API was started with `ALLOW_PAID_PROCESSING=1`, and 413 for a recording over 5 MB (the page stops recording after one minute).
+- `order_intake_from_chat/transcribe_speech.py` sends the recording to the model in `config.toml` `[voice]` (`gpt-transcribe`), with the configured language hints (`en`, `zh`) and keywords: the order-ID prefix `ORD-`, workshop IDs and names and the product names from `orders.csv`. Hints improve spelling; they do not check facts.
+- The response is `{"text": ...}`. The recording and transcript are not saved or cached. The transcript enters the chat only when the worker edits and sends it, so processing treats it as an ordinary typed message, with the same evidence, date, quantity and cancellation checks.
+- A provider error answers 502 with only the error's type, as processing does, because a model API error can quote part of the API key. The client makes no retry.
+
+English is the supported language. Mandarin transcripts are accepted but experimental; with translation on, Send saves them in English ([translation](#translation)), and the Python cancellation, date and quantity checks read that English. Transcription accuracy, latency and cost on real speech have not been measured. The [system design](../docs/system-design.md#voice-input-decision-29-october-2026) records why the recording goes to OpenAI rather than a local recognizer.
+
+## Translation
+
+Translation is optional and disabled by default (31 October 2026). The English dispatch workflow needs neither translation weights nor MLX. Restart the backend after changing the switch. If enabled, Send translates a Chinese message into English on this computer, so intake and processing read English.
+
+- `POST /chat/messages` looks for Chinese characters (`[\u4e00-\u9fff]`, the range of the Chat page's Mandarin note). Text without them is saved unchanged and never reaches the model.
+- With `config.toml` `[translation]` `enabled = true`, `order_intake_from_chat/translate_message.py` translates the whole message with Tencent's Hy-MT2-1.8B (Apache 2.0), run by `mlx-lm` on Apple silicon from `model_folder`: `models/Hy-MT2-1.8B-8bit`, an 8-bit conversion of the official weights. It uses the model card's Chinese-to-English instruction and greedy decoding, so the same message always gives the same English.
+- The English replaces the Chinese in the saved message, so the chat, snapshots, processing and the dispatcher see only the English. The original is not kept ([decision](../docs/system-design.md#local-translation-decision-30-october-2026)).
+- Python refuses the Send with 422 and saves nothing when the English does not contain exactly the order IDs (`ORD-045`) and workshop IDs (`W6`) of the original. Quantities, dates, negation and cancellation wording are not checked. The cancellation check reads the English and recognizes the "cancel" forms the model produced ("canceled", "Do not cancel"), but not hold wording such as "Suspended", which it has never recognized in English either.
+- `enabled = false` saves every message as written, as before. `mlx-lm` and the model load only at the first Chinese Send, so neither setting changes the API's start-up or any processing run; translation is not part of processing.
+
+`mlx-lm` is in the optional `translation` extra, excluded from an ordinary `uv sync`. To enable this optional capability on Apple silicon, run `uv sync --extra translation` from `backend/`, prepare the model using the download/conversion commands in `config.toml`, set `[translation] enabled = true` and restart the API. Model weights are ignored by Git and Docker. Without the extra or model folder, a Chinese Send fails while translation is on. The English default does not need this runtime; MLX translation remains Apple-silicon-specific.
+
+Measured on an M2 Pro with 16 GB (30 October 2026, 12 made-up messages; not a quality evaluation): the first Chinese Send after start-up took about 2.6 s including loading, later translations a median 0.27 s, with 2.2 GB peak memory against 3.7 GB unquantized. 11 of the 12 translations matched the unquantized model word for word; a 4-bit conversion (1.3 GB) matched 4.
 
 ## Intake and processing modules
 
@@ -55,8 +82,10 @@ An HTTP 200 can contain a business refusal in `refused`; clients must inspect it
 
 | File | Responsibility |
 |---|---|
-| `config.toml` | Input/output paths, the message date, stage models, reasoning efforts, batching and allocation settings. Paths are relative to `backend/`. |
+| `config.toml` | Input/output paths, the message date, stage models, reasoning efforts, batching, allocation settings, the voice transcription model and languages, and the translation switch and model folder. Paths are relative to `backend/`. |
 | `order_intake_from_chat/read_chat_messages.py` | TXT snapshot to numbered source messages. |
+| `order_intake_from_chat/transcribe_speech.py` | One recording to text for the Chat message box, with the configured model, language hints and keywords ([voice input](#voice-input)). Not part of processing. |
+| `order_intake_from_chat/translate_message.py` | A Chinese chat message to the English that Send saves, with the local model and the ID check ([translation](#translation)). Not part of processing. |
 | `order_processing_into_tasks/settings_and_data.py` | Load settings and the trusted CSV lookup dictionaries; provide JSON save helpers. |
 | `order_processing_into_tasks/model_prompts.py` | Intake, linking and verification prompts. |
 | `order_processing_into_tasks/model_calls_with_cache.py` | Cache lookup, paid calls when needed, structured responses and per-call records. |
@@ -204,7 +233,9 @@ Recorded normal replay: the default policy has 8.1 mean delivery days and 2% lat
 
 ## Run reports
 
-`make_run_report.py <run folder>` writes `run_report.md` into the run folder from the files the run saved: settings from `manifest.json`, processing counts from `state.json`, every plan row with its reason from `plan.json`, and each stage's calls, tokens, cost and model time from `calls/`. It makes no model call and changes no other file, so it can be repeated. "Cost in this run" counts only calls not answered from the saved-answer cache; "cost of a fresh run" prices every call. Prices are the table in `eval_run_report/run_summary.py` (checked 14 Oct 2026). On Test 8's run it reproduces the recorded $0.0705 for 37 verification calls.
+`make_run_report.py <run folder>` writes `run_report.md` into the run folder from the files the run saved: settings from `manifest.json`, processing counts from `state.json`, every plan row with its reason from `plan.json`, and each stage's calls, tokens, cost and model time from `calls/`. It makes no model call and changes no other file, so it can be repeated. "Cost in this run" counts only calls not answered from the saved-answer cache; "cost of a fresh run" prices every call. Prices are the table in `eval_run_report/run_summary.py` (checked 14 Oct 2026; `PRICES_CHECKED` records that date). On Test 8's run it reproduces the recorded $0.0705 for 37 verification calls.
+
+`GET /runs/{run_id}/usage` (29 October 2026) returns the same per-stage figures (`stage_costs`) as JSON, with the price table and its date, for the Dispatcher's **Model usage and cost** panel. It reads only `calls/*.json`, returns numbers and model names without prompt or answer text, and changes no file. A stage containing a model with no listed price reports its cost as `null`, not zero. Model time is the sum of call durations, not elapsed run time.
 
 With `--key <key.json> --data <data folder>`, the report adds a score against a JSON answer key in the format of `docs/evaluation/extended_dispatch_100_human_team_golden.json`, following [How the score works](docs/evaluation/NEW_TEST_SETS_PLAN.md#how-the-score-works-fixed-before-the-run):
 - each case is matched to the task created from its first message, by order ID when that message holds two jobs;
@@ -219,7 +250,7 @@ The data folder is named on the command line because a run's manifest does not r
 
 ## Verification
 
-The latest recorded baseline is **170 offline tests** (24 October 2026, after the cancellation change): 27 processing, 25 routing/allocation, 15 harness, 23 graph, 43 dispatcher review, 11 run-report, 4 approved-table score, 10 run and review API and 12 chat API tests. Run from `backend/`:
+The latest recorded baseline is **176 offline tests** (30 October 2026, after local translation): 27 processing, 25 routing/allocation, 15 harness, 23 graph, 43 dispatcher review, 11 run-report, 4 approved-table score, 11 run and review API and 17 chat API tests. The transcription tests replace the model client and `.env` loading with stand-ins, so no recording leaves the machine; the translation tests replace the model's answer and fail if the model is loaded. Run from `backend/`:
 
 ```text
 uv run python -m unittest discover -s tests -v

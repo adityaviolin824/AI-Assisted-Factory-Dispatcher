@@ -1,13 +1,15 @@
 # Capabilities and evidence
 
-SweaterCo Dispatch Copilot reads factory requests, calculates workshop options and records dispatcher decisions. Implementation status and recorded evidence through 24 October 2026 are summarized below. See the [product overview](README.md), [backend guide](backend/README.md) and [frontend guide](frontend/README.md).
+SweaterCo Dispatch Copilot reads factory requests, calculates workshop options and records dispatcher decisions. Implementation status and recorded evidence through 30 October 2026 are summarized below. See the [product overview](README.md), [backend guide](backend/README.md) and [frontend guide](frontend/README.md).
 
 ## Implemented workflow
 
 | Capability | Behavior |
 |---|---|
 | Shared operations chat | Named messages, retained source text, retry identity, shared history and stable TXT snapshots. |
-| Explicit processing | A snapshot enters the language/validation/allocation pipeline only on request; the API requires paid-processing permission. |
+| Checked voice input | **Record** turns one short spoken request into text in the message box through OpenAI's `gpt-transcribe`; the worker checks and edits it before **Send**. English is supported and Mandarin is experimental. The API refuses it without paid-processing permission. |
+| Local Chinese translation | Optional and disabled by default. With the configuration switch on and the optional runtime/model installed, **Send** saves a message containing Chinese as its English translation, made on the host by Tencent's Hy-MT2-1.8B (8-bit, MLX), so processing reads English. A translation that changes an order or workshop ID is refused. No per-message charge; the original Chinese is not kept. |
+| Explicit processing | **Prepare chat for dispatch** captures a snapshot; **Start dispatch workflow** sends it into the language/validation/allocation pipeline. The API requires paid-processing permission. |
 | Evidence-backed interpretation | Owned extraction, independent jobs, bounded follow-up candidates, task versions and source checks. |
 | Deterministic planning | Capability, status, caps, preferences and exclusions; delivery, cost, expected rework and queue calculations. |
 | Uncertainty visibility | Clarifications, processing/link reviews and provisional warnings remain separate from approved rows. |
@@ -16,6 +18,7 @@ SweaterCo Dispatch Copilot reads factory requests, calculates workshop options a
 | One approval | **Approve all** calculates once, preserves manual destinations, replans flexible work and saves the change report immediately. |
 | Reallocation and history | **Review again** updates saved choices and saves a new version from the original queues, preserving earlier revisions. |
 | Inspection | Source messages, task evidence, workshop comparisons, rejection reasons, tentative queues and before/after changes. |
+| Model usage and cost | Each saved run's calls, reused answers, tokens, model time and estimated model cost by stage, counted from its call records with no model call. |
 
 Reallocation concerns the proposed dispatch table. It does not recall work already started, book workshop work or update live production queues. A saved final table may retain unresolved rows.
 
@@ -69,11 +72,11 @@ The supplied 30-request Test 7 replay reached 30/30 readiness agreement after a 
 
 ## Verification and observability
 
-Latest recorded checks, on 24 October 2026 after the cancellation change, passed 170 offline backend tests, 66 Playwright tests, type checking, lint and the frontend build. The backend categories total 170: 27 processing, 25 allocation, 15 harness, 23 graph, 43 dispatcher review, 11 run-report, 4 final-score, 10 run/review API and 12 chat API checks.
+Latest recorded checks, on 30 October 2026 after local translation, passed 176 offline backend tests, 72 Playwright tests, type checking, lint and the frontend build. The backend categories total 176: 27 processing, 25 allocation, 15 harness, 23 graph, 43 dispatcher review, 11 run-report, 4 final-score, 11 run/review API and 17 chat API checks.
 
 Checks cover hand-worked scheduling cases, source/schema contracts, task versions, queue accounting, partial plans, graph/standalone equivalence, refusal, preview without writes, approval, re-review and chat snapshots. Recorded mutation checks establish detection of selected deliberately broken rules. Some checks depend on local notebooks/saved runs excluded from publication. Browser tests use controlled API responses; a backend chat test also executes the pipeline with saved model answers.
 
-Runs retain messages/settings, processing state, per-call records and plans. `make_run_report.py` generates counts, reasons, tokens, estimated cost and latency and optionally scores against a matching key. `score_dispatcher_review.py` evaluates approved rows. Exact saved-answer reuse avoids another model call but still revalidates the response and recalculates the plan.
+Runs retain messages/settings, processing state, per-call records and plans. `make_run_report.py` generates counts, reasons, tokens, estimated cost and latency and optionally scores against a matching key; the Dispatcher shows the same per-stage usage for each saved run. `score_dispatcher_review.py` evaluates approved rows. Exact saved-answer reuse avoids another model call but still revalidates the response and recalculates the plan.
 
 Optional LangSmith tracing records graph execution, including cached runs. The historical 15 October trace contained 34 chain spans and zero LLM spans for a fully cached 26-message execution. Tracing can transmit source and decision data; offline tests disable it.
 
@@ -84,16 +87,19 @@ Optional LangSmith tracing records graph execution, including cached runs. The h
 - Internal navigation can discard unsaved choices; saved/new lateness consent differs in whole-submission refusal behavior.
 - Failed processing records can remain beside added replacement batches.
 - Chat/CSV deadline disagreement has no automatic discrepancy alert.
-- Authentication, clarification replies, multiple channels, voice, live assignments and production tracking are not implemented.
+- Voice input is not measured on real speech. It sends audio to OpenAI; local speech recognition, Singapore English pronunciation, Singlish and Mandarin-English code-switching are not evaluated.
+- Translation was checked on 12 made-up messages only. Only order and workshop IDs are checked afterwards; quantities, dates, negation and intent are not, and Chinese hold wording translated as "suspended" is not recognized as a possible hold. It runs only on Apple silicon.
+- Authentication, clarification replies, multiple channels, live assignments and production tracking are not implemented.
 - Docker and deployment remain deferred.
 
 ## Planned extensions
 
-The [further implementation roadmap](FURTHER_IMPLEMENTATION.md), recorded 28 October 2026, proposes:
+The [further implementation roadmap](FURTHER_IMPLEMENTATION.md), updated 29 October 2026, proposes:
 
 - Shared order/workshop records in PostgreSQL, with authenticated workshop updates for dated closures and permitted capacity changes. Automatic planning would check affected production dates and recheck changes before approval.
-- Local PII filtering before model calls and external tracing, while preserving operational identifiers and source-evidence checks.
-- Basic prompt-injection detection with visible review, measured false positives and optional later evaluation of a local encoder classifier.
-- A sanitized public evidence bundle for reproducing recorded model-cost estimates without publishing full run records.
+- Local PII filtering before model calls and external tracing, while preserving operational identifiers and source-evidence checks. The first scope is names of people and addresses.
+- Basic prompt-injection detection with visible review, measured false positives and optional later evaluation of a local encoder classifier. This remains future work for the final presentation.
+- A sanitized public evidence bundle for reproducing recorded model-cost estimates without publishing full run records. The in-app usage view covers runs held locally; the public bundle is still to be prepared.
+- Bilingual Chinese-English review, with original messages retained beside the translation and bilingual clarification. Chinese-to-English translation at Send exists; keeping the original, Chinese-aware hold/cancellation checks and English-to-Chinese replies do not. Local voice recognition would replace the current cloud transcription behind the same editable transcript. Singlish and Mandarin-English code-switching require separate evaluation. The [model and workflow research](MULTILINGUAL_INPUT_RESEARCH.md) records candidates, language-aware validation, privacy boundaries and proposed acceptance checks.
 
 These extensions are not implemented or measured. A database alone does not provide workshop access controls, current availability or live booking guarantees. The [project plan](docs/project-plan.md) defines priorities. The [engineering log](docs/engineering-log.md) retains dated investigation and verification evidence; [experiments](experiments/README.md) preserves historical notebook stages rather than current application contracts.

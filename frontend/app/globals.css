@@ -489,6 +489,27 @@ select:disabled {
   color: var(--on-accent);
 }
 
+/* A button that deletes data, such as "Yes, delete" for Clear chat. */
+.danger {
+  background: var(--red);
+  border-color: var(--red);
+  color: var(--on-accent);
+}
+
+/* Chat: the "Are you sure?" step before Clear chat deletes every message. */
+.confirm-clear {
+  margin-top: 12px;
+  padding: 12px 16px;
+  background: var(--tint-error);
+  border-left: 3px solid var(--red);
+  border-radius: 0 9px 9px 0;
+  max-width: 96ch;
+}
+
+.confirm-clear p {
+  margin: 0 0 10px;
+}
+
 select,
 input,
 textarea {
@@ -721,20 +742,13 @@ fieldset.lock {
   margin: 0;
 }
 
-/* Chat: the conversation with its composer beside the processing panel. */
-.chat-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 360px;
-  gap: 28px;
-  align-items: start;
-  margin-top: 16px;
-}
-
+/* Chat: the conversation with its composer, across the whole page. */
 .conversation {
   display: flex;
   flex-direction: column;
   height: calc(100vh - 150px);
   min-height: 520px;
+  margin-top: 16px;
   overflow: hidden;
   background: var(--surface);
   border: 1px solid var(--card-line);
@@ -833,9 +847,10 @@ fieldset.lock {
   color: var(--muted);
 }
 
+/* Dispatcher: the panel that prepares the chat and starts the dispatch workflow. */
 .process-panel {
-  position: sticky;
-  top: 16px;
+  max-width: 96ch;
+  margin: 16px 0 24px;
   padding: 8px 22px 22px;
   background: var(--surface);
   border: 1px solid var(--card-line);
@@ -1088,6 +1103,133 @@ pre {
   font-size: 14px;
 }
 
+/* Dispatcher: the read-only chat history, opened from the toolbar. Its log scrolls inside a fixed height. */
+.chat-history {
+  display: flex;
+  flex-direction: column;
+  max-height: 460px;
+  margin: 16px 0 8px;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--card-line);
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+}
+
+.chat-history-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 16px;
+  padding: 14px 18px 12px;
+  border-bottom: 1px solid var(--seam);
+}
+
+.chat-history-head h2,
+.chat-history-head .hint {
+  margin: 0;
+}
+
+.chat-history .error {
+  margin: 12px 18px;
+}
+
+/* Who is signed in, at the right of the app bar. */
+.signed-in {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.signed-in strong {
+  color: var(--text);
+  font-weight: 650;
+}
+
+.sign-in-link {
+  color: var(--muted);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.sign-in-link:hover {
+  color: var(--link);
+}
+
+/* Sign in: one narrow panel with the name, the two roles and Enter. */
+.sign-in {
+  max-width: 30rem;
+  margin: 24px auto 0;
+  padding: 26px 28px 28px;
+  background: var(--surface);
+  border: 1px solid var(--card-line);
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+}
+
+.sign-in form {
+  display: grid;
+  gap: 18px;
+  margin-top: 20px;
+}
+
+.sign-in .name-field {
+  display: grid;
+  gap: 6px;
+}
+
+.sign-in fieldset {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.sign-in legend {
+  margin-bottom: 8px;
+  color: var(--muted);
+}
+
+/* Each role is a full-width row; the chosen one is marked like a pressed filter. */
+.role-option {
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--seam);
+  border-radius: 8px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.role-option:has(input:checked) {
+  background: var(--selected);
+  border-color: var(--highlight);
+}
+
+.role-option input {
+  margin: 4px 0 0;
+  accent-color: var(--highlight);
+}
+
+.role-option > span {
+  display: grid;
+  gap: 2px;
+}
+
+.sign-in .error {
+  margin: 0;
+}
+
+.sign-in button[type="submit"] {
+  justify-self: start;
+  padding: 9px 26px;
+}
+
 @media (max-width: 1100px) {
   .workspace {
     grid-template-columns: minmax(0, 1fr);
@@ -1098,17 +1240,9 @@ pre {
     max-height: none;
   }
 
-  .chat-layout {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
   .conversation {
     height: 75vh;
     min-height: 440px;
-  }
-
-  .process-panel {
-    position: static;
   }
 }
 

@@ -1,11 +1,14 @@
-import { expect, type Page, type Route, test } from "@playwright/test";
+import { expect, type Page, type Request, type Route, test } from "@playwright/test";
 import type { Plan } from "@/lib/types";
-import { makePlan, makeUsage, OTHER_RUN, RUN, runDetails } from "./fixtures";
+import { makePlan, makeReview, makeSnapshot, makeUsage, MESSAGES, OTHER_RUN, RUN, runDetails, signIn } from "./fixtures";
 
 // Every backend request is answered by the test. A request without its own route is aborted, so
 // these tests never reach a real FastAPI server. (A later route takes precedence over this one.)
+// The Dispatch workflow panel reads the chat's snapshots on opening; by default there are none.
 test.beforeEach(async ({ page }) => {
+  await signIn(page, "dispatcher", "Mei");
   await page.route("**/api/backend/**", (route) => route.abort());
+  await page.route("**/api/backend/chat/snapshots", (route) => route.fulfill({ json: [] }));
 });
 
 async function serve(page: Page, path: string, json: unknown, status = 200) {
@@ -257,4 +260,147 @@ test("a model without a listed price has an unavailable cost, never $0", async (
   );
   const total = usagePanel(page).getByRole("row", { name: /Total/ });
   await expect(total).toContainText("2,400--");
+});
+
+function chatHistory(page: Page) {
+  return page.getByRole("region", { name: "Chat history" });
+}
+
+test("See chat history shows the whole chat, read-only, and reads it again each time it opens", async ({ page }) => {
+  const chatReads: string[] = [];
+  page.on("request", (request) => request.url().endsWith("/chat/messages") && chatReads.push(request.url()));
+  let served = MESSAGES;
+  await page.route("**/api/backend/chat/messages", (route) => route.fulfill({ json: served }));
+  await serve(page, "/runs", [RUN]);
+  await page.goto("/dispatcher");
+  await expect(page.getByLabel("Saved run")).toBeVisible();
+  // The Dispatcher page reads no chat until the dispatcher asks for it.
+  expect(chatReads).toEqual([]);
+
+  await page.getByRole("button", { name: "See chat history" }).click();
+  await expect(chatHistory(page).getByRole("listitem")).toHaveCount(2);
+  await expect(chatHistory(page)).toContainText("Can someone place ORD-107?");
+  await expect(chatHistory(page)).toContainText("2 messages");
+  await expect(chatHistory(page).getByRole("textbox")).toHaveCount(0);
+  await expect(chatHistory(page).getByRole("button")).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Hide chat history" }).click();
+  await expect(chatHistory(page)).toHaveCount(0);
+
+  served = [MESSAGES[0]];
+  await page.getByRole("button", { name: "See chat history" }).click();
+  await expect(chatHistory(page).getByRole("listitem")).toHaveCount(1);
+});
+
+test("an empty chat history says so in the Dispatcher page's words", async ({ page }) => {
+  await serve(page, "/chat/messages", []);
+  await serve(page, "/runs", [RUN]);
+  await page.goto("/dispatcher");
+  await page.getByRole("button", { name: "See chat history" }).click();
+  await expect(chatHistory(page)).toContainText("The chat has no messages.");
+  await expect(chatHistory(page)).not.toContainText("Write the first request below");
+});
+
+test("a failed chat history read shows the reason", async ({ page }) => {
+  await page.route("**/api/backend/chat/messages", (route) => route.fulfill({ status: 500, body: "Internal Server Error" }));
+  await serve(page, "/runs", [RUN]);
+  await page.goto("/dispatcher");
+  await page.getByRole("button", { name: "See chat history" }).click();
+  await expect(chatHistory(page).locator("p.error")).toHaveText(
+    "Could not read the chat: The backend answered HTTP 500. Check that the FastAPI server is running.",
+  );
+});
+
+function workflowPanel(page: Page) {
+  return page.getByRole("region", { name: "Dispatch workflow" });
+}
+
+test("the Dispatch workflow panel counts one message in the singular and opens an earlier run", async ({ page }) => {
+  const oneLine = { lines: [makeSnapshot().lines[0]], message_count: 1 };
+  await page.route("**/api/backend/chat/snapshots", (route) =>
+    route.fulfill({
+      json: [
+        makeSnapshot(oneLine),
+        makeSnapshot({ ...oneLine, snapshot_id: "S0", processing: "finished", run_id: "R0", thread_id: "TH0" }),
+      ],
+    }),
+  );
+  await serve(page, "/runs", [RUN]);
+  await serve(page, "/runs/R0", runDetails(makePlan(), "R0"));
+  await page.goto("/dispatcher");
+  await expect(workflowPanel(page)).toContainText("Snapshot of 1 message,");
+  const earlier = workflowPanel(page).getByRole("listitem").filter({ hasText: "R0" });
+  await expect(earlier).toHaveText("R0 1 message");
+
+  await earlier.getByRole("button", { name: "R0" }).click();
+  await expect(page).toHaveURL(/\/dispatcher\?run=R0$/);
+  await expect(page.getByText("Plan before the dispatcher's review")).toBeVisible();
+});
+
+test("processing waits for a confirmation about paid models, then opens the run and its review", async ({ page }) => {
+  // Real thread IDs are long random codes (uuid4); the button carries it, so the panel does not show it.
+  const threadId = "3f2a9c1e-5b7d-4e2a-9f1c-8d6b2a4e7c10";
+  const processRequests: Request[] = [];
+  page.on("request", (request) => request.url().endsWith("/process") && processRequests.push(request));
+  await page.clock.install();
+  await serve(page, "/runs", [RUN]);
+  await serve(page, `/runs/${RUN.run_id}`, runDetails(makePlan()));
+  await serve(page, `/reviews/${threadId}`, { status: "waiting", review: makeReview(), refused: null });
+  await page.route("**/api/backend/chat/snapshots", (route) =>
+    route.request().method() === "POST" ? route.fulfill({ json: makeSnapshot() }) : route.fulfill({ json: [] }),
+  );
+  await serve(page, "/chat/snapshots/S1/process", makeSnapshot({ processing: "running" }));
+  await serve(page, "/chat/snapshots/S1", makeSnapshot({ processing: "finished", run_id: RUN.run_id, thread_id: threadId }));
+  await page.goto("/dispatcher");
+
+  await workflowPanel(page).getByRole("button", { name: "Prepare chat for dispatch" }).click();
+  await expect(workflowPanel(page)).toContainText("Snapshot of 2 messages");
+  await expect(workflowPanel(page)).toContainText("Processing sends these messages to paid AI models");
+  expect(processRequests).toHaveLength(0);
+
+  await workflowPanel(page).getByRole("button", { name: "Start dispatch workflow" }).click();
+  await expect(workflowPanel(page)).toContainText("Processing. This takes several minutes; this panel updates by itself.");
+  await page.clock.fastForward(5000);
+  await expect(workflowPanel(page)).toContainText(`Processed as run ${RUN.run_id}, ready for your review.`);
+  await expect(page.getByText(threadId)).toHaveCount(0);
+  expect(processRequests).toHaveLength(1);
+
+  await workflowPanel(page).getByRole("button", { name: "Open this run" }).click();
+  await expect(page).toHaveURL(new RegExp(`/dispatcher\\?run=${RUN.run_id}&thread=${threadId}$`));
+  await expect(page.getByText(`Reviewing thread ${threadId}.`)).toBeVisible();
+  await expect(page.getByText("Draft under review")).toBeVisible();
+});
+
+test("a failed status read is shown in the panel, and processing is still followed", async ({ page }) => {
+  await page.clock.install();
+  await serve(page, "/runs", [RUN]);
+  await serve(page, "/chat/snapshots", [makeSnapshot({ processing: "running" })]);
+  let reads = 0;
+  await page.route("**/api/backend/chat/snapshots/S1", (route) => {
+    reads += 1;
+    // The first read fails, as while the API server reloads; the next one finds the run finished.
+    return reads === 1
+      ? route.fulfill({ status: 502, body: "Bad gateway" })
+      : route.fulfill({ json: makeSnapshot({ processing: "finished", run_id: "R1", thread_id: "TH1" }) });
+  });
+  await page.goto("/dispatcher");
+  await expect(workflowPanel(page)).toContainText("Processing. This takes several minutes");
+  await page.clock.fastForward(5000);
+  await expect(workflowPanel(page).locator("p.error")).toContainText("HTTP 502");
+  await page.clock.fastForward(5000);
+  await expect(workflowPanel(page).getByRole("button", { name: "Open this run" })).toBeVisible();
+  await expect(workflowPanel(page).locator("p.error")).toHaveCount(0);
+});
+
+test("preparing an empty chat shows the backend's reason and makes no snapshot", async ({ page }) => {
+  await serve(page, "/runs", [RUN]);
+  await page.route("**/api/backend/chat/snapshots", (route) =>
+    route.request().method() === "POST"
+      ? route.fulfill({ status: 400, json: { detail: "There are no messages to export yet." } })
+      : route.fulfill({ json: [] }),
+  );
+  await page.goto("/dispatcher");
+  await workflowPanel(page).getByRole("button", { name: "Prepare chat for dispatch" }).click();
+  await expect(workflowPanel(page).locator("p.error")).toHaveText("There are no messages to export yet.");
+  await expect(workflowPanel(page).getByText("Snapshot of")).toHaveCount(0);
 });

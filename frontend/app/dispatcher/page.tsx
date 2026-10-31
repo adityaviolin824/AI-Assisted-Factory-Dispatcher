@@ -3,7 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import AddBatchForm from "@/components/AddBatchForm";
 import ChangesTable from "@/components/ChangesTable";
+import ChatHistory from "@/components/ChatHistory";
 import ChoiceForm from "@/components/ChoiceForm";
+import ProcessPanel from "@/components/ProcessPanel";
 import QueueTable from "@/components/QueueTable";
 import ReviewBar from "@/components/ReviewBar";
 import RunPicker from "@/components/RunPicker";
@@ -25,8 +27,9 @@ import { type AddedBatch, type Choices, decisionsFrom, withChoice } from "@/lib/
 import { decisionFor, taskFor } from "@/lib/plan";
 import type { Review, RunDetails, RunSummary } from "@/lib/types";
 
-// The dispatcher console. A saved run shows its approved dispatcher plan when there is one,
-// otherwise the plan made before the dispatcher's review. Opening a paused review shows its draft
+// The dispatcher console, the dispatcher's only page. See chat history shows the shared chat read-only,
+// and the Dispatch workflow panel turns it into a run. A saved run shows its approved dispatcher plan
+// when there is one, otherwise the plan made before the dispatcher's review. Opening a paused review shows its draft
 // and lets the dispatcher make choices, which stay in this page until Approve all. Check workshop
 // options shows a preview of them, calculated by the backend and saved nowhere. Review again opens
 // an approved plan for new choices in the same way; Approve all then saves a new version.
@@ -46,6 +49,8 @@ export default function DispatcherPage() {
   const [preview, setPreview] = useState<Review | null>(null);
   const [previewing, setPreviewing] = useState(false);
   const [reviewNote, setReviewNote] = useState<string | null>(null);
+  // See chat history: the read-only conversation above the plan.
+  const [historyOpen, setHistoryOpen] = useState(false);
   // Counts every change of the choices, so a preview that answers after a change is not shown.
   const choicesVersion = useRef(0);
   // The open run's reads (its plan, then any review), aborted when another run is opened so a slow
@@ -85,9 +90,9 @@ export default function DispatcherPage() {
     }
   }, [preview]);
 
-  // The run named in the address (/dispatcher?run=<id>) opens straight away, as when Chat links here;
-  // Chat's link also names the paused review (&thread=<id>), which then opens too. The address is read
-  // once: React's development mode runs this effect twice, and openRun rewrites it without &thread=
+  // The run named in the address (/dispatcher?run=<id>) opens straight away, with its paused review when
+  // the address names one (&thread=<id>), so a refresh or a shared link shows the same run. The address is
+  // read once: React's development mode runs this effect twice, and openRun rewrites it without &thread=
   // until the review has opened.
   useEffect(() => {
     listRuns()
@@ -168,6 +173,21 @@ export default function DispatcherPage() {
       .then(setRuns)
       .catch((caught) => setError(errorText(caught)));
     openRun(runId);
+  }
+
+  // Opens a run from the Dispatch workflow panel. The run list is read again first, because a run the
+  // panel has just processed is not in it yet.
+  function openProcessed(id: string, thread: string | null) {
+    if (!discardConfirmed()) {
+      return;
+    }
+    listRuns()
+      .then(setRuns)
+      .catch((caught) => setError(errorText(caught)));
+    openRun(id);
+    if (thread) {
+      openReview(thread, id);
+    }
   }
 
   // A review is used only when it belongs to the open run (review.source_run). The caller names that
@@ -327,12 +347,17 @@ export default function DispatcherPage() {
           <button onClick={refresh} disabled={approving}>
             Refresh
           </button>
+          <button onClick={() => setHistoryOpen(!historyOpen)} aria-expanded={historyOpen}>
+            {historyOpen ? "Hide chat history" : "See chat history"}
+          </button>
         </div>
       </div>
       <p className="muted lede">
         The AI only read the chat. Python calculated every date, queue, cost and ranking shown here. Approving a
         plan saves it as JSON files; nothing is sent to a workshop.
       </p>
+      {historyOpen && <ChatHistory />}
+      <ProcessPanel onOpen={openProcessed} />
 
       {runs?.length === 0 && <p className="muted">The backend has no saved runs.</p>}
       {error && (

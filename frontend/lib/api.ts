@@ -130,6 +130,11 @@ export function sendMessage(message: NewMessage) {
   });
 }
 
+// Deletes every message for everyone. Snapshots, runs and saved plans stay.
+export function clearChat() {
+  return request<{ deleted: number }>("/chat/messages", { method: "DELETE" });
+}
+
 // Turns one voice recording into text for the message box; it saves nothing. It calls a paid model, so
 // the backend refuses it unless the API was started with ALLOW_PAID_PROCESSING=1.
 export function transcribe(audio: Blob, fileName: string) {

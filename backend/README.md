@@ -38,9 +38,9 @@ The root [Dockerfile](../Dockerfile) uses a Python 3.13.14 slim builder and runt
 
 `tzdata` is an explicit small production dependency so the chat's `Asia/Singapore` timestamps work even when a slim host has no system timezone database. The container starts one Uvicorn worker on `0.0.0.0`, using `PORT` when supplied or 8000 otherwise. One worker/instance matches the current file-based processing status contract, which records the serving process ID.
 
-Prepared Render/Vercel topology, not a completed deployment:
+Deployed on 31 October 2026: Render serves the backend and Vercel the frontend ([live demo](https://ai-assisted-factory-dispatcher.vercel.app/)).
 
-- Render builds the backend using the repository-root Dockerfile and build context. Keep one service instance and mount persistent storage at `/app/output` for chat SQLite, snapshots, response caches, saved plans and LangGraph checkpoints.
+- Render builds the backend using the repository-root Dockerfile and build context, as one service instance. No persistent disk is attached, so chat SQLite, snapshots, response caches, saved plans and LangGraph checkpoints in `/app/output` are lost when the service restarts or redeploys. Attach a disk at `/app/output` only if hosted runs must survive restarts.
 - Set backend credentials in Render's environment, never in the image or frontend. Voice and fresh processing require `ALLOW_PAID_PROCESSING=1`; the current application has no authentication, so public paid endpoints need controlled access before enabling them.
 - Vercel builds `frontend/` with `BACKEND_API_URL` set to the backend's HTTPS origin. The existing rewrite proxies `/api/backend/...`; browser code does not need provider credentials. Rebuild after changing the origin.
 - Several people can access the shared interface, but this does not add isolated conversations or independent simultaneous dispatch workflows. Processing admits one snapshot at a time; coordinate dispatcher edits because multi-dispatcher conflict handling is not implemented.
@@ -66,12 +66,13 @@ These observations support a small shared demo, not a full processing-load guara
 
 ## HTTP API
 
-FastAPI exposes 17 application routes. Interactive schema documentation is available at `/docs` when the API is running.
+FastAPI exposes 18 application routes. Interactive schema documentation is available at `/docs` when the API is running.
 
 | Routes | Purpose | Model calls |
 |---|---|---|
 | `GET /chat/dates` | Configured message and dispatch dates. | None. |
 | `GET`, `POST /chat/messages` | Shared history and explicit message storage. With `[translation]` on, a message with Chinese characters is saved as its English translation ([translation](#translation)). | None paid: a Chinese message is translated by a local model. |
+| `DELETE /chat/messages` | Clear chat (31 October 2026): delete every message for everyone and return `{"deleted"}`. Snapshots, runs and reviews stay; before the first message it creates nothing. | None. |
 | `POST /chat/transcriptions` | Turn one recording (up to 5 MB) into text for the message box; saves nothing. Requires `ALLOW_PAID_PROCESSING=1`. | Paid: one transcription call per request, never cached. |
 | `GET`, `POST /chat/snapshots`; `GET /chat/snapshots/{snapshot_id}` | List, capture and inspect fixed conversation inputs. | None. |
 | `POST /chat/snapshots/{snapshot_id}/process` | Background processing to the first dispatcher pause; requires `ALLOW_PAID_PROCESSING=1`. | Cache misses can be paid. |

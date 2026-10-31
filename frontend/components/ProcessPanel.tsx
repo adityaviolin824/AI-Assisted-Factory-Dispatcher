@@ -1,15 +1,16 @@
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createSnapshot, errorText, listSnapshots, processSnapshot, readSnapshot } from "@/lib/api";
 import { chatDateTime, count } from "@/lib/format";
 import type { Snapshot } from "@/lib/types";
 
-type Props = { messageCount: number };
+// onOpen opens a processed run on the Dispatcher page, with its paused review when there is one.
+type Props = { onOpen: (runId: string, threadId: string | null) => void };
 
-// The start-run path, in two steps. "Prepare chat for dispatch" captures the chat as a fixed snapshot,
-// with no AI call, and asks for confirmation, because processing calls paid AI models; "Start dispatch
-// workflow" then runs the pipeline on exactly that snapshot. Messages sent later go into the next snapshot.
-export default function ProcessPanel({ messageCount }: Props) {
+// The start-run path, in two steps, on the Dispatcher page. "Prepare chat for dispatch" captures the chat
+// as a fixed snapshot, with no AI call, and asks for confirmation, because processing calls paid AI models;
+// "Start dispatch workflow" then runs the pipeline on exactly that snapshot. Messages sent later go into the
+// next snapshot. An empty chat is refused by the backend, and its reason is shown.
+export default function ProcessPanel({ onOpen }: Props) {
   // Newest first: the first snapshot is the current one, the others are earlier runs.
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [busy, setBusy] = useState(false);
@@ -76,11 +77,11 @@ export default function ProcessPanel({ messageCount }: Props) {
       <h2>Dispatch workflow</h2>
       <p className="muted">
         First prepare a fixed copy of the chat; this makes no AI call. Then start the workflow: the AI reads the
-        messages into requests, and Python checks every workshop and makes a plan for the dispatcher.
+        messages into requests, and Python checks every workshop and makes a plan for you to review.
       </p>
       <button
         className={waitingToStart ? undefined : "primary"}
-        disabled={busy || messageCount === 0 || current?.processing === "running"}
+        disabled={busy || current?.processing === "running"}
         onClick={capture}
       >
         Prepare chat for dispatch
@@ -90,7 +91,14 @@ export default function ProcessPanel({ messageCount }: Props) {
           {error}
         </p>
       )}
-      {current && <SnapshotState snapshot={current} busy={busy} onStart={() => start(current.snapshot_id)} />}
+      {current && (
+        <SnapshotState
+          snapshot={current}
+          busy={busy}
+          onStart={() => start(current.snapshot_id)}
+          onOpen={onOpen}
+        />
+      )}
 
       {earlier.length > 0 && (
         <>
@@ -98,7 +106,9 @@ export default function ProcessPanel({ messageCount }: Props) {
           <ul className="run-list">
             {earlier.map((snapshot) => (
               <li key={snapshot.snapshot_id}>
-                <Link href={`/dispatcher?run=${encodeURIComponent(snapshot.run_id ?? "")}`}>{snapshot.run_id}</Link>{" "}
+                <button className="link-button" onClick={() => onOpen(snapshot.run_id ?? "", null)}>
+                  {snapshot.run_id}
+                </button>{" "}
                 <span className="muted">{count(snapshot.message_count, "message")}</span>
               </li>
             ))}
@@ -109,16 +119,10 @@ export default function ProcessPanel({ messageCount }: Props) {
   );
 }
 
-// Dispatcher opens the run and, when the pipeline paused it for review, that review as well.
-function dispatcherLink(runId: string, threadId: string | null) {
-  const thread = threadId ? `&thread=${encodeURIComponent(threadId)}` : "";
-  return `/dispatcher?run=${encodeURIComponent(runId)}${thread}`;
-}
-
-type StateProps = { snapshot: Snapshot; busy: boolean; onStart: () => void };
+type StateProps = Props & { snapshot: Snapshot; busy: boolean; onStart: () => void };
 
 // One snapshot: what it holds, and where its processing has got to.
-function SnapshotState({ snapshot, busy, onStart }: StateProps) {
+function SnapshotState({ snapshot, busy, onStart, onOpen }: StateProps) {
   const first = snapshot.lines[0]?.request_label;
   const last = snapshot.lines.at(-1)?.request_label;
   return (
@@ -145,16 +149,16 @@ function SnapshotState({ snapshot, busy, onStart }: StateProps) {
         </>
       )}
       {snapshot.processing === "running" && (
-        <p role="status">Processing. This takes several minutes; you can keep chatting meanwhile.</p>
+        <p role="status">Processing. This takes several minutes; this panel updates by itself.</p>
       )}
-      {/* The thread ID is a long random code, so it is not shown: the link below carries it. */}
+      {/* The thread ID is a long random code, so it is not shown: the button below opens it. */}
       {snapshot.processing === "finished" && snapshot.run_id && (
         <p role="status">
           Processed as run {snapshot.run_id}
-          {snapshot.thread_id && ", ready for the dispatcher's review"}.{" "}
-          <Link className="open-run" href={dispatcherLink(snapshot.run_id, snapshot.thread_id)}>
-            Open in Dispatcher
-          </Link>
+          {snapshot.thread_id && ", ready for your review"}.{" "}
+          <button className="link-button open-run" onClick={() => onOpen(snapshot.run_id ?? "", snapshot.thread_id)}>
+            Open this run
+          </button>
         </p>
       )}
       {snapshot.processing === "failed" && (

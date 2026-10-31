@@ -66,8 +66,8 @@ MOCK_APP = Path(__file__).resolve().parents[1] / "experimentation_notebooks/mock
 # The definitions chat_storage copies unchanged from the mock chat's app.py.
 MOVED = ["DISPLAY_TIMEZONE", "initialize_storage", "save_message", "read_messages", "build_export",
          "export_conversation"]
-# Definitions that are new in chat_storage: where the app keeps its chat.
-NEW = ["CHAT_DIR", "DATABASE", "SNAPSHOTS_DIR"]
+# Definitions that are new in chat_storage: where the app keeps its chat, and Clear chat.
+NEW = ["CHAT_DIR", "DATABASE", "SNAPSHOTS_DIR", "clear_messages"]
 # One line of the supplied chat file: "R01 [07:53] Chen: Need scarves ...".
 CHAT_LINE = re.compile(r"^R\d+ \[(\d\d):(\d\d)\] ([^:]+): (.*)$")
 
@@ -230,6 +230,28 @@ class Endpoints(unittest.TestCase):
         for unknown in ("20990101T000000000000Z-00000000", "..", ".pending-x"):
             with self.subTest(snapshot_id=unknown):
                 self.assertEqual(self.client.get(f"/chat/snapshots/{unknown}").status_code, 404)
+
+    def test_clear_chat_deletes_every_message_and_keeps_snapshots(self):
+        self.send(message())
+        self.send(message(sender="Ravi", raw_text="For ORD-061, avoid QuickStitch."))
+        before = self.capture()
+        cleared = self.client.delete("/chat/messages")
+        self.assertEqual((cleared.status_code, cleared.json()), (200, {"deleted": 2}))
+        self.assertEqual(self.client.get("/chat/messages").json(), [])
+        # The snapshot taken before the clear still reads the same, TXT and manifest included.
+        self.assertEqual(self.snapshot(before["snapshot_id"]), before)
+        # Sending works again, and the next snapshot labels the new conversation from R01, although
+        # the database ID keeps counting up.
+        self.send(message(sender="Mei", raw_text="Please allocate ORD-066."))
+        after = self.capture()
+        self.assertRegex(after["text"], r"^R01 \[\d\d:\d\d\] Mei: Please allocate ORD-066\.\r\n$")
+        self.assertEqual(after["lines"], [{"message_id": 3, "request_label": "R01", "processing_message_id": "L0001"}])
+        self.assertEqual(self.client.delete("/chat/messages").json(), {"deleted": 1})
+
+    def test_clearing_before_the_first_message_creates_nothing(self):
+        cleared = self.client.delete("/chat/messages")
+        self.assertEqual((cleared.status_code, cleared.json()), (200, {"deleted": 0}))
+        self.assertFalse(self.chat_dir.exists())
 
     def test_processing_a_snapshot_of_the_supplied_chat_pauses_for_the_dispatcher(self):
         store_supplied_chat(chat_storage.DATABASE)

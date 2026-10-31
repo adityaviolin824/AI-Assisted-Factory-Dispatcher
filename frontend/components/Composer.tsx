@@ -2,22 +2,19 @@ import { type FormEvent, type KeyboardEvent, useRef, useState } from "react";
 import { errorText, sendMessage, transcribe } from "@/lib/api";
 import type { ChatMessage } from "@/lib/types";
 
-const NAME_KEY = "chat-name";
 // One request per recording: recording stops by itself after a minute.
 const MAX_RECORDING_MS = 60_000;
 // Chinese characters in a transcript mean the worker spoke Mandarin.
 const CHINESE = /[一-鿿]/;
 
-type Props = { onSent: (message: ChatMessage) => void };
+// sender is the signed-in name, shown on every message this tab sends.
+type Props = { sender: string; onSent: (message: ChatMessage) => void };
 
 // Writes one message. Send only saves it for everyone: it makes no model call. When saving fails,
 // the draft stays so it can be sent again. While it sends, the text box is read-only: the saved
 // answer clears the box, which would also erase anything typed in the meantime.
 // Record turns speech into text in the message box, to be checked and edited; it never sends by itself.
-// The page renders it in the browser only (next/dynamic, ssr: false), because it reads sessionStorage.
-export default function Composer({ onSent }: Props) {
-  // The name is remembered for this browser tab only, as in the mock chat. It is not an account.
-  const [sender, setSender] = useState(() => sessionStorage.getItem(NAME_KEY) ?? "");
+export default function Composer({ sender, onSent }: Props) {
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,12 +27,7 @@ export default function Composer({ onSent }: Props) {
   const submissionId = useRef<string | null>(null);
   const stopTimer = useRef<number | undefined>(undefined);
   const listening = recorder !== null || transcribing;
-  const canSend = !sending && !listening && sender.trim() !== "" && text.trim() !== "";
-
-  function changeSender(value: string) {
-    setSender(value);
-    sessionStorage.setItem(NAME_KEY, value);
-  }
+  const canSend = !sending && !listening && text.trim() !== "";
 
   function changeText(value: string) {
     setText(value);
@@ -121,13 +113,6 @@ export default function Composer({ onSent }: Props) {
 
   return (
     <form className="composer" onSubmit={send}>
-      <div className="composer-row">
-        <label>
-          Your name
-          <input value={sender} onChange={(event) => changeSender(event.target.value)} autoComplete="name" />
-        </label>
-        <span className="hint">One line, no colon.</span>
-      </div>
       <label className="message-field">
         Message
         <textarea
@@ -151,7 +136,9 @@ export default function Composer({ onSent }: Props) {
         <button type="button" disabled={sending || transcribing} onClick={recorder ? () => recorder.stop() : startRecording}>
           {recorder ? "Stop recording" : "Record"}
         </button>
-        <span className="hint">Saves the message for everyone. Nothing is processed until you start the dispatch workflow.</span>
+        <span className="hint">
+          Saves the message for everyone. Nothing is processed until the dispatcher starts the dispatch workflow.
+        </span>
       </div>
       {error && (
         <p className="error" role="alert">

@@ -2,18 +2,25 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { type Role, useIdentity } from "@/lib/identity";
 
-const MODES = [
-  { href: "/operations", label: "Chat" },
-  { href: "/dispatcher", label: "Dispatcher" },
-];
+// The page each role works in. Team members write in the chat; the dispatcher plans on the Dispatcher
+// page and reads the chat there.
+const MODES: Record<Role, { href: string; label: string }[]> = {
+  team: [{ href: "/operations", label: "Chat" }],
+  dispatcher: [{ href: "/dispatcher", label: "Dispatcher" }],
+};
 
-// Chat and Dispatcher, one click apart on every page. It is navigation only: there is no login or role yet.
+// The signed-in role's page, one click away on every page. Nothing is shown before sign-in.
 export default function ModeSwitch() {
   const pathname = usePathname();
+  const identity = useIdentity();
+  if (!identity) {
+    return null;
+  }
   return (
     <nav className="mode-switch" aria-label="Mode">
-      {MODES.map((mode) => (
+      {MODES[identity.role].map((mode) => (
         <Link key={mode.href} href={mode.href} aria-current={pathname === mode.href ? "page" : undefined}>
           {mode.label}
         </Link>

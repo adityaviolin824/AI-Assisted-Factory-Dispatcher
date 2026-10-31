@@ -71,8 +71,8 @@ export default function IntroductionPage() {
         </li>
         <li>
           <span>
-            <strong>Start the dispatch workflow.</strong> The AI turns messages into requests. Python checks each
-            workshop, ranks them and reserves queue time.
+            <strong>Start the dispatch workflow in Dispatcher.</strong> The AI turns messages into requests. Python
+            checks each workshop, ranks them and reserves queue time.
           </span>
         </li>
         <li>
@@ -91,8 +91,9 @@ export default function IntroductionPage() {
       <h2>What works today</h2>
       <ul className="status-list">
         <li>
-          Chat saves messages, captures a fixed copy of the conversation and sends it for processing. Processing calls
-          paid AI models, so the server must be started with permission.
+          Chat saves team members&apos; messages. The dispatcher reads the chat in Dispatcher, captures a fixed copy of
+          it and sends that for processing. Processing calls paid AI models, so the server must be started with
+          permission.
         </li>
         <li>
           Dispatcher shows each run&apos;s worklist, original messages, request facts, workshop comparison and queues.

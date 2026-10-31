@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Archivo, Literata } from "next/font/google";
 import Link from "next/link";
 import ModeSwitch from "@/components/ModeSwitch";
+import SignInStatus from "@/components/SignInStatus";
 import ThemeSwitch from "@/components/ThemeSwitch";
 import "./globals.css";
 
@@ -35,6 +36,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             About
           </Link>
           <ThemeSwitch />
+          <SignInStatus />
         </header>
         <main>{children}</main>
       </body>

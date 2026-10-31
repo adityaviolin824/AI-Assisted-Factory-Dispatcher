@@ -7,9 +7,10 @@ SweaterCo Dispatch Copilot reads factory requests, calculates workshop options a
 | Capability | Behavior |
 |---|---|
 | Shared operations chat | Named messages, retained source text, retry identity, shared history and stable TXT snapshots. |
+| Demo sign-in and roles | A name and a role, Team member or Dispatcher, for each browser tab, without passwords or authentication; messages carry the signed-in name. Team members get the Chat page only, including **Clear chat**, which asks "Are you sure?" on the page and then empties the conversation for everyone while snapshots, runs and plans stay. The dispatcher gets the Dispatcher page only: **See chat history** shows the chat read-only, and dispatch processing starts there. |
 | Checked voice input | **Record** turns one short spoken request into text in the message box through OpenAI's `gpt-transcribe`; the worker checks and edits it before **Send**. English is supported and Mandarin is experimental. The API refuses it without paid-processing permission. |
 | Local Chinese translation | Optional and disabled by default. With the configuration switch on and the optional runtime/model installed, **Send** saves a message containing Chinese as its English translation, made on the host by Tencent's Hy-MT2-1.8B (8-bit, MLX), so processing reads English. A translation that changes an order or workshop ID is refused. No per-message charge; the original Chinese is not kept. |
-| Explicit processing | **Prepare chat for dispatch** captures a snapshot; **Start dispatch workflow** sends it into the language/validation/allocation pipeline. The API requires paid-processing permission. |
+| Explicit processing | On the Dispatcher page, **Prepare chat for dispatch** captures a snapshot; **Start dispatch workflow** sends it into the language/validation/allocation pipeline. The API requires paid-processing permission. |
 | Evidence-backed interpretation | Owned extraction, independent jobs, bounded follow-up candidates, task versions and source checks. |
 | Deterministic planning | Capability, status, caps, preferences and exclusions; delivery, cost, expected rework and queue calculations. |
 | Uncertainty visibility | Clarifications, processing/link reviews and provisional warnings remain separate from approved rows. |
@@ -90,16 +91,16 @@ Optional LangSmith tracing records graph execution, including cached runs. The h
 - Voice input is not measured on real speech. It sends audio to OpenAI; local speech recognition, Singapore English pronunciation, Singlish and Mandarin-English code-switching are not evaluated.
 - Translation was checked on 12 made-up messages only. Only order and workshop IDs are checked afterwards; quantities, dates, negation and intent are not, and Chinese hold wording translated as "suspended" is not recognized as a possible hold. It runs only on Apple silicon.
 - Authentication, clarification replies, multiple channels, live assignments and production tracking are not implemented.
-- Docker and deployment remain deferred.
+- The hosted demo (Vercel frontend, Render backend, deployed 31 October 2026) has a sign-in that labels users but does not authenticate them: anyone can choose Dispatcher, any team member can clear the shared chat, and the API has no access control. Its saved chat, runs and reviews are reset when the backend restarts.
 
 ## Planned extensions
 
 The [further implementation roadmap](FURTHER_IMPLEMENTATION.md), updated 29 October 2026, proposes:
 
 - Shared order/workshop records in PostgreSQL, with authenticated workshop updates for dated closures and permitted capacity changes. Automatic planning would check affected production dates and recheck changes before approval.
-- Local PII filtering before model calls and external tracing, while preserving operational identifiers and source-evidence checks. The first scope is names of people and addresses.
-- Basic prompt-injection detection with visible review, measured false positives and optional later evaluation of a local encoder classifier. This remains future work for the final presentation.
+- Local PII filtering before model calls and external tracing, while preserving operational identifiers and source-evidence checks. The first scope is names of people and addresses. Deferred on 31 October 2026 in favor of deeper dispatch features.
+- Basic prompt-injection detection with visible review, measured false positives and optional later evaluation of a local encoder classifier. Deferred on 31 October 2026.
 - A sanitized public evidence bundle for reproducing recorded model-cost estimates without publishing full run records. The in-app usage view covers runs held locally; the public bundle is still to be prepared.
-- Bilingual Chinese-English review, with original messages retained beside the translation and bilingual clarification. Chinese-to-English translation at Send exists; keeping the original, Chinese-aware hold/cancellation checks and English-to-Chinese replies do not. Local voice recognition would replace the current cloud transcription behind the same editable transcript. Singlish and Mandarin-English code-switching require separate evaluation. The [model and workflow research](MULTILINGUAL_INPUT_RESEARCH.md) records candidates, language-aware validation, privacy boundaries and proposed acceptance checks.
+- Bilingual Chinese-English review (deferred on 31 October 2026), with original messages retained beside the translation and bilingual clarification. Chinese-to-English translation at Send exists; keeping the original, Chinese-aware hold/cancellation checks and English-to-Chinese replies do not. Local voice recognition would replace the current cloud transcription behind the same editable transcript. Singlish and Mandarin-English code-switching require separate evaluation. The [model and workflow research](MULTILINGUAL_INPUT_RESEARCH.md) records candidates, language-aware validation, privacy boundaries and proposed acceptance checks.
 
 These extensions are not implemented or measured. A database alone does not provide workshop access controls, current availability or live booking guarantees. The [project plan](docs/project-plan.md) defines priorities. The [engineering log](docs/engineering-log.md) retains dated investigation and verification evidence; [experiments](experiments/README.md) preserves historical notebook stages rather than current application contracts.

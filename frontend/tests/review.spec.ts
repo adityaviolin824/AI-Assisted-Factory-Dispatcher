@@ -1,6 +1,6 @@
 import { expect, type Page, type Route, test } from "@playwright/test";
 import type { Review, ReviewEnvelope } from "@/lib/types";
-import { makePlan, makeReview, OTHER_RUN, RUN, runDetails } from "./fixtures";
+import { makePlan, makeReview, OTHER_RUN, RUN, runDetails, signIn } from "./fixtures";
 
 // The dispatcher's local staging. Every backend request is answered by the test, and every POST is
 // recorded, so a test fails if a choice sends anything before Approve all.
@@ -8,12 +8,15 @@ let posts: { url: string; body: unknown }[] = [];
 
 test.beforeEach(async ({ page }) => {
   posts = [];
+  await signIn(page, "dispatcher", "Mei");
   page.on("request", (request) => {
     if (request.method() === "POST") {
       posts.push({ url: request.url(), body: request.postDataJSON() });
     }
   });
   await page.route("**/api/backend/**", (route) => route.abort());
+  // The Dispatch workflow panel reads the chat's snapshots on opening; here there are none.
+  await page.route("**/api/backend/chat/snapshots", (route) => route.fulfill({ json: [] }));
 });
 
 async function serve(page: Page, path: string, json: unknown) {

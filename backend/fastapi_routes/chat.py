@@ -15,6 +15,8 @@
 # saves nothing, and the worker checks and edits the text before Send.
 # Send translates a message with Chinese characters into English on this computer first, when
 # config.toml [translation] is on (30 October 2026); that is free and needs no switch.
+# DELETE /chat/messages (31 October 2026) is Clear chat: it deletes every message for everyone, so a
+# demonstration can start from an empty conversation. Snapshots, runs and reviews stay.
 import json
 import os
 from pathlib import Path
@@ -165,6 +167,19 @@ def send_message(message: NewMessage):
         return chat_storage.save_message(chat_storage.DATABASE, message.submission_id, message.sender, text)
     except ValueError as error:
         raise HTTPException(status_code=422, detail=str(error))
+
+
+@router.delete("/chat/messages")
+def clear_chat():
+    """Delete every chat message for everyone and return {"deleted"}, the number deleted. It makes no
+    model call.
+
+    Saved snapshots, runs and reviews stay. A running process reads its own snapshot file, so it is
+    not affected. Before the first message there is nothing to delete, and nothing is created.
+    """
+    if not chat_storage.DATABASE.exists():
+        return {"deleted": 0}
+    return {"deleted": chat_storage.clear_messages(chat_storage.DATABASE)}
 
 
 @router.get("/chat/snapshots")

@@ -7,8 +7,9 @@
 #            DISPLAY_TIMEZONE and the five storage functions are copied unchanged; the mock's comments
 #            became docstrings. The mock's Streamlit screen stays there. CHAT_DIR, DATABASE and
 #            SNAPSHOTS_DIR are new: the app keeps its chat in the output folder, apart from the mock's.
+#            clear_messages is new (31 October 2026): Clear chat, to start a demonstration afresh.
 # Reads:     DATABASE.
-# Writes:    DATABASE (save_message, initialize_storage) and one new folder per snapshot,
+# Writes:    DATABASE (save_message, initialize_storage, clear_messages) and one new folder per snapshot,
 #            SNAPSHOTS_DIR/<snapshot ID>/ with dispatch_requests.txt and manifest.json (export_conversation).
 #            No model is called.
 import hashlib
@@ -79,6 +80,16 @@ def read_messages(database):
         return [dict(row) for row in connection.execute(
             "SELECT * FROM messages ORDER BY message_id"
         ).fetchall()]
+
+
+def clear_messages(database):
+    """Delete every saved message and return how many were deleted.
+
+    Snapshots are separate files and stay unchanged, so every conversation sent for processing keeps
+    its copy. Message IDs keep counting up; the next snapshot still labels its first message R01.
+    """
+    with closing(sqlite3.connect(database, timeout=10)) as connection, connection:
+        return connection.execute("DELETE FROM messages").rowcount
 
 
 def build_export(messages, snapshot_id, exported_at_utc):

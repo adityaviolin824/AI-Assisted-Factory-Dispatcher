@@ -1,13 +1,14 @@
 import { chatDateTime, chatTime } from "@/lib/format";
 import type { ChatMessage } from "@/lib/types";
 
-type Props = { messages: ChatMessage[] };
+// emptyText replaces the Chat page's wording where there is no composer below, as on the Dispatcher page.
+type Props = { messages: ChatMessage[]; emptyText?: string };
 
 // The shared conversation in the order the backend saved it, with each message's original text.
 // The newest message stays in view: .timeline scrolls from the bottom (globals.css).
-export default function ChatTimeline({ messages }: Props) {
+export default function ChatTimeline({ messages, emptyText = "No messages yet. Write the first request below." }: Props) {
   if (messages.length === 0) {
-    return <p className="timeline-empty muted">No messages yet. Write the first request below.</p>;
+    return <p className="timeline-empty muted">{emptyText}</p>;
   }
   return (
     <div className="timeline">

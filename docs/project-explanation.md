@@ -10,7 +10,7 @@ The application keeps original messages beside recommendations, calculates the a
 
 ## Current workflow
 
-1. Operations staff send named messages in Chat, typed or dictated. A dictated message appears as text to check and edit before sending. With translation on, a message in Chinese is saved as its English translation, made on the computer itself. **Prepare chat for dispatch** captures a fixed conversation snapshot.
+1. Operations staff send named messages in Chat, typed or dictated. A dictated message appears as text to check and edit before sending. With translation on, a message in Chinese is saved as its English translation, made on the computer itself. The dispatcher reads the chat on the Dispatcher page, where **Prepare chat for dispatch** captures a fixed conversation snapshot.
 2. After **Start dispatch workflow**, language models extract owned messages, identify jobs, connect supported follow-ups and assess current task evidence.
 3. Python checks order identity, quantities, dates, restrictions and readiness. Uncertain or unsupported input remains visible.
 4. The scheduler calculates workshop eligibility, delivery, cost and tentative shared queues in deadline order.

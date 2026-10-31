@@ -1,12 +1,13 @@
 import { expect, type Page, type Request, test } from "@playwright/test";
 import type { ChatMessage, NewMessage } from "@/lib/types";
-import { makeSnapshot, MESSAGES } from "./fixtures";
+import { MESSAGES, signIn } from "./fixtures";
 
-// Every backend request is answered by the test, as in dispatcher.spec.ts: the chat endpoints are
-// only proposed, and these tests never reach a real backend or a model.
+// Every backend request is answered by the test, as in dispatcher.spec.ts, so these tests never reach
+// a real backend or a model. The Chat page belongs to team members, so each test signs in as one; the
+// dispatcher's Dispatch workflow panel is tested in dispatcher.spec.ts.
 test.beforeEach(async ({ page }) => {
+  await signIn(page, "team", "Priya");
   await page.route("**/api/backend/**", (route) => route.abort());
-  await page.route("**/api/backend/chat/snapshots", (route) => route.fulfill({ json: [] }));
 });
 
 async function serveMessages(page: Page, messages: ChatMessage[]) {
@@ -59,29 +60,25 @@ test("the chat says which date relative words count from", async ({ page }) => {
 });
 
 test("one message is counted in the singular", async ({ page }) => {
-  const oneLine = { lines: [makeSnapshot().lines[0]], message_count: 1 };
   await serveMessages(page, [MESSAGES[0]]);
-  await page.route("**/api/backend/chat/snapshots", (route) =>
-    route.fulfill({
-      json: [
-        makeSnapshot(oneLine),
-        makeSnapshot({ ...oneLine, snapshot_id: "S0", processing: "finished", run_id: "R0", thread_id: "TH0" }),
-      ],
-    }),
-  );
   await page.goto("/operations");
   await expect(page.getByText("1 message, the last at 09:02")).toBeVisible();
-  await expect(page.getByText("Snapshot of 1 message,")).toBeVisible();
-  await expect(page.getByRole("listitem").filter({ hasText: "R0" })).toHaveText("R0 1 message");
 });
 
-test("Send stays disabled until there is a name and a message", async ({ page }) => {
+test("the Chat page has no dispatch controls: dispatch starts on the Dispatcher page", async ({ page }) => {
+  await serveMessages(page, MESSAGES);
+  await page.goto("/operations");
+  await expect(page.getByRole("list", { name: "Messages" }).getByRole("listitem")).toHaveCount(2);
+  await expect(page.getByRole("region", { name: "Dispatch workflow" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Prepare chat for dispatch" })).toHaveCount(0);
+});
+
+test("Send stays disabled until there is a message, and the composer asks for no name", async ({ page }) => {
   await serveMessages(page, []);
   await page.goto("/operations");
   const send = page.getByRole("button", { name: "Send" });
   await expect(send).toBeDisabled();
-  await page.getByLabel("Your name").fill("Chen");
-  await expect(send).toBeDisabled();
+  await expect(page.getByLabel("Your name")).toHaveCount(0);
   await page.getByRole("textbox", { name: "Message", exact: true }).fill("Please allocate ORD-061.");
   await expect(send).toBeEnabled();
 });
@@ -90,7 +87,6 @@ test("Ctrl+Enter does not send while Send is disabled", async ({ page }) => {
   await serveMessages(page, MESSAGES);
   const bodies = await recordSends(page, (body) => saved(body, 3));
   await page.goto("/operations");
-  await page.getByLabel("Your name").fill("Chen");
   const message = page.getByRole("textbox", { name: "Message", exact: true });
   await message.press("Control+Enter");
   // Only the message sent afterwards reaches the backend.
@@ -105,7 +101,6 @@ test("Send saves the message, shows it and clears the draft", async ({ page }) =
   await serveMessages(page, MESSAGES);
   const bodies = await recordSends(page, (body) => saved(body, 3));
   await page.goto("/operations");
-  await page.getByLabel("Your name").fill("Priya");
   await page.getByRole("textbox", { name: "Message", exact: true }).fill("Please allocate ORD-061.");
   await page.getByRole("button", { name: "Send" }).click();
 
@@ -122,7 +117,6 @@ test("a failed send keeps the draft, and a retry reuses its submission ID", asyn
     attempt === 1 ? { status: 503, json: { detail: "The chat store is busy." } } : saved(body, 3),
   );
   await page.goto("/operations");
-  await page.getByLabel("Your name").fill("Priya");
   await page.getByRole("textbox", { name: "Message", exact: true }).fill("Please allocate ORD-061.");
   await page.getByRole("button", { name: "Send" }).click();
 
@@ -137,7 +131,6 @@ test("editing a draft after a failed send makes it a new submission", async ({ p
   await serveMessages(page, MESSAGES);
   const bodies = await recordSends(page, () => ({ status: 503, json: { detail: "The chat store is busy." } }));
   await page.goto("/operations");
-  await page.getByLabel("Your name").fill("Priya");
   await page.getByRole("textbox", { name: "Message", exact: true }).fill("Please allocate ORD-061.");
   await page.getByRole("button", { name: "Send" }).click();
   await expect(page.getByText("Not sent: The chat store is busy.")).toBeVisible();
@@ -160,7 +153,6 @@ test("while a message sends, its text box cannot change", async ({ page }) => {
     await route.fulfill(saved(route.request().postDataJSON() as NewMessage, 3));
   });
   await page.goto("/operations");
-  await page.getByLabel("Your name").fill("Priya");
   const box = page.getByRole("textbox", { name: "Message", exact: true });
   await box.fill("Please allocate ORD-061.");
   await box.press("Control+Enter");
@@ -176,79 +168,125 @@ test("while a message sends, its text box cannot change", async ({ page }) => {
   await expect(box).toBeEditable();
 });
 
-test("the name is remembered in this tab", async ({ page }) => {
-  await serveMessages(page, MESSAGES);
+test("an open chat empties at the next read after the conversation is cleared", async ({ page }) => {
+  await page.clock.install();
+  let served = MESSAGES;
+  await page.route("**/api/backend/chat/messages", (route) => route.fulfill({ json: served }));
   await page.goto("/operations");
-  await page.getByLabel("Your name").fill("Priya");
-  await page.reload();
-  await expect(page.getByLabel("Your name")).toHaveValue("Priya");
+  await expect(page.getByText("2 messages, the last at 09:05")).toBeVisible();
+
+  // Another device clears the chat, so the backend now returns no messages.
+  served = [];
+  await page.clock.fastForward(3000);
+  await expect(page.getByText("No messages yet.")).toBeVisible();
+  await expect(page.getByText("0 messages")).toBeVisible();
 });
 
-test("processing waits for a confirmation about paid models, then links the run to Dispatcher", async ({ page }) => {
-  // Real thread IDs are long random codes (uuid4); the link carries it, so the text does not show it.
-  const threadId = "3f2a9c1e-5b7d-4e2a-9f1c-8d6b2a4e7c10";
-  const processRequests: Request[] = [];
-  page.on("request", (request) => request.url().endsWith("/process") && processRequests.push(request));
+test("a read that started before a Send does not hide the sent message when it answers late", async ({ page }) => {
   await page.clock.install();
-  await serveMessages(page, MESSAGES);
-  await page.route("**/api/backend/chat/snapshots", (route) =>
-    route.request().method() === "POST" ? route.fulfill({ json: makeSnapshot() }) : route.fulfill({ json: [] }),
-  );
-  await page.route("**/api/backend/chat/snapshots/S1/process", (route) =>
-    route.fulfill({ json: makeSnapshot({ processing: "running" }) }),
-  );
-  await page.route("**/api/backend/chat/snapshots/S1", (route) =>
-    route.fulfill({
-      json: makeSnapshot({ processing: "finished", run_id: "2026-10-21_09-10-00", thread_id: threadId }),
-    }),
-  );
-  await page.goto("/operations");
-
-  await page.getByRole("button", { name: "Prepare chat for dispatch" }).click();
-  await expect(page.getByText("Snapshot of 2 messages")).toBeVisible();
-  await expect(page.getByText("Processing sends these messages to paid AI models")).toBeVisible();
-  expect(processRequests).toHaveLength(0);
-
-  await page.getByRole("button", { name: "Start dispatch workflow" }).click();
-  await expect(page.getByText("Processing. This takes several minutes")).toBeVisible();
-  await page.clock.fastForward(5000);
-  await expect(page.getByRole("link", { name: "Open in Dispatcher" })).toHaveAttribute(
-    "href",
-    `/dispatcher?run=2026-10-21_09-10-00&thread=${threadId}`,
-  );
-  await expect(page.getByText("Processed as run 2026-10-21_09-10-00, ready for the dispatcher's review.")).toBeVisible();
-  await expect(page.getByText(threadId)).toHaveCount(0);
-  expect(processRequests).toHaveLength(1);
-});
-
-test("a failed status read is shown, and processing is still followed", async ({ page }) => {
-  await page.clock.install();
-  await serveMessages(page, MESSAGES);
-  await page.route("**/api/backend/chat/snapshots", (route) =>
-    route.fulfill({ json: [makeSnapshot({ processing: "running" })] }),
-  );
+  const bodies = await recordSends(page, (body) => saved(body, 3));
   let reads = 0;
-  await page.route("**/api/backend/chat/snapshots/S1", (route) => {
+  let answerLateRead: (() => Promise<void>) | undefined;
+  await page.route("**/api/backend/chat/messages", (route) => {
+    if (route.request().method() !== "GET") {
+      return route.fallback();
+    }
     reads += 1;
-    // The first read fails, as while the API server reloads; the next one finds the run finished.
-    return reads === 1
-      ? route.fulfill({ status: 502, body: "Bad gateway" })
-      : route.fulfill({ json: makeSnapshot({ processing: "finished", run_id: "R1", thread_id: "TH1" }) });
+    if (reads === 2) {
+      // The second read is held until after the Send, as on a slow connection.
+      answerLateRead = () => route.fulfill({ json: MESSAGES });
+      return;
+    }
+    return route.fulfill({ json: bodies.length ? [...MESSAGES, saved(bodies[0], 3).json] : MESSAGES });
   });
   await page.goto("/operations");
-  await expect(page.getByText("Processing. This takes several minutes")).toBeVisible();
-  await page.clock.fastForward(5000);
-  await expect(page.locator("p.error")).toContainText("HTTP 502");
-  await page.clock.fastForward(5000);
-  await expect(page.getByRole("link", { name: "Open in Dispatcher" })).toBeVisible();
-  await expect(page.locator("p.error")).toHaveCount(0);
+  await expect(page.getByText("2 messages")).toBeVisible();
+  await page.clock.fastForward(3000);
+  await expect.poll(() => answerLateRead).toBeDefined();
+
+  await messageBox(page).fill("Please allocate ORD-061.");
+  await page.getByRole("button", { name: "Send" }).click();
+  await expect(page.getByText("3 messages")).toBeVisible();
+
+  // The held read answers with the two older messages; the page keeps all three.
+  const lateAnswer = page.waitForResponse((response) => response.request().method() === "GET" && response.url().endsWith("/chat/messages"));
+  await answerLateRead!();
+  await lateAnswer;
+  await page.waitForTimeout(300);
+  // Counted once, not with a retrying check, which would wait for the next read to repair the list.
+  expect(await page.getByRole("list", { name: "Messages" }).getByRole("listitem").count()).toBe(3);
 });
 
-test("Prepare chat for dispatch is disabled while the chat is empty", async ({ page }) => {
-  await serveMessages(page, []);
+// Serves a chat that a successful Clear chat really empties; returns the DELETE requests it received.
+async function serveClearableChat(page: Page, succeed: boolean) {
+  let served = MESSAGES;
+  const deletes: Request[] = [];
+  await page.route("**/api/backend/chat/messages", (route) => {
+    if (route.request().method() !== "DELETE") {
+      return route.fulfill({ json: served });
+    }
+    deletes.push(route.request());
+    if (!succeed) {
+      return route.fulfill({ status: 500, body: "Internal Server Error" });
+    }
+    served = [];
+    return route.fulfill({ json: { deleted: MESSAGES.length } });
+  });
+  return deletes;
+}
+
+function confirmClear(page: Page) {
+  return page.getByRole("group", { name: "Confirm Clear chat" });
+}
+
+test("Clear chat asks on the page first, and Cancel sends nothing", async ({ page }) => {
+  const deletes = await serveClearableChat(page, true);
+  // The question is part of the page, not a browser pop-up.
+  const dialogs: string[] = [];
+  page.on("dialog", (dialog) => {
+    dialogs.push(dialog.message());
+    return dialog.dismiss();
+  });
   await page.goto("/operations");
+  await page.getByRole("button", { name: "Clear chat" }).click();
+  await expect(confirmClear(page)).toContainText(
+    "Are you sure you want to delete all the chat messages up till now (2 messages)? They are deleted for " +
+      "everyone and cannot be recovered. Saved snapshots and dispatch plans stay.",
+  );
+  await expect(page.getByRole("button", { name: "Clear chat" })).toBeDisabled();
+
+  await confirmClear(page).getByRole("button", { name: "Cancel" }).click();
+  await expect(confirmClear(page)).toHaveCount(0);
+  await expect(page.getByRole("list", { name: "Messages" }).getByRole("listitem")).toHaveCount(2);
+  await expect(page.getByRole("button", { name: "Clear chat" })).toBeEnabled();
+  expect(deletes).toHaveLength(0);
+  expect(dialogs).toEqual([]);
+});
+
+test("Yes, delete sends one request and empties the chat", async ({ page }) => {
+  const deletes = await serveClearableChat(page, true);
+  await page.goto("/operations");
+  await page.getByRole("button", { name: "Clear chat" }).click();
+  await confirmClear(page).getByRole("button", { name: "Yes, delete" }).click();
   await expect(page.getByText("No messages yet.")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Prepare chat for dispatch" })).toBeDisabled();
+  await expect(page.getByText("0 messages")).toBeVisible();
+  await expect(confirmClear(page)).toHaveCount(0);
+  // Nothing is left to clear.
+  await expect(page.getByRole("button", { name: "Clear chat" })).toBeDisabled();
+  expect(deletes).toHaveLength(1);
+});
+
+test("a failed Clear chat shows the reason and keeps the messages", async ({ page }) => {
+  await serveClearableChat(page, false);
+  await page.goto("/operations");
+  await page.getByRole("button", { name: "Clear chat" }).click();
+  await confirmClear(page).getByRole("button", { name: "Yes, delete" }).click();
+  await expect(page.locator("p.error")).toHaveText(
+    "Could not clear the chat: The backend answered HTTP 500. Check that the FastAPI server is running.",
+  );
+  await expect(confirmClear(page)).toHaveCount(0);
+  await expect(page.getByRole("list", { name: "Messages" }).getByRole("listitem")).toHaveCount(2);
+  await expect(page.getByRole("button", { name: "Clear chat" })).toBeEnabled();
 });
 
 function messageBox(page: Page) {

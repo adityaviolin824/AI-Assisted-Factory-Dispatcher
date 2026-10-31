@@ -1,5 +1,7 @@
 // Small synthetic plans for the browser tests. The numbers are made up; the field names and
 // outcomes follow the backend's plan.json (see lib/types.ts).
+import type { Page } from "@playwright/test";
+import type { Role } from "@/lib/identity";
 import type {
   ChatMessage,
   DecisionRecord,
@@ -14,6 +16,12 @@ import type {
   SummaryRow,
   Task,
 } from "@/lib/types";
+
+/** Sign in before each page load, as the sign-in page would: the name and role go into this tab's
+ * sessionStorage under the key lib/identity.ts reads. */
+export async function signIn(page: Page, role: Role, name: string) {
+  await page.addInitScript((identity) => sessionStorage.setItem("identity", JSON.stringify(identity)), { name, role });
+}
 
 export const RUN: RunSummary = { run_id: "R1", label: "chat.txt", messages: 4 };
 export const OTHER_RUN: RunSummary = { run_id: "R2", label: "other-chat.txt", messages: 4 };

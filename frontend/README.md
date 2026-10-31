@@ -26,6 +26,12 @@ Browser requests use `/api/backend/...`. The rewrite in [next.config.ts](next.co
 
 Opening a page, sending messages, capturing snapshots, reading model usage and reviewing plans make no paid model calls; sending a Chinese message can use the backend's local translation model. Two Chat actions can incur model charges, and the backend refuses both unless it was started with `ALLOW_PAID_PROCESSING=1`: **Start dispatch workflow**, which processes a snapshot, and **Record**, which sends one recording for transcription.
 
+### Vercel frontend with a Render backend
+
+This hosting arrangement is prepared, not deployed. Set Vercel's project root to `frontend/` and provide `BACKEND_API_URL` as the Render backend's HTTPS origin before building. The existing `/api/backend/...` rewrite proxies requests to the backend; no browser-side provider key or separate CORS configuration is needed for that path. Changing the backend origin requires a new frontend build.
+
+Keep OpenAI credentials and paid-processing permission on the backend. HTTPS provides the browser context needed for recording and chat submission on phones. Deployment still uses one shared conversation and dispatcher workspace; independent user sessions and concurrent-review conflict handling are not implemented. Backend storage, worker constraints and sizing limits are documented in the [backend hosting guide](../backend/README.md#minimal-container-and-split-hosting).
+
 ### Use an Android phone without deployment
 
 The laptop can serve the application while a connected Android phone runs the real interface. Start the frontend and backend normally; no public hosting or Wi-Fi connection between the devices is needed for Chrome's USB port forwarding.

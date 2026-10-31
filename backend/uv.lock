@@ -2369,16 +2369,14 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "fastapi", extra = ["standard-no-fastapi-cloud-cli"] },
-    { name = "langchain" },
     { name = "langchain-openai" },
     { name = "langgraph" },
     { name = "langgraph-checkpoint-sqlite" },
     { name = "langsmith" },
     { name = "openai" },
-    { name = "pandas" },
     { name = "pydantic" },
     { name = "python-dotenv" },
-    { name = "streamlit" },
+    { name = "tzdata" },
 ]
 
 [package.optional-dependencies]
@@ -2391,22 +2389,23 @@ dev = [
     { name = "gradio" },
     { name = "ipykernel" },
     { name = "jupyterlab" },
+    { name = "langchain" },
+    { name = "pandas" },
+    { name = "streamlit" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "fastapi", extras = ["standard-no-fastapi-cloud-cli"], specifier = ">=0.147.0" },
-    { name = "langchain" },
     { name = "langchain-openai" },
     { name = "langgraph" },
     { name = "langgraph-checkpoint-sqlite", specifier = ">=3.1.2" },
     { name = "langsmith" },
     { name = "mlx-lm", marker = "extra == 'translation'", specifier = ">=0.32.2" },
     { name = "openai", specifier = ">=3.16.2" },
-    { name = "pandas" },
     { name = "pydantic" },
     { name = "python-dotenv" },
-    { name = "streamlit", specifier = ">=1.65.0" },
+    { name = "tzdata", specifier = ">=2026.4" },
 ]
 provides-extras = ["translation"]
 
@@ -2415,6 +2414,9 @@ dev = [
     { name = "gradio", specifier = ">=6.30.0" },
     { name = "ipykernel" },
     { name = "jupyterlab" },
+    { name = "langchain", specifier = ">=1.4.2" },
+    { name = "pandas", specifier = ">=3.0.6" },
+    { name = "streamlit", specifier = ">=1.65.0" },
 ]
 
 [[package]]

@@ -4,21 +4,36 @@
 !backend/
 
 # Never send secrets or local tool settings, even from inside backend/.
+backend/.env
+backend/.env.*
 **/.env
 **/.env.*
 backend/.claude/
 **/.DS_Store
+**/.git
+**/*.pem
+**/*.key
+**/credentials*.json
+**/secrets*.json
 
 # Made on each computer or by each run. The image builds its own .venv; saved runs, model-answer
 # caches and review checkpoints are mounted when the container starts (see the Dockerfile).
 backend/.venv/
+backend/.uv-cache/
+backend/.cache/
 backend/output/
 **/__pycache__/
-# Local translation model weights (config.toml [translation], 1.8 GB). MLX runs on Apple silicon only,
-# so a Linux container would need translation switched off or another runtime.
+# Optional translation is disabled and its runtime is not installed in the production image.
 backend/models/
 
 # Not used by the API. The notebooks hold their own outputs and chat storage, and the tests read them.
 backend/experimentation_notebooks/
 backend/tests/
 backend/testing_runs/
+backend/full_evaluation_suite/
+backend/eval_harness/
+backend/docs/
+backend/debugging/
+backend/problems_solved/
+backend/code-section-demos-explanations/
+backend/*.md

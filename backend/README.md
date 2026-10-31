@@ -2,9 +2,9 @@
 
 Backend for [AI-Assisted-Factory-Dispatcher](../README.md), the repository for SweaterCo Dispatch Copilot.
 
-Implementation reference updated: 30 October 2026. Python modules serve the command-line scripts and the FastAPI application in `main.py`. The web interface uses chat/snapshot processing, saved runs and dispatcher review endpoints. Notebooks 05 and 06 are historical references; intentional differences are declared in the module tests.
+Implementation reference updated: 31 October 2026 for production dependency separation and minimal container packaging. Python modules serve the command-line scripts and the FastAPI application in `main.py`. The web interface uses chat/snapshot processing, saved runs and dispatcher review endpoints. Notebooks 05 and 06 are historical references; intentional differences are declared in the module tests.
 
-**One-batch final approval, implemented 21 October:** the dispatcher completes all choices locally, with no per-click mutation, recalculation or persisted edits. One **Approve all** submits the set through `POST /reviews/{thread_id}/finalize`; Python keeps the dispatcher's destinations, schedules flexible work, saves immediately and returns the final dispatch table plus changed rows. **Check workshop options** (22 October 2026) sends the same set to `POST /reviews/{thread_id}/preview`, which runs that calculation and returns the draft and its changed rows, or the refusal, without saving, approving or resuming anything. **Review again** (22 October 2026) reopens an approved plan: `POST /runs/{run_id}/preview` and `POST /runs/{run_id}/finalize` add new choices to the saved ones, plan once from the original queues and save a new version, keeping the earlier one in `plan-history/`. The lower-level per-answer/empty-approval API described below is retained for terminal and programmatic use; the web interface uses batch finalization. Approve all and Review again are the app's reallocation: there is no separate step. Docker comes at the absolute end.
+**One-batch final approval, implemented 21 October:** the dispatcher completes all choices locally, with no per-click mutation, recalculation or persisted edits. One **Approve all** submits the set through `POST /reviews/{thread_id}/finalize`; Python keeps the dispatcher's destinations, schedules flexible work, saves immediately and returns the final dispatch table plus changed rows. **Check workshop options** (22 October 2026) sends the same set to `POST /reviews/{thread_id}/preview`, which runs that calculation and returns the draft and its changed rows, or the refusal, without saving, approving or resuming anything. **Review again** (22 October 2026) reopens an approved plan: `POST /runs/{run_id}/preview` and `POST /runs/{run_id}/finalize` add new choices to the saved ones, plan once from the original queues and save a new version, keeping the earlier one in `plan-history/`. The lower-level per-answer/empty-approval API described below is retained for terminal and programmatic use; the web interface uses batch finalization. Approve all and Review again are the app's reallocation: there is no separate step. The Linux AMD64 container has been built and checked locally; cloud deployment is not complete.
 
 For the earlier notebook stages, see the [experiment guide](../experiments/README.md), [development notes](../experiments/development-notes.md) and [timeline](../experiments/timeline.md). The public notebook copies retain the rules of their historical versions; they are not the current application entry points.
 
@@ -31,6 +31,38 @@ Run commands from `backend/`, using the project-local `uv` environment.
 | `uv run python score_dispatcher_review.py output/runs/<start time> --key <key.json> --data <data folder>` | Score the table after the dispatcher's review against an answer key; writes `dispatcher_review_score.md` into the run folder. | None. |
 
 Obtain approval before any run that could make paid model calls. A previously free run does not establish that the current flow is fully cached.
+
+## Minimal container and split hosting
+
+The root [Dockerfile](../Dockerfile) uses a Python 3.13.14 slim builder and runtime. The builder uses locked `uv` dependencies; the final image receives only the virtual environment and backend source. `uv` itself, package caches, notebook/test material and model weights are excluded. Pandas, Streamlit and the full `langchain` package are development dependencies; production uses `langchain-openai` and its required core dependencies. Translation remains an unselected optional extra. Voice remains available through the OpenAI API and needs no local speech runtime.
+
+`tzdata` is an explicit small production dependency so the chat's `Asia/Singapore` timestamps work even when a slim host has no system timezone database. The container starts one Uvicorn worker on `0.0.0.0`, using `PORT` when supplied or 8000 otherwise. One worker/instance matches the current file-based processing status contract, which records the serving process ID.
+
+Prepared Render/Vercel topology, not a completed deployment:
+
+- Render builds the backend using the repository-root Dockerfile and build context. Keep one service instance and mount persistent storage at `/app/output` for chat SQLite, snapshots, response caches, saved plans and LangGraph checkpoints.
+- Set backend credentials in Render's environment, never in the image or frontend. Voice and fresh processing require `ALLOW_PAID_PROCESSING=1`; the current application has no authentication, so public paid endpoints need controlled access before enabling them.
+- Vercel builds `frontend/` with `BACKEND_API_URL` set to the backend's HTTPS origin. The existing rewrite proxies `/api/backend/...`; browser code does not need provider credentials. Rebuild after changing the origin.
+- Several people can access the shared interface, but this does not add isolated conversations or independent simultaneous dispatch workflows. Processing admits one snapshot at a time; coordinate dispatcher edits because multi-dispatcher conflict handling is not implemented.
+
+Render's [free service rules](https://render.com/docs/free) include idle spin-down and loss of ephemeral local files. A [persistent disk](https://render.com/docs/disks) requires a paid service. Moving workshop records to Postgres later would not by itself persist the existing JSON run files and SQLite checkpoints.
+
+### Measured container size and limited-load memory
+
+On 31 October 2026, `sweaterco-backend:slim-check-20261031` was built for Linux AMD64 using Docker Desktop on an ARM64 Mac. The final image installed 81 production packages; checks found no translation/model/notebook packages, local weights, environment file or runtime uv binary. Build context was about 691 KB. Explicit environment-file exclusions and exclusion of the local evaluation-suite folders keep them outside the build context.
+
+| Measurement | Observed value |
+|---|---|
+| Docker-reported local image disk usage | 323 MB |
+| Compressed image content | 68.9 MB |
+| Container memory after HTTP checks | 115.4 MiB |
+| Cgroup peak during startup and checks | 149.3 MiB (156,553,216 bytes) |
+| Test memory limit | 512 MiB, with no additional swap |
+| Out-of-memory events | 0 |
+
+The container had no external network, credentials, published port or host-data mount. Sixteen synthetic chat submissions from four concurrent clients succeeded; a duplicate submission was saved once, and a snapshot contained all 16 messages. Processing and transcription correctly returned 403 while paid processing was disabled. The temporary container was stopped after measurement; its synthetic data was disposable.
+
+These observations support a small shared demo, not a full processing-load guarantee. The peak includes the in-container verification client and AMD64 execution on an ARM64 host. Fresh language processing, real voice calls, concurrent review edits and a Render deployment were not exercised. Image storage and the hosting plan's RAM allowance are separate quantities; measure the real processing workload before treating 512 MB as sufficient for every supported use.
 
 ## HTTP API
 

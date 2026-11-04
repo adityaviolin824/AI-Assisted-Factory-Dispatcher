@@ -1,0 +1,24 @@
+R01 [09:00] Chen: Please allocate ORD-008 to OldMill, W7, for delivery by Apr 20.
+R02 [09:02] Priya: Please allocate ORD-015 to Little Loom, W4, for delivery by Apr 20.
+R03 [09:04] Boss: Please allocate all 400 pieces of ORD-073 to FreshStart, W8, for delivery by Apr 20.
+R04 [09:06] Mei: Please allocate ORD-045 for delivery by Apr 02. The deadline is confirmed and cannot move.
+R05 [09:08] Ravi: Please allocate ORD-029 for delivery today, Apr 01.
+R06 [09:10] Chen: Please allocate ORD-120. The delivery deadline is Mar 17, with no confirmed replacement date.
+R07 [09:12] Priya: Please allocate ORD-053 by Apr 20, excluding W1, W2, W3, W5, W6 and W8.
+R08 [09:14] Boss: ORD-109 must go to W2, but the customer also says W2 must not receive it. Both instructions are still in force; ask which applies.
+R09 [09:16] Mei: Please split ORD-061 equally across two workshops and deliver by Apr 22.
+R10 [09:18] Ravi: Please allocate ORD-081 by Apr 25, but total production cost must not exceed 100.
+R11 [09:20] Chen: Please allocate ORD-099 for delivery by Apr 02. Show a late option for the dispatcher if necessary; I have not authorised late delivery.
+R12 [09:22] Priya: ORD-103 is 2500 scarves, although the order record says 2000. Please confirm the quantity before planning it for Apr 25.
+R13 [09:24] Boss: ORD-066 might need delivery on Apr 10 instead of Apr 26. The customer has not confirmed which date applies.
+R14 [09:26] Mei: The customer has cancelled ORD-093. Do not allocate it.
+R15 [09:28] Ravi: Please allocate ORD-017 by Apr 25 as two separate batches. The dispatcher must decide the batch quantities.
+R16 [09:30] Chen: Please allocate ORD-095 by Apr 26. Fastest eligible workshop that meets delivery, using the recorded quantity.
+R17 [09:32] Priya: Please allocate ORD-040 by Apr 22. Fastest eligible workshop that meets delivery, using the recorded quantity.
+R18 [09:34] Boss: Please allocate ORD-036 by Apr 22. Cheapest eligible workshop that meets delivery, using the recorded quantity.
+R19 [09:36] Mei: Please allocate ORD-010 by Apr 25. Lowest defect rate among eligible workshops that meet delivery.
+R20 [09:38] Ravi: Please allocate ORD-108 by Apr 25. Exclude W6 and use the recorded quantity.
+R21 [09:40] Chen: What selling price did we quote the customer for ORD-096? This is a question, not a request to allocate it.
+R22 [09:42] Priya: Which workshop handled ORD-062 last year? Please use an actual assignment record if one exists.
+R23 [09:44] Boss: Has outside production actually started for ORD-024? I need live workshop progress, not its estimated delivery.
+R24 [09:46] Mei: Please allocate ORD-005 by Apr 25 only to a workshop with the customer's certification. The certification name and evidence have not been provided.

@@ -1,0 +1,30 @@
+R01 [08:00] Chen: Please allocate ORD-045. Delivery is required by Apr 14.
+R02 [08:01] Chen: For that batch, choose the cheapest eligible workshop that can meet delivery.
+R03 [08:03] Priya: Please allocate ORD-061. Delivery is required by Apr 18.
+R04 [08:04] Boss: Please allocate ORD-053. Delivery is required by Apr 18.
+R05 [08:05] Priya: For my scarf request just above, exclude W6. The delivery date is unchanged.
+R06 [08:06] Boss: For my polo-shirt request, exclude W1. This is a condition on the existing request.
+R07 [08:08] Mei: Please place ORD-073 for delivery by Apr 20.
+R08 [08:09] Mei: For that hoodie batch, quality matters more than price. Use the lowest defect rate among eligible on-time workshops.
+R09 [08:11] Ravi: Allocate ORD-081 for delivery by Apr 22.
+R10 [08:12] Ravi: Keep BudgetWorks out of that crewneck-sweater request.
+R11 [08:14] Chen: Correction to my ORD-045 request: delivery is now Apr 16, replacing Apr 14. Keep the existing workshop preference.
+R12 [08:16] Priya: Please allocate ORD-103 for delivery by Apr 25.
+R13 [08:17] Boss: Please allocate ORD-109 for delivery by Apr 25.
+R14 [08:18] Priya: My ORD-103 scarf batch must go to W6. This does not change the earlier ORD-061 exclusion.
+R15 [08:19] Boss: For ORD-109, choose the cheapest eligible workshop that meets delivery.
+R16 [08:21] Mei: Allocate ORD-066 for delivery by Apr 26.
+R17 [08:22] Ravi: Allocate ORD-008 for delivery by Apr 20.
+R18 [08:23] Mei: No QuickStitch for ORD-066. Please attach that restriction to my existing request.
+R19 [08:24] Ravi: For ORD-008, quickest delivery is the priority.
+R20 [08:26] Chen: Please allocate ORD-015 for delivery by Apr 18.
+R21 [08:27] Mei: Chen, for ORD-015, is quality more important than price?
+R22 [08:28] Chen: Yes, for ORD-015 use the lowest defect rate among workshops that can make delivery.
+R23 [08:30] Priya: Please allocate ORD-099 for delivery by Apr 22.
+R24 [08:31] Priya: Correction: the confirmed delivery date for ORD-099 is Apr 24. Replace Apr 22; this is not another batch.
+R25 [08:33] Boss: Please allocate ORD-029 for delivery by Apr 24.
+R26 [08:34] Boss: For that beanie batch, choose the cheapest eligible workshop that makes the date.
+R27 [08:36] Ravi: Please allocate ORD-093 for delivery by Apr 20.
+R28 [08:37] Ravi: Thanks, ORD-093 is the correct order number. No change to the request.
+R29 [08:39] Mei: My ORD-066 message is one request for its recorded 1000 pieces. Please do not create a second task from this confirmation.
+R30 [08:40] Chen: Final preference correction for ORD-045: fastest turnaround replaces cheapest. Keep delivery Apr 16.

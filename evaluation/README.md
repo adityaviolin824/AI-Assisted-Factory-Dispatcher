@@ -20,6 +20,7 @@ Two separate things were evaluated, and their results are kept apart:
 | Review record: who reviewed, what changed, file hashes | [Review evidence](../backend/docs/evaluation/extended_dispatch_100_REVIEW.md) |
 | Test 10: both runs, with failure analysis and charts | [Run comparison and findings](../backend/docs/evaluation/GOLDEN_100_RUN_REPORT.md) |
 | Test 11: one run, before and after the dispatcher's review | [End-to-end test](../backend/docs/evaluation/END_TO_END_TEST_2026-10-22.md) |
+| Eighteen individually analysed failures, fixes, current limits and verification evidence | [Failure case analysis](failure-case-analysis.md) |
 | Run 2: every plan row with its reason | [Detailed run 2 results](golden_100_run_2_report.md) |
 | Log of every paid test run (Tests 10 and 11 cover these runs) | [Experiment history](../backend/docs/evaluation/PROMPT_TESTING_RESULTS.md) |
 | Earlier notebooks and selected debugging records | [Development experiments](../experiments/README.md) |

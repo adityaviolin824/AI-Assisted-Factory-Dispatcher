@@ -5,10 +5,11 @@ import { usePathname } from "next/navigation";
 import { type Role, useIdentity } from "@/lib/identity";
 
 // The page each role works in. Team members write in the chat; the dispatcher plans on the Dispatcher
-// page and reads the chat there.
+// page and reads the chat there; a workshop reports its current state.
 const MODES: Record<Role, { href: string; label: string }[]> = {
   team: [{ href: "/operations", label: "Chat" }],
   dispatcher: [{ href: "/dispatcher", label: "Dispatcher" }],
+  workshop: [{ href: "/workshop", label: "Workshop" }],
 };
 
 // The signed-in role's page, one click away on every page. Nothing is shown before sign-in.

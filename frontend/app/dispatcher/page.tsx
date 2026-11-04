@@ -12,6 +12,7 @@ import RunPicker from "@/components/RunPicker";
 import TaskDetails from "@/components/TaskDetails";
 import TaskTable from "@/components/TaskTable";
 import UsagePanel from "@/components/UsagePanel";
+import WorkshopUpdates from "@/components/WorkshopUpdates";
 import {
   errorText,
   finalize,
@@ -28,7 +29,8 @@ import { decisionFor, taskFor } from "@/lib/plan";
 import type { Review, RunDetails, RunSummary } from "@/lib/types";
 
 // The dispatcher console, the dispatcher's only page. See chat history shows the shared chat read-only,
-// and the Dispatch workflow panel turns it into a run. A saved run shows its approved dispatcher plan
+// Workshop updates lists what the workshops reported for the next run, and the Dispatch workflow panel
+// turns the chat into a run. A saved run shows its approved dispatcher plan
 // when there is one, otherwise the plan made before the dispatcher's review. Opening a paused review shows its draft
 // and lets the dispatcher make choices, which stay in this page until Approve all. Check workshop
 // options shows a preview of them, calculated by the backend and saved nowhere. Review again opens
@@ -357,6 +359,7 @@ export default function DispatcherPage() {
         plan saves it as JSON files; nothing is sent to a workshop.
       </p>
       {historyOpen && <ChatHistory />}
+      <WorkshopUpdates />
       <ProcessPanel onOpen={openProcessed} />
 
       {runs?.length === 0 && <p className="muted">The backend has no saved runs.</p>}

@@ -239,6 +239,32 @@ export type Transcript = { text: string };
 // One send attempt. Sending it again with the same submission_id saves nothing new.
 export type NewMessage = { submission_id: string; sender: string; raw_text: string };
 
+// What a workshop can report about itself (3 November 2026). Each value replaces a workshops.csv value
+// from the next dispatch run on: capacity is pieces per day, queue_days the days of work already booked
+// outside the plan, lead_days the pickup lead time.
+export type WorkshopValues = { taking_new_work: boolean; capacity: number; queue_days: number; lead_days: number };
+
+// One report, as PUT /workshops/{workshop_id} receives it.
+export type NewWorkshopReport = WorkshopValues & { note: string; reported_by: string };
+
+// A saved report; reported_at is UTC.
+export type WorkshopReport = NewWorkshopReport & { workshop_id: string; reported_at: string };
+
+// One workshop as GET /workshops returns it: its fixed facts from workshops.csv, the CSV ("recorded") and
+// current values of what it can report, and its last report.
+export type Workshop = {
+  workshop_id: string;
+  name: string;
+  status: string;
+  makes: string[];
+  cost_per_piece: number;
+  defect_rate: number;
+  max_batch: number | null;
+  recorded: WorkshopValues;
+  current: WorkshopValues;
+  last_report: WorkshopReport | null;
+};
+
 // How one exported line maps a chat message to its R label and the pipeline's L message ID.
 export type SnapshotLine = { message_id: number; request_label: string; processing_message_id: string };
 

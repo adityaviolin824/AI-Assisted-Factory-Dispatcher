@@ -7,9 +7,10 @@ The Next.js interface for [SweaterCo Dispatch Copilot](../README.md). Team membe
 | Route | Purpose |
 |---|---|
 | `/` | Product introduction, worked dispatch example, recorded evaluation results and methodology. |
-| `/sign-in` | A name and a role, Team member or Dispatcher, for this browser tab. It labels the demo's users and is not authentication: there is no password and the backend does not check it. A team member is offered only Chat; a dispatcher is offered only Dispatcher. **Switch user** returns here. |
+| `/sign-in` | A name and a role, Team member, Dispatcher or Workshop, for this browser tab; a workshop also chooses which of the eight workshops it is. It labels the demo's users and is not authentication: there is no password and the backend does not check it. Each role is offered only its own page. **Switch user** returns here. |
 | `/operations` | Team members only. Shared conversation, named senders, message history, optional voice input and **Clear chat**. |
-| `/dispatcher` | Dispatcher only. Read-only chat history, fixed snapshots and an explicitly started dispatch workflow, saved runs, source evidence, recommendations, exceptions, workshop comparisons, decisions, change reports and each run's model usage and estimated cost. |
+| `/dispatcher` | Dispatcher only. Read-only chat history, workshop updates, fixed snapshots and an explicitly started dispatch workflow, saved runs, source evidence, recommendations, exceptions, workshop comparisons, decisions, change reports and each run's model usage and estimated cost. |
+| `/workshop` | Workshop only (3 November 2026). The factory's fixed facts and the workshop's own report, used from the dispatcher's next run ([workshop reports](#workshop-reports)). |
 
 ## Run locally
 
@@ -51,7 +52,7 @@ Use forwarded `localhost` for this setup. A plain HTTP LAN address is not equiva
 
 ## Chat interaction
 
-Chat and Dispatcher open only after sign-in; without one, both go to `/sign-in`. Chat belongs to team members: a dispatcher who opens it is sent to Dispatcher, which shows the chat read-only, and a team member who opens Dispatcher is sent to Chat.
+Chat, Dispatcher and Workshop open only after sign-in; without one, each goes to `/sign-in`. Chat belongs to team members: a dispatcher who opens it is sent to Dispatcher, which shows the chat read-only, and a team member who opens Dispatcher is sent to Chat.
 
 1. Type a message; it is sent under the signed-in name. Alternatively, select **Record**, speak one request and select **Stop recording**; recording stops by itself after one minute. The transcript is added to the message box and is never sent by itself.
 2. Check and edit the text before **Send**, especially order IDs, quantities and dates. **Send** saves the message for everyone and makes no paid model call. With the backend's translation switch on, a message containing Chinese is saved, and then shown, as its English translation (30 October 2026); a translation that changed an order or workshop ID is refused with the reason, and the text stays in the box.
@@ -77,12 +78,18 @@ Reallocation is this recalculation of the dispatch table. It does not transfer w
 
 **See chat history**, in the page toolbar, opens a read-only copy of the whole shared conversation above the dispatch workflow panel and the plan, with no message box, Send or Clear chat, read from `GET /chat/messages` each time it opens; **Hide chat history** closes it. It shows the messages since the last Clear chat. A saved run's source messages remain in its task details, because a run keeps its own snapshot.
 
+## Workshop reports
+
+A workshop signs in, chooses itself and opens `/workshop` (3 November 2026). **Set by the factory** shows its categories, status, price per piece, defect rate and largest batch, which it cannot change. **Your report** has a **Taking new work** switch and three numbers: **Pieces per day**, **Days of work already booked** (work outside the dispatcher's plan) and **Pickup lead time (days)**, each with the factory's record beside it, plus an optional note. The browser refuses pieces per day below 1 and negative days; **Save** sends `PUT /workshops/{workshop_id}` and shows "Saved ... It applies from the dispatcher's next run." A run already started keeps the numbers it started with. If the factory has suspended the workshop, the page says automatic planning skips it whatever it reports.
+
+On the Dispatcher page, **Workshop updates** lists each workshop whose last report differs from the factory's records or carries a note, in plain words, for example "W6 Nimble Needle: not taking new work; pieces per day from 130 to 65", with who reported it and when. It reads `GET /workshops` when the page opens and on **Check for new reports**. To plan with new reports, prepare the chat again and process the new snapshot.
+
 ## Structure
 
 | Location | Responsibility |
 |---|---|
-| `app/` | Routes, layouts and shared styles. `app/operations/layout.tsx` and `app/dispatcher/layout.tsx` apply each page's role rule through `components/RoleGuard.tsx`. |
-| `components/` | Sign-in status and role guard, chat controls and voice recording, dispatch workflow status, dispatch tables, detail views, model usage and decision forms. |
+| `app/` | Routes, layouts and shared styles. `app/operations/layout.tsx`, `app/dispatcher/layout.tsx` and `app/workshop/layout.tsx` apply each page's role rule through `components/RoleGuard.tsx`. |
+| `components/` | Sign-in status and role guard, chat controls and voice recording, dispatch workflow status, workshop updates, dispatch tables, detail views, model usage and decision forms. |
 | `lib/api.ts` | Calls to the existing FastAPI endpoints. |
 | `lib/choices.ts` | Convert local form choices into structured dispatcher decisions. |
 | `lib/identity.ts` | The signed-in name and role, kept in this tab's `sessionStorage`, and the name rule shared with the backend. |
@@ -102,13 +109,13 @@ npm run build
 npm test
 ```
 
-The latest recorded checks, on 31 October 2026 after the demo sign-in, Clear chat, See chat history and the role correction that moved the dispatch workflow to the Dispatcher page and Clear chat to team members, passed 87 Playwright tests, type checking, lint and the production build. The three voice-recording tests were not run on that day; they last passed on 30 October 2026.
+The latest recorded checks, on 3 November 2026 after the workshop reports, passed 96 Playwright tests, including the three voice-recording tests, type checking, lint and the production build.
 
 Playwright uses the Chromium executable configured in [playwright.config.ts](playwright.config.ts); `CHROMIUM_PATH` can select an existing compatible binary. The default references a locally installed browser, so a clean checkout needs an available browser executable. Tests simulate backend responses; they do not process paid requests or establish production accuracy. Voice tests record from Chromium's fake microphone (`--use-fake-ui-for-media-stream`, `--use-fake-device-for-media-stream`) and answer the transcription request themselves, so no real speech is recognised and no model is called. Some backend integration checks additionally depend on local saved runs and notebook references excluded from publication.
 
 ## Current limits
 
-- One shared conversation and one dispatcher; multiple channels are not implemented. The sign-in sorts the demo's users but is not authentication: anyone can choose Dispatcher, any team member can clear the shared chat, and the backend does not check who sends a request.
+- One shared conversation and one dispatcher; multiple channels are not implemented. The sign-in sorts the demo's users but is not authentication: anyone can choose Dispatcher or any workshop, any team member can clear the shared chat, and the backend does not check who sends a request.
 - Source-linked clarification replies and general-purpose AI question answering are not implemented.
 - Voice input sends audio to OpenAI and has not been measured on real speech. Mandarin is experimental; Singapore English pronunciation, Singlish and Mandarin-English code-switching are not evaluated. Local speech recognition remains future work.
 - A translated message shows only its English; the original Chinese is not kept, and the page does not mark the message as translated.

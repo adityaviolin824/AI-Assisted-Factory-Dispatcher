@@ -59,7 +59,7 @@ from task_allocation_to_workshops import allocation_plan
 # The definitions copied unchanged from notebook 05 (Sections 14 and 15).
 MOVED = {
     "app_full_pipeline.pipeline_graph": [
-        "start_run", "link_items", "extract_batch", "verify_tasks", "save_outputs", "after_link",
+        "link_items", "extract_batch", "verify_tasks", "save_outputs", "after_link",
         "recursion_limit"],
 }
 # Moved from notebook 05, then changed on purpose (see docs/legacy/LANGGRAPH_MODULARIZATION_PLAN.md):
@@ -68,9 +68,10 @@ MOVED = {
 # Since 20 October 2026 (DISPATCHER_REVIEW_GRAPH_PLAN.md) the graph pauses for the dispatcher:
 # PipelineState has the review keys, plan_allocation also calculates the first review, build_graph
 # compiles with a checkpointer and adds the review loop, and run_graph runs on a new thread to the
-# first pause.
+# first pause. Since 3 November 2026 (DISPATCHER_REVIEW_PLAN.md) start_run also saves the run's fixed
+# workshop facts as workshops.json.
 CHANGED = {
-    "app_full_pipeline.pipeline_graph": ["PipelineState", "plan_allocation", "build_graph", "run_graph"],
+    "app_full_pipeline.pipeline_graph": ["PipelineState", "start_run", "plan_allocation", "build_graph", "run_graph"],
 }
 # Functions that are new in the modules.
 NEW = {
@@ -81,7 +82,7 @@ NEW = {
 }
 T8, T9, T21 = "T:L0008:J1", "T:L0009:J1", "T:L0021:J1"
 # The files a run folder holds before the dispatcher approves.
-RUN_FILES = {"manifest.json", "state.json", "calls", "plan.json", "plan-history"}
+RUN_FILES = {"manifest.json", "state.json", "workshops.json", "calls", "plan.json", "plan-history"}
 DISPATCHER_FILES = {"dispatcher-decisions.json", "dispatcher-plan.json"}
 
 

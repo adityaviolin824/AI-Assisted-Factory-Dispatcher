@@ -25,6 +25,7 @@ from task_allocation_to_workshops.allocation_settings_and_data import (
     DISPATCH_DATE, INITIAL_QUEUES, PLAN_OBJECTIVE, WORKSHOPS)
 from task_allocation_to_workshops.rank_workshops import OBJECTIVE_ALIASES, OBJECTIVE_FIELDS
 from task_allocation_to_workshops.recommend_one_task import recommend, task_deadline
+from task_allocation_to_workshops.workshop_updates import use_run_workshops
 from task_routing.route_verified_tasks import route_tasks
 
 
@@ -196,7 +197,11 @@ def plan_allocation(run_dir, state, messages):
 
     A task that an unresolved input may modify is planned as usual, and its row is marked
     provisional. plan["review_warnings"] keeps, for each such task, the rows that may modify it.
+
+    The workshops are planned with the facts fixed when the run started (run_dir/workshops.json), or
+    with workshops.csv for a run without that file (3 November 2026).
     """
+    use_run_workshops(run_dir)
     created_at = datetime.now()
     complete = pipeline_complete(state, messages)
     if not complete:

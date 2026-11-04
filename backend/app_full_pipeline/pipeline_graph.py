@@ -11,7 +11,8 @@
 # Came from: notebook 05, Sections 14 and 15. The plan_allocation node now calls the allocation
 #            module, so every run gets a plan (a partial one when processing is incomplete), and the
 #            notebook's after_save router is gone. The review pause is new (20 October 2026).
-# Writes:    RUNS_DIR/<start time>/: manifest.json, state.json, calls/, plan.json and plan-history/,
+#            start_run also saves the run's fixed workshop facts, workshops.json (3 November 2026).
+# Writes:    RUNS_DIR/<start time>/: manifest.json, state.json, workshops.json, calls/, plan.json and plan-history/,
 #            the same files as run_intake_and_processing.py followed by run_allocation.py; after the
 #            dispatcher's approval also dispatcher-decisions.json and dispatcher-plan.json. While a run
 #            waits for the dispatcher, the checkpointer (CHECKPOINT_FILE for the runner scripts) keeps it.
@@ -43,6 +44,7 @@ from order_processing_into_tasks.processing_run import prepare_run, save_run_out
 from order_processing_into_tasks.settings_and_data import OUTPUT_DIR, save_checkpoint
 from order_processing_into_tasks.verify_tasks import run_verification
 from task_allocation_to_workshops import allocation_plan
+from task_allocation_to_workshops.workshop_updates import freeze_for_run
 
 # The SQLite file in which run_full_pipeline.py and resume_dispatcher_review.py keep paused reviews.
 CHECKPOINT_FILE = OUTPUT_DIR / "dispatcher-review-checkpoints.sqlite"
@@ -78,6 +80,8 @@ def start_run(graph_state):
     Every run starts from scratch; saved model answers make a repeated run free, so there is no resume.
     """
     run_dir, processing = prepare_run(graph_state["messages"], graph_state["label"])
+    # The run's workshop facts are fixed now; a workshop report saved later applies to the next run.
+    freeze_for_run(run_dir)
     print(f"[Graph] start_run: {len(graph_state['messages'])} messages; run folder {run_dir}")
     return {"run_dir": str(run_dir), "processing": processing}
 

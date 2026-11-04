@@ -7,6 +7,7 @@ import type {
   ChatMessage,
   Decision,
   NewMessage,
+  NewWorkshopReport,
   PreviewEnvelope,
   ReviewEnvelope,
   RunDetails,
@@ -14,6 +15,7 @@ import type {
   RunUsage,
   Snapshot,
   Transcript,
+  Workshop,
 } from "./types";
 
 const BASE = "/api/backend";
@@ -154,6 +156,20 @@ export function createSnapshot() {
 
 export function readSnapshot(snapshotId: string) {
   return request<Snapshot>(`/chat/snapshots/${encodeURIComponent(snapshotId)}`);
+}
+
+// The eight workshops with their recorded and current values and last report. No model call.
+export function listWorkshops() {
+  return request<Workshop[]>("/workshops");
+}
+
+// Saves one workshop's report; the next dispatch run plans with it. No model call.
+export function reportWorkshop(workshopId: string, report: NewWorkshopReport) {
+  return request<Workshop>(`/workshops/${encodeURIComponent(workshopId)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(report),
+  });
 }
 
 // Starts the pipeline on one snapshot and returns at once; processing calls paid models.

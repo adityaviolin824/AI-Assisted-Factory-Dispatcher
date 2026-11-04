@@ -15,8 +15,9 @@
 #              2026): a chosen workshop or completed request overrides whatever processing left open
 #              (blockers, a split, a non-allocation intent), and the row names what it overrides.
 #              A request the dispatcher cancelled is not planned (24 October 2026): it reserves no
-#              queue time and has a "cancelled" row of its own.
-# Reads:       the run folder's manifest.json and state.json, orders.csv and workshops.csv.
+#              queue time and has a "cancelled" row of its own. Each review plans with the run's fixed
+#              workshop facts (workshops.json, 3 November 2026).
+# Reads:       the run folder's manifest.json, state.json and workshops.json, orders.csv and workshops.csv.
 # Writes:      nothing. A review is a preview: it commits no assignment and changes no queue outside
 #              its own copy. No model is called.
 import contextlib
@@ -34,6 +35,7 @@ from task_allocation_to_workshops.allocation_settings_and_data import (
     DISPATCH_DATE, INITIAL_QUEUES, ORDERS, WORKSHOPS)
 from task_allocation_to_workshops.recommend_one_task import batch_pieces, recommend, task_deadline
 from task_allocation_to_workshops.workshop_rules_and_estimates import candidate_metrics, rejection_reason
+from task_allocation_to_workshops.workshop_updates import use_run_workshops
 from task_routing.route_verified_tasks import route_task, route_tasks
 
 # The facts a dispatcher may correct, with their allowed values (None: checked on their own). A
@@ -244,7 +246,11 @@ def build_dispatcher_plan(run_folder, decisions):
     reserves the same work twice. Every input keeps exactly one row, as in plan.json, and every batch
     the dispatcher added has one more. Nothing is final in a draft: finalize_review approves the review
     the dispatcher saw.
+
+    The workshops have the facts fixed when the run started, so a later workshop report never changes
+    this run's reviews (3 November 2026).
     """
+    use_run_workshops(run_folder)
     manifest = json.loads((run_folder / "manifest.json").read_text(encoding="utf-8"))
     state = json.loads((run_folder / "state.json").read_text(encoding="utf-8"))
     messages, entries = manifest["messages"], decisions["decisions"]

@@ -7,12 +7,13 @@ SweaterCo Dispatch Copilot reads factory requests, calculates workshop options a
 | Capability | Behavior |
 |---|---|
 | Shared operations chat | Named messages, retained source text, retry identity, shared history and stable TXT snapshots. |
-| Demo sign-in and roles | A name and a role, Team member or Dispatcher, for each browser tab, without passwords or authentication; messages carry the signed-in name. Team members get the Chat page only, including **Clear chat**, which asks "Are you sure?" on the page and then empties the conversation for everyone while snapshots, runs and plans stay. The dispatcher gets the Dispatcher page only: **See chat history** shows the chat read-only, and dispatch processing starts there. |
+| Demo sign-in and roles | A name and a role, Team member, Dispatcher or Workshop, for each browser tab, without passwords or authentication; messages carry the signed-in name. Team members get the Chat page only, including **Clear chat**, which asks "Are you sure?" on the page and then empties the conversation for everyone while snapshots, runs and plans stay. The dispatcher gets the Dispatcher page only: **See chat history** shows the chat read-only, and dispatch processing starts there. |
 | Checked voice input | **Record** turns one short spoken request into text in the message box through OpenAI's `gpt-transcribe`; the worker checks and edits it before **Send**. English is supported and Mandarin is experimental. The API refuses it without paid-processing permission. |
 | Local Chinese translation | Optional and disabled by default. With the configuration switch on and the optional runtime/model installed, **Send** saves a message containing Chinese as its English translation, made on the host by Tencent's Hy-MT2-1.8B (8-bit, MLX), so processing reads English. A translation that changes an order or workshop ID is refused. No per-message charge; the original Chinese is not kept. |
 | Explicit processing | On the Dispatcher page, **Prepare chat for dispatch** captures a snapshot; **Start dispatch workflow** sends it into the language/validation/allocation pipeline. The API requires paid-processing permission. |
 | Evidence-backed interpretation | Owned extraction, independent jobs, bounded follow-up candidates, task versions and source checks. |
 | Deterministic planning | Capability, status, caps, preferences and exclusions; delivery, cost, expected rework and queue calculations. |
+| Workshop reports | A workshop reports whether it is taking new work, its pieces per day, days of work already booked and pickup lead time (3 November 2026). Each run fixes these values when it starts and the planning rules use them; a later report applies from the next run. The Dispatcher page lists reported changes. |
 | Uncertainty visibility | Clarifications, processing/link reviews and provisional warnings remain separate from approved rows. |
 | Dispatcher control | Correct facts and quantity, complete an identified request, add batches, fix destinations, check applicable warnings and cancel a request so it reserves no workshop time. |
 | Unsaved preview | **Check workshop options** calculates the whole pending choice set without saving or resuming the graph. |
@@ -73,7 +74,7 @@ The supplied 30-request Test 7 replay reached 30/30 readiness agreement after a 
 
 ## Verification and observability
 
-Latest recorded checks, on 30 October 2026 after local translation, passed 176 offline backend tests, 72 Playwright tests, type checking, lint and the frontend build. The backend categories total 176: 27 processing, 25 allocation, 15 harness, 23 graph, 43 dispatcher review, 11 run-report, 4 final-score, 11 run/review API and 17 chat API checks.
+Latest recorded checks, on 3 November 2026 after workshop reports, passed 184 offline backend tests, 96 Playwright tests, type checking, lint and the frontend build. The backend categories total 184: 27 processing, 25 allocation, 15 harness, 23 graph, 43 dispatcher review, 11 run-report, 4 final-score, 11 run/review API, 19 chat API and 6 workshop report checks.
 
 Checks cover hand-worked scheduling cases, source/schema contracts, task versions, queue accounting, partial plans, graph/standalone equivalence, refusal, preview without writes, approval, re-review and chat snapshots. Recorded mutation checks establish detection of selected deliberately broken rules. Some checks depend on local notebooks/saved runs excluded from publication. Browser tests use controlled API responses; a backend chat test also executes the pipeline with saved model answers.
 
@@ -91,13 +92,13 @@ Optional LangSmith tracing records graph execution, including cached runs. The h
 - Voice input is not measured on real speech. It sends audio to OpenAI; local speech recognition, Singapore English pronunciation, Singlish and Mandarin-English code-switching are not evaluated.
 - Translation was checked on 12 made-up messages only. Only order and workshop IDs are checked afterwards; quantities, dates, negation and intent are not, and Chinese hold wording translated as "suspended" is not recognized as a possible hold. It runs only on Apple silicon.
 - Authentication, clarification replies, multiple channels, live assignments and production tracking are not implemented.
-- The hosted demo (Vercel frontend, Render backend, deployed 31 October 2026) has a sign-in that labels users but does not authenticate them: anyone can choose Dispatcher, any team member can clear the shared chat, and the API has no access control. Its saved chat, runs and reviews are reset when the backend restarts.
+- The hosted demo (Vercel frontend, Render backend, deployed 31 October 2026) has a sign-in that labels users but does not authenticate them: anyone can choose Dispatcher or any workshop, any team member can clear the shared chat, and the API has no access control. Its saved chat, runs, reviews and workshop reports are reset when the backend restarts.
 
 ## Planned extensions
 
 The [further implementation roadmap](FURTHER_IMPLEMENTATION.md), updated 29 October 2026, proposes:
 
-- Shared order/workshop records in PostgreSQL, with authenticated workshop updates for dated closures and permitted capacity changes. Automatic planning would check affected production dates and recheck changes before approval.
+- Shared order/workshop records in PostgreSQL, with authenticated workshop updates for dated closures and permitted capacity changes. Automatic planning would check affected production dates and recheck changes before approval. A first, unauthenticated version of workshop reports, applied from the next run, exists since 3 November 2026.
 - Local PII filtering before model calls and external tracing, while preserving operational identifiers and source-evidence checks. The first scope is names of people and addresses. Deferred on 31 October 2026 in favor of deeper dispatch features.
 - Basic prompt-injection detection with visible review, measured false positives and optional later evaluation of a local encoder classifier. Deferred on 31 October 2026.
 - A sanitized public evidence bundle for reproducing recorded model-cost estimates without publishing full run records. The in-app usage view covers runs held locally; the public bundle is still to be prepared.

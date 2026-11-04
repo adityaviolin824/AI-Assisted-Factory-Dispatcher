@@ -1159,7 +1159,7 @@ pre {
   color: var(--link);
 }
 
-/* Sign in: one narrow panel with the name, the two roles and Enter. */
+/* Sign in: one narrow panel with the name, the three roles (a workshop also picks itself) and Enter. */
 .sign-in {
   max-width: 30rem;
   margin: 24px auto 0;
@@ -1230,6 +1230,122 @@ pre {
   padding: 9px 26px;
 }
 
+/* Workshop: one panel with the factory's fixed facts, then the workshop's own report. */
+.workshop-page {
+  max-width: 40rem;
+  margin: 24px auto 0;
+  padding: 26px 28px 28px;
+  background: var(--surface);
+  border: 1px solid var(--card-line);
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+}
+
+.workshop-page h1 .muted {
+  font-size: 0.6em;
+  font-weight: 600;
+}
+
+.workshop-page form {
+  display: grid;
+  gap: 18px;
+  margin-top: 8px;
+}
+
+.workshop-page form h2 {
+  margin-bottom: 0;
+}
+
+.workshop-page .notice,
+.workshop-page .error {
+  margin: 14px 0 0;
+}
+
+.workshop-page form .error {
+  margin: 0;
+}
+
+.workshop-page button[type="submit"] {
+  justify-self: start;
+  padding: 9px 26px;
+}
+
+/* Taking new work: the checkbox and its label on one line, the hint below. */
+.switch-field {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 10px;
+  align-items: center;
+  color: var(--text);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.switch-field input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--highlight);
+}
+
+.switch-field .hint {
+  grid-column: 2;
+  font-weight: 400;
+}
+
+/* Each number field: its label, the input, then the factory's record as a hint. */
+.report-field {
+  display: grid;
+  gap: 6px;
+}
+
+.report-field input {
+  max-width: 12rem;
+}
+
+.saved-note {
+  margin: 0;
+  padding: 10px 14px;
+  background: var(--tint-saved);
+  border-left: 5px double var(--green);
+  border-radius: 0 9px 9px 0;
+}
+
+/* Dispatcher: what the workshops reported, applied from the next run. */
+.workshop-updates {
+  max-width: 96ch;
+  margin: 16px 0 8px;
+  padding: 14px 22px 16px;
+  background: var(--surface);
+  border: 1px solid var(--card-line);
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+}
+
+.workshop-updates-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 16px;
+}
+
+.workshop-updates-head h2 {
+  margin: 0;
+}
+
+.workshop-updates > .hint,
+.workshop-updates > .muted,
+.workshop-updates > .error {
+  margin: 6px 0 0;
+}
+
+.workshop-updates ul {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding-left: 20px;
+}
+
 @media (max-width: 1100px) {
   .workspace {
     grid-template-columns: minmax(0, 1fr);
@@ -1295,5 +1411,10 @@ pre {
 
   .timeline ol {
     padding: 12px;
+  }
+
+  .workshop-page,
+  .workshop-updates {
+    padding: 18px 16px 20px;
   }
 }

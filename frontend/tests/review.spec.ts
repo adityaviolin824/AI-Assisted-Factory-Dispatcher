@@ -15,8 +15,10 @@ test.beforeEach(async ({ page }) => {
     }
   });
   await page.route("**/api/backend/**", (route) => route.abort());
-  // The Dispatch workflow panel reads the chat's snapshots on opening; here there are none.
+  // The Dispatch workflow panel reads the chat's snapshots and Workshop updates reads the workshops on
+  // opening; here there are none.
   await page.route("**/api/backend/chat/snapshots", (route) => route.fulfill({ json: [] }));
+  await page.route("**/api/backend/workshops", (route) => route.fulfill({ json: [] }));
 });
 
 async function serve(page: Page, path: string, json: unknown) {

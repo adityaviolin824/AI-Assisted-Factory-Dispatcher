@@ -15,12 +15,35 @@ import type {
   StageUsage,
   SummaryRow,
   Task,
+  Workshop,
 } from "@/lib/types";
 
 /** Sign in before each page load, as the sign-in page would: the name and role go into this tab's
- * sessionStorage under the key lib/identity.ts reads. */
-export async function signIn(page: Page, role: Role, name: string) {
-  await page.addInitScript((identity) => sessionStorage.setItem("identity", JSON.stringify(identity)), { name, role });
+ * sessionStorage under the key lib/identity.ts reads. A workshop's person also names the workshop. */
+export async function signIn(page: Page, role: Role, name: string, workshop?: { workshopId: string; workshopName: string }) {
+  await page.addInitScript((identity) => sessionStorage.setItem("identity", JSON.stringify(identity)), {
+    name,
+    role,
+    ...workshop,
+  });
+}
+
+// One workshop as GET /workshops returns it. With no report, its current values are the factory's records.
+export function makeWorkshop(changes: Partial<Workshop> = {}): Workshop {
+  const recorded = { taking_new_work: true, capacity: 60, queue_days: 1, lead_days: 1 };
+  return {
+    workshop_id: "W6",
+    name: "Nimble Needle",
+    status: "ACTIVE",
+    makes: ["DRESSES", "TOPS"],
+    cost_per_piece: 1.2,
+    defect_rate: 0.05,
+    max_batch: 400,
+    recorded,
+    current: recorded,
+    last_report: null,
+    ...changes,
+  };
 }
 
 export const RUN: RunSummary = { run_id: "R1", label: "chat.txt", messages: 4 };

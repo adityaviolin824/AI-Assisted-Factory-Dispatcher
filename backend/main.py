@@ -5,14 +5,16 @@
 #
 # Routes: fastapi_routes/runs.py reads saved runs; fastapi_routes/dispatcher.py shows and answers a
 # dispatcher review that the pipeline paused; fastapi_routes/chat.py saves the operations chat and
-# captures snapshots of it. Only POST /chat/snapshots/{snapshot_id}/process calls models, which can
+# captures snapshots of it; fastapi_routes/workshops.py lists the workshops and saves their own reports
+# (3 November 2026). Only POST /chat/snapshots/{snapshot_id}/process calls models, which can
 # cost money, and it is refused unless the server was started with ALLOW_PAID_PROCESSING=1. Why it is
-# built this way: FASTAPI_BUILD.md.
+# built this way: FASTAPI_BUILD.md (workshop reports: DISPATCHER_REVIEW_PLAN.md).
 from fastapi import FastAPI
 
-from fastapi_routes import chat, dispatcher, runs
+from fastapi_routes import chat, dispatcher, runs, workshops
 
 app = FastAPI(title="Dispatcher API")
 app.include_router(runs.router)
 app.include_router(dispatcher.router)
 app.include_router(chat.router)
+app.include_router(workshops.router)

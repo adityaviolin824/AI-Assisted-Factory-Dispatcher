@@ -1,14 +1,27 @@
 import { expect, type Page, type Request, type Route, test } from "@playwright/test";
 import type { Plan } from "@/lib/types";
-import { makePlan, makeReview, makeSnapshot, makeUsage, MESSAGES, OTHER_RUN, RUN, runDetails, signIn } from "./fixtures";
+import {
+  makePlan,
+  makeReview,
+  makeSnapshot,
+  makeUsage,
+  makeWorkshop,
+  MESSAGES,
+  OTHER_RUN,
+  RUN,
+  runDetails,
+  signIn,
+} from "./fixtures";
 
 // Every backend request is answered by the test. A request without its own route is aborted, so
 // these tests never reach a real FastAPI server. (A later route takes precedence over this one.)
-// The Dispatch workflow panel reads the chat's snapshots on opening; by default there are none.
+// The Dispatch workflow panel reads the chat's snapshots and Workshop updates reads the workshops on
+// opening; by default there are none.
 test.beforeEach(async ({ page }) => {
   await signIn(page, "dispatcher", "Mei");
   await page.route("**/api/backend/**", (route) => route.abort());
   await page.route("**/api/backend/chat/snapshots", (route) => route.fulfill({ json: [] }));
+  await page.route("**/api/backend/workshops", (route) => route.fulfill({ json: [] }));
 });
 
 async function serve(page: Page, path: string, json: unknown, status = 200) {
@@ -29,6 +42,33 @@ function details(page: Page, rowId: string) {
 function worklistRows(page: Page) {
   return page.getByRole("table", { name: "Worklist" }).locator("tbody tr");
 }
+
+test("Workshop updates lists what a workshop reported, and Check for new reports reads it again", async ({ page }) => {
+  await serve(page, "/runs", []);
+  await serve(page, "/workshops", [makeWorkshop(), makeWorkshop({ workshop_id: "W1", name: "QuickStitch" })]);
+  await page.goto("/dispatcher");
+  const updates = page.getByRole("region", { name: "Workshop updates" });
+  await expect(updates).toContainText("No workshop has reported a change.");
+
+  const report = {
+    taking_new_work: false,
+    capacity: 45,
+    queue_days: 1,
+    lead_days: 1,
+    note: "Two machines down",
+    reported_by: "Arun",
+    workshop_id: "W6",
+    reported_at: "2026-11-03T02:00:00+00:00",
+  };
+  const reported = makeWorkshop({ current: { taking_new_work: false, capacity: 45, queue_days: 1, lead_days: 1 }, last_report: report });
+  await serve(page, "/workshops", [reported, makeWorkshop({ workshop_id: "W1", name: "QuickStitch" })]);
+  await updates.getByRole("button", { name: "Check for new reports" }).click();
+  // Only the workshop that reported a change is listed, in plain words, with who reported it and the note.
+  await expect(updates.getByRole("listitem")).toHaveCount(1);
+  await expect(updates.getByRole("listitem")).toContainText("W6 Nimble Needle: not taking new work; pieces per day from 60 to 45.");
+  await expect(updates.getByRole("listitem")).toContainText("Reported by Arun");
+  await expect(updates.getByRole("listitem")).toContainText("Two machines down");
+});
 
 test("filter counts add up to all rows", async ({ page }) => {
   await openRun(page, makePlan());

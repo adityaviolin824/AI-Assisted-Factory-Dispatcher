@@ -66,7 +66,7 @@ These observations support a small shared demo, not a full processing-load guara
 
 ## HTTP API
 
-FastAPI exposes 18 application routes. Interactive schema documentation is available at `/docs` when the API is running.
+FastAPI exposes 20 application routes. Interactive schema documentation is available at `/docs` when the API is running.
 
 | Routes | Purpose | Model calls |
 |---|---|---|
@@ -81,6 +81,8 @@ FastAPI exposes 18 application routes. Interactive schema documentation is avail
 | `POST /runs/{run_id}/preview`, `/finalize` | Preview or save further decisions on an approved plan. | None. |
 | `GET /reviews/{thread_id}` | Read a paused review. | None. |
 | `POST /reviews/{thread_id}/answer`, `/preview`, `/finalize` | Lower-level answers, explicit unsaved preview and one-batch approval. | None. |
+| `GET /workshops` | The eight workshops (3 November 2026): fixed facts, CSV values, current values and last report ([workshop reports](#workshop-reports)). | None. |
+| `PUT /workshops/{workshop_id}` | Save one workshop's report; 404 for an unknown workshop, 422 with a reason for a refused value. Applies from the next run. | None. |
 
 An HTTP 200 can contain a business refusal in `refused`; clients must inspect it. Unknown runs/threads return 404. Preview saves nothing. Initial finalization resumes the paused graph; saved-plan Review again calls the same planning functions outside it. One snapshot can be processed once, with only one active processing job in this single-dispatcher application.
 
@@ -151,6 +153,11 @@ Interpretation failures are recorded and other work continues. API, file and pro
 | `task_allocation_to_workshops/rank_workshops.py` | Rank candidates under the five objectives or hybrid, with deterministic tie-breaks. |
 | `task_allocation_to_workshops/recommend_one_task.py` | Produce one recommendation or an allocation review with its reasons and alternatives. |
 | `task_allocation_to_workshops/allocation_plan.py` | Plan earliest deadline first, reserve tentative workload, account for inputs and save the plan/history. |
+| `task_allocation_to_workshops/workshop_updates.py` | Save workshop reports and fix each run's workshop facts in `workshops.json`. |
+
+### Workshop reports
+
+Since 3 November 2026 a workshop can report four values from the `/workshop` page: taking new work, pieces per day (`capacity`), days of work already booked outside the plan (`queue0`) and pickup lead time (`lead_days`). Reports are appended to `output/workshop_reports.json`; the latest per workshop is current. `start_run` copies the current values into the run's `workshops.json`, and `plan_allocation` and `build_dispatcher_plan` load that file into the shared workshop records before calculating, so every calculation for one run uses the same facts and a later report applies from the next run. A run without the file uses `workshops.csv`. A workshop not taking new work gets the status `NOT_TAKING_NEW_WORK`, which the existing status rule rejects, only when its CSV status is ACTIVE. No eligibility or estimate formula changed. Reports are lost when the hosted backend restarts.
 
 Hard checks run before selection: active status, product compatibility, batch caps, requested destination, exclusions and on-time feasibility. Splits and unsupported conditions require review. Independent verified allocation requests for the same order require batch clarification. A reference-only winning workshop also requires review rather than a silent assignment.
 
@@ -283,7 +290,7 @@ The data folder is named on the command line because a run's manifest does not r
 
 ## Verification
 
-The latest recorded baseline is **176 offline tests** (30 October 2026, after local translation): 27 processing, 25 routing/allocation, 15 harness, 23 graph, 43 dispatcher review, 11 run-report, 4 approved-table score, 11 run and review API and 17 chat API tests. The transcription tests replace the model client and `.env` loading with stand-ins, so no recording leaves the machine; the translation tests replace the model's answer and fail if the model is loaded. Run from `backend/`:
+The latest recorded baseline is **184 offline tests** (3 November 2026, after workshop reports): 27 processing, 25 routing/allocation, 15 harness, 23 graph, 43 dispatcher review, 11 run-report, 4 approved-table score, 11 run and review API, 19 chat API and 6 workshop report tests. The transcription tests replace the model client and `.env` loading with stand-ins, so no recording leaves the machine; the translation tests replace the model's answer and fail if the model is loaded. Run from `backend/`:
 
 ```text
 uv run python -m unittest discover -s tests -v

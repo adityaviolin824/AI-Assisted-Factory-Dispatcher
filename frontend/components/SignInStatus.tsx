@@ -28,7 +28,7 @@ export default function SignInStatus() {
   return (
     <span className="signed-in">
       <strong>{identity.name}</strong>
-      {ROLE_LABELS[identity.role]}
+      {identity.workshopName ? `${ROLE_LABELS[identity.role]}, ${identity.workshopName}` : ROLE_LABELS[identity.role]}
       <button type="button" className="link-button" onClick={switchUser}>
         Switch user
       </button>

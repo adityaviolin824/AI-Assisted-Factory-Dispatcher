@@ -45,6 +45,7 @@ from order_intake_from_chat.read_chat_messages import read_messages
 from order_processing_into_tasks import (
     create_and_link_tasks, extract_items, model_calls_with_cache, model_prompts, processing_run, settings_and_data,
     verify_tasks)
+from task_allocation_to_workshops import workshop_updates
 
 # The definitions each module copies unchanged from notebook 05.
 MOVED = {
@@ -288,10 +289,12 @@ def offline_modules(work_dir):
     """Point the modules' run folders and a copy of the saved answers at work_dir; block API calls.
 
     Also pins NOTEBOOK_MODELS with no reasoning effort, and the notebook's VERIFY_PROMPT, so the
-    saved answers match whatever config.toml names and despite the declared prompt changes.
+    saved answers match whatever config.toml names and despite the declared prompt changes. Workshop
+    reports are read from work_dir, where there are none, so runs plan with workshops.csv.
     """
     shutil.copytree(SAVED_ANSWERS, work_dir / "response-cache")
     with (mock.patch.object(processing_run, "RUNS_DIR", work_dir / "runs"),
+          mock.patch.object(workshop_updates, "REPORTS_FILE", work_dir / "workshop_reports.json"),
           mock.patch.object(model_calls_with_cache, "CACHE_DIR", work_dir / "response-cache"),
           mock.patch.object(model_calls_with_cache, "make_chat_model", refuse_api_call),
           mock.patch.dict(settings_and_data.STAGE_MODELS, NOTEBOOK_MODELS),

@@ -78,7 +78,8 @@ MOVED = {
 # 2026): CORRECTABLE takes it, derive_task checks it and keeps it as a number, and batch_of and reserve
 # use it through batch_pieces. The dispatcher may cancel a request (24 October 2026, after CASE-097):
 # build_dispatcher_plan neither routes nor plans it and gives it a "cancelled" row, and entry_for refuses
-# another decision for it until clear.
+# another decision for it until clear. Since 3 November 2026 build_dispatcher_plan first loads the run's
+# fixed workshop facts (workshops.json, checked in test_workshop_updates.py).
 CHANGED = {
     "dispatcher_review.dispatcher_plan": [
         "CORRECTABLE", "RESERVING", "derive_task", "batch_of", "named_option", "reserve", "flexible_decision",

@@ -4,7 +4,7 @@ SweaterCo Dispatch Copilot helps factory teams decide which outside workshop sho
 
 The source repository is [AI-Assisted-Factory-Dispatcher](https://github.com/adityaviolin824/AI-Assisted-Factory-Dispatcher). SweaterCo Dispatch Copilot is the application name.
 
-**Live demo:** [ai-assisted-factory-dispatcher.vercel.app](https://ai-assisted-factory-dispatcher.vercel.app/). The frontend runs on Vercel and the API on Render. The hosted demo has one shared chat and workspace. Each person signs in with a name and a role, Team member or Dispatcher; this sorts the demo's users but is not authentication, and the API itself has no access control. **Clear chat** on the Chat page, open to any team member after an "Are you sure?" step, starts each demonstration from an empty conversation. Saved chat, runs and reviews are reset whenever the backend restarts. Fresh processing and voice input work only while the backend's paid-processing switch is on.
+**Live demo:** [ai-assisted-factory-dispatcher.vercel.app](https://ai-assisted-factory-dispatcher.vercel.app/). The frontend runs on Vercel and the API on Render. The hosted demo has one shared chat and workspace. Each person signs in with a name and a role, Team member, Dispatcher or Workshop; this sorts the demo's users but is not authentication, and the API itself has no access control. **Clear chat** on the Chat page, open to any team member after an "Are you sure?" step, starts each demonstration from an empty conversation. A workshop can report whether it is taking new work and its current capacity, queue and pickup time; the dispatcher's next run plans with the report. Saved chat, runs, reviews and workshop reports are reset whenever the backend restarts. Fresh processing and voice input work only while the backend's paid-processing switch is on.
 
 It is designed for dispatchers who assign the work, operations staff who send requests, and managers who need to understand the plan. Instead of checking every workshop and recalculating its workload by hand, the dispatcher can compare the options, deal with exceptions and make the final decision.
 
@@ -53,7 +53,7 @@ The saved table shows every row that changed: its old and new outcome, workshop,
 
 ## Product architecture
 
-This view follows a request from chat to a saved dispatch table. Read it from top to bottom. Teal represents the team frontend, green AI, blue Python and amber the dispatcher. **Review again** is optional and saves a new version. The [implementation status](#what-is-available-now) below lists current capabilities.
+This view follows a request from chat to a saved dispatch table. Read it from top to bottom. Each role has its own page: team members post requests in Chat, workshops report their availability, and the dispatcher starts runs, reviews and approves. The pages run on Vercel and work on a phone or a laptop; AI processing, Python planning and the saved records are handled by the backend on Render. Teal represents the team and workshop pages, green AI, blue Python, amber the dispatcher and grey-green saved data. A run fixes its chat snapshot and workshop facts when it starts, so a later workshop report applies from the next run. **Review again** is optional and saves a new version. The [implementation status](#what-is-available-now) below lists current capabilities.
 
 ```mermaid
 ---
@@ -82,33 +82,39 @@ flowchart TB
     subgraph PRODUCT["SWEATERCO DISPATCH COPILOT / FROM CHAT TO DISPATCH TABLE"]
         direction TB
 
-        subgraph S1["STEP 1 / OPERATIONS CHAT"]
-            direction LR
-            SEND["Team sends requests<br/>and corrections"]:::screen
-            SNAP["Dispatcher captures a fixed<br/>snapshot of the chat"]:::screen
-            PROCESS["Process the snapshot<br/>(calls paid AI models)"]:::screen
-            SEND --> SNAP --> PROCESS
+        subgraph S1["STEP 1 / TEAM AND WORKSHOPS / OWN PAGES, PHONE OR LAPTOP"]
+            direction TB
+            SEND["Team member, Chat page<br/>types or dictates a request,<br/>checks the text, then sends"]:::screen
+            REPORT["Workshop, Workshop page<br/>reports taking new work, pieces per day,<br/>booked days and pickup lead time"]:::screen
         end
 
-        subgraph S2["STEP 2 / UNDERSTAND AND PLAN"]
+        subgraph S2["STEP 2 / DISPATCHER STARTS A RUN"]
+            direction LR
+            WATCH["Read the chat (read-only)<br/>and Workshop updates"]:::human
+            SNAP["Capture a fixed<br/>snapshot of the chat"]:::human
+            PROCESS["Start the dispatch workflow<br/>(calls paid AI models)"]:::human
+            WATCH --> SNAP --> PROCESS
+        end
+
+        subgraph S3["STEP 3 / UNDERSTAND AND PLAN"]
             direction LR
             EXTRACT["AI extracts requests<br/>and links follow-ups"]:::ai
             VERIFY["AI checks requests and missing facts<br/>Python checks the order details"]:::logic
             PLAN["Python checks workshop rules,<br/>queues and deadlines,<br/>then ranks the options"]:::logic
-            FACTS[("orders.csv<br/>workshops.csv")]:::data
+            FACTS[("orders.csv<br/>workshops.csv<br/>+ workshop reports, fixed per run")]:::data
             EXTRACT --> VERIFY --> PLAN
             PLAN -.- FACTS
         end
 
-        subgraph S3["STEP 3 / DISPATCHER REVIEW"]
+        subgraph S4["STEP 4 / DISPATCHER REVIEW"]
             direction LR
-            READ["Read suggestions, reasons<br/>and Needs attention"]:::human
+            READ["Scan Suggested rows and reasons;<br/>focus judgement on Needs attention"]:::human
             CHOOSE["Keep or change suggestions<br/>correct facts, choose workshops,<br/>add or cancel batches"]:::human
             APPROVE["Approve all<br/>one approval submits any edits"]:::human
             READ --> CHOOSE --> APPROVE
         end
 
-        subgraph S4["STEP 4 / REPLAN AND SAVE"]
+        subgraph S5["STEP 5 / REPLAN AND SAVE"]
             direction LR
             REPLAN["Apply edits and replan if needed<br/>keep chosen workshops fixed;<br/>replan other ready work"]:::logic
             SAVE["Save the dispatch table,<br/>reasons and decision history;<br/>show what changed"]:::data
@@ -116,9 +122,10 @@ flowchart TB
             REPLAN --> SAVE -.-> AGAIN
         end
 
-        S1 -- "fixed snapshot" --> S2
-        S2 -- "draft dispatch table" --> S3
-        S3 -- "Approve all" --> S4
+        S1 -- "requests and workshop reports" --> S2
+        S2 -- "fixed chat snapshot and workshop facts" --> S3
+        S3 -- "draft dispatch table" --> S4
+        S4 -- "Approve all" --> S5
     end
 
     classDef screen fill:#183A49,stroke:#63AFC0,color:#F1F7F9,stroke-width:1.5px
@@ -190,7 +197,7 @@ flowchart TB
 
         subgraph B3["3 / ALLOCATE READY BATCHES / PYTHON / EARLIEST DEADLINE FIRST"]
             direction TB
-            FACTS[("Order and workshop facts")]:::data
+            FACTS[("Order facts and the run's<br/>fixed workshop facts")]:::data
             RULES["Check deadline, status, category,<br/>batch cap and request constraints<br/>Estimate queue + production<br/>+ expected rework + pickup<br/>remove late workshop options"]:::logic
             OPTIONS{"Any on-time<br/>option?"}:::logic
             PROPOSE["Rank by the request's priority<br/>default: avoid lateness<br/>or explicit cost / quality preference<br/>Propose workshop with a reason<br/>reserve planning queue time"]:::logic
@@ -250,6 +257,7 @@ The drawing groups logical responsibilities rather than expanding every implemen
 | Web interface | Chat and Dispatcher screens exist and call the backend. Chat saves messages. The dispatcher captures a fixed snapshot of the conversation and can send that snapshot through the pipeline to a paused dispatcher review (23 October 2026; these controls moved from Chat to the Dispatcher page on 31 October 2026). Processing calls paid AI models, so the API refuses it unless it was started with `ALLOW_PAID_PROCESSING=1`. Automated browser checks use controlled API responses; the chat bridge also has an offline pipeline integration test using saved model answers. The published evidence does not include a retained live-browser run artifact. |
 | Voice input | **Record** turns one short spoken request into text in the message box, to check and edit before sending (29 October 2026). The recording goes to OpenAI's `gpt-transcribe` and is not stored; the API refuses it unless started with `ALLOW_PAID_PROCESSING=1`. English is supported and Mandarin is experimental. Accuracy on real speech has not been measured. |
 | Chinese translation | Optional and disabled by default. With the switch in `backend/config.toml` on and the optional runtime/model installed, **Send** saves a message containing Chinese as its English translation, so processing reads English (implemented 30 October 2026). Tencent's Hy-MT2-1.8B runs locally (8-bit, Apple silicon), with no per-message charge. A translation that changes an order or workshop ID is refused. The original Chinese is not kept, and translation was checked on 12 made-up messages only. |
+| Workshop reports | A workshop signs in, chooses itself and reports whether it is taking new work, its pieces per day, days of work already booked and pickup lead time (3 November 2026). Each run fixes the reported values when it starts, so a later report applies from the next run; Python's existing rules and delivery estimate use them. The Dispatcher page lists reported changes. Reports are not authenticated and are lost when the hosted backend restarts. |
 | Model usage | The Dispatcher shows each saved run's model calls, reused answers, tokens, model time and estimated cost by stage, from the run's call records (29 October 2026). The figures are estimates from a stored price table, not invoices. |
 | Saved AI responses | Identical requests can reuse earlier answers. Changes to the input, model, prompt or settings may require new paid calls. |
 | Reallocation | Part of **Approve all**: Python keeps the dispatcher's choices fixed and plans the other ready work again around them, using the updated queues. **Review again** does the same on an approved table. |
@@ -308,7 +316,7 @@ The allocation rules were tested on 120 historical orders using the supplied sim
 
 The default policy delivered sooner and had fewer late batches in this test, but cost more and had more defective batches. The simulator requires a workshop for every batch, so the evaluation adapter chooses the least-late option when all options are late. The app instead asks the dispatcher to review the case. The [scheduling benchmark report](backend/eval_harness/results/harness_results_2026-10-15.md) includes the other policies and assumptions.
 
-These results measure the scheduling rules, not the accuracy of AI's reading of a conversation. The backend's **176 offline tests passed on 30 October 2026**; later changes have their own checks in the engineering log.
+These results measure the scheduling rules, not the accuracy of AI's reading of a conversation. The backend's **184 offline tests passed on 3 November 2026**; later changes have their own checks in the engineering log.
 
 ### Chat-to-allocation results
 
@@ -393,6 +401,8 @@ API keys belong in the backend environment, never in browser code. Local environ
 Current work focuses on workshop-informed dispatch planning and interface quality, with existing evaluation evidence retained. On 31 October, 176 backend tests passed after production dependency separation; the frontend's type checking, lint, build and 72 browser tests also passed earlier that day. After the demo controls were added later that day, and the roles were then corrected so that dispatch starts on the Dispatcher page and team members clear the chat, 178 backend tests and 87 browser tests passed with type checking, lint and the build; the three voice-recording tests were not rerun. The minimal Python-slim Linux AMD64 image was subsequently built and checked locally: Docker reports 323 MB of local image disk usage, and startup/chat/snapshot checks peaked at 149.3 MiB within a 512 MiB container limit. These checks made no model calls and do not establish full-processing peak memory. The backend and frontend were deployed to Render and Vercel on 31 October 2026 (see the live demo link above); see the [backend hosting guide](backend/README.md#minimal-container-and-split-hosting) for measurements, storage and shared-workspace limits.
 
 **Demo controls (31 October 2026).** A simple sign-in where each person enters a name and chooses Team member or Dispatcher, without passwords or authentication; messages carry the signed-in name. Team members see only the chat, and any of them can use **Clear chat**, after an on-page "Are you sure?" step, so each demonstration starts from an empty conversation. The dispatcher works only on the Dispatcher page: **See chat history** shows the whole chat read-only, and the **Dispatch workflow** panel there prepares and starts processing. The [system design](docs/system-design.md#demo-sign-in-decision-31-october-2026) records the design and its limits.
+
+**Workshop reports (3 November 2026).** A third role, Workshop, reports whether the workshop is taking new work, its pieces per day, days of work already booked and pickup lead time. Each dispatch run fixes these values when it starts, and the planner's existing rules use them, so a workshop that has stopped taking work or lost capacity is planned around from the next run. After this change, 184 backend tests and 96 browser tests, including the voice tests, passed with type checking, lint and the build. The [system design](docs/system-design.md#workshop-reports-decision-3-november-2026) records the decision.
 
 **Factory evaluation with dispatcher oversight (proposed).** The strongest next evidence of operational usefulness would come from evaluating a frozen version alongside real dispatchers on actual factory conversations and current order and workshop records. Begin in shadow mode: compare recommendations with independently reviewed dispatcher judgments while dispatchers retain operational control. Check message interpretation, follow-up links, allocate-or-hold decisions, evidence behind explanations, and whether workshops can make the batch, can take it given capacity and queues, and are allowed to take it. Measure unsafe recommendations, unnecessary reviews, corrections and review time against a manual workflow. Measure actual delivery, lateness, cost and quality separately if a later operational pilot is undertaken. Add inspected failures to the golden regression set, while reserving a separate untouched sample for evaluating the next frozen version. This would extend the current simulator and synthetic tests; no factory evaluation or dispatcher time-saving measurement has been performed.
 

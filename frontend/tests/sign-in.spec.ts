@@ -10,6 +10,7 @@ test.beforeEach(async ({ context }) => {
   await context.route("**/api/backend/chat/messages", (route) => route.fulfill({ json: [] }));
   await context.route("**/api/backend/chat/snapshots", (route) => route.fulfill({ json: [] }));
   await context.route("**/api/backend/runs", (route) => route.fulfill({ json: [] }));
+  await context.route("**/api/backend/workshops", (route) => route.fulfill({ json: [] }));
 });
 
 async function signInWithForm(page: Page, name: string, role: "Team member" | "Dispatcher") {
@@ -85,12 +86,14 @@ test("each browser tab has its own sign-in, so one laptop can show both roles", 
   await expect(modeLinks(page)).toHaveText(["Dispatcher"]);
 });
 
-test("without a sign-in, Chat and Dispatcher open the sign-in page and read nothing from the backend", async ({ page }) => {
+test("without a sign-in, Chat, Dispatcher and Workshop open the sign-in page and read nothing from the backend", async ({ page }) => {
   const backendRequests: string[] = [];
   page.on("request", (request) => request.url().includes("/api/backend/") && backendRequests.push(request.url()));
   await page.goto("/dispatcher");
   await expect(page).toHaveURL(/\/sign-in$/);
   await page.goto("/operations");
+  await expect(page).toHaveURL(/\/sign-in$/);
+  await page.goto("/workshop");
   await expect(page).toHaveURL(/\/sign-in$/);
   expect(backendRequests).toEqual([]);
 });

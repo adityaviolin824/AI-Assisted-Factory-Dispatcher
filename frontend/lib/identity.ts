@@ -1,13 +1,14 @@
 import { useMemo, useSyncExternalStore } from "react";
 
-export type Role = "team" | "dispatcher";
-export type Identity = { name: string; role: Role };
+export type Role = "team" | "dispatcher" | "workshop";
+// A workshop's person also names the workshop they report for (3 November 2026).
+export type Identity = { name: string; role: Role; workshopId?: string; workshopName?: string };
 
-export const ROLE_LABELS: Record<Role, string> = { team: "Team member", dispatcher: "Dispatcher" };
+export const ROLE_LABELS: Record<Role, string> = { team: "Team member", dispatcher: "Dispatcher", workshop: "Workshop" };
 
-// Each role works on one page: team members write in the chat, and the dispatcher plans on the
-// Dispatcher page, where he can read the chat but not change it.
-export const HOME_PAGE: Record<Role, string> = { team: "/operations", dispatcher: "/dispatcher" };
+// Each role works on one page: team members write in the chat, the dispatcher plans on the Dispatcher
+// page, where they can read the chat but not change it, and a workshop reports its current state.
+export const HOME_PAGE: Record<Role, string> = { team: "/operations", dispatcher: "/dispatcher", workshop: "/workshop" };
 
 // The signed-in name and role, remembered for this browser tab only, so one laptop can show a team
 // member tab and a dispatcher tab side by side. It is a label for the demo, not an account: there is
@@ -30,7 +31,7 @@ export function nameProblem(name: string): string | null {
 }
 
 export function signIn(identity: Identity) {
-  sessionStorage.setItem(IDENTITY_KEY, JSON.stringify({ name: identity.name.trim(), role: identity.role }));
+  sessionStorage.setItem(IDENTITY_KEY, JSON.stringify({ ...identity, name: identity.name.trim() }));
   window.dispatchEvent(new Event(CHANGED));
 }
 

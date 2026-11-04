@@ -69,7 +69,9 @@ NEW = {
 # a request whose deadline is on or before the dispatch date the status "deadline_passed" and
 # calculates nothing for it (checked through expected_decision and by ControlledChecks). Since 22 October
 # 2026 recommend sizes the batch with batch_pieces: a quantity only the dispatcher's review can give,
-# otherwise the order's pieces as before (checked in test_dispatcher_review.py).
+# otherwise the order's pieces as before (checked in test_dispatcher_review.py). Since 3 November 2026
+# plan_allocation first loads the run's fixed workshop facts (workshops.json, checked in
+# test_workshop_updates.py).
 CHANGED = {
     "task_allocation_to_workshops.allocation_plan": ["plan_tasks", "summarize_plan", "plan_allocation"],
     "task_allocation_to_workshops.recommend_one_task": ["recommend"],

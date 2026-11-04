@@ -70,7 +70,7 @@ The first implementation should avoid another network call. Measure detection mi
 
 ### Purpose and proposed approach
 
-**Timing decision (29 October 2026):** these checks remain future work. The final presentation describes them as a planned control, not an implemented one.
+**Timing decision (29 October 2026):** these checks remain future work: a planned control, not an implemented one.
 
 Add a local detection layer for attempts to change the model's role, bypass its task or expose unrelated information. Current prompts already treat source evidence as data, and Python checks response structure, source membership and scheduling rules. These controls do not establish complete resistance to manipulated interpretations.
 
@@ -117,7 +117,7 @@ Workers should be able to express requirements and understand clarification in a
 
 **Implemented part: local translation at Send (30 October 2026).** With `[translation]` on in `backend/config.toml`, **Send** translates a message containing Chinese characters into English with the research's first candidate, Hy-MT2-1.8B, converted to 8 bits and run on the host through MLX, and saves the English. A translation that loses, changes or adds an order or workshop ID is refused. It follows the local-execution rule and has no per-message charge. It departs from the first rule below: the English replaces the original instead of sitting beside it. Quantities, dates, negation and intent are not validated after translation; it was checked on 12 made-up messages. The [system design](docs/system-design.md#local-translation-decision-30-october-2026) records the decision.
 
-The [multilingual research](MULTILINGUAL_INPUT_RESEARCH.md) compares local translation and speech models, regional alternatives, licenses, runtime evidence and evaluation limitations. Its initial trial shortlist is Hy-MT2-1.8B for translation and Qwen3-ASR-0.6B for later dictation, with larger/regional comparisons only when measured failures justify them. Hy-MT2-1.8B is now installed for the translation above; no speech model is installed.
+The [multilingual research](docs/MULTILINGUAL_INPUT_RESEARCH.md) compares local translation and speech models, regional alternatives, licenses, runtime evidence and evaluation limitations. Its initial trial shortlist is Hy-MT2-1.8B for translation and Qwen3-ASR-0.6B for later dictation, with larger/regional comparisons only when measured failures justify them. Hy-MT2-1.8B is now installed for the translation above; no speech model is installed.
 
 ### Required behavior and acceptance boundaries
 
@@ -131,18 +131,18 @@ The [multilingual research](MULTILINGUAL_INPUT_RESEARCH.md) compares local trans
 
 The research defines a phased workflow and a proposed test suite; it contains no measured Singlish or voice result, and translation is measured only on the 12 made-up messages above. These extensions remain deferred under the current product priorities.
 
-## 6. Implementation sequence and presentation scope
+## 6. Implementation sequence and current scope
 
 The immediate priorities remain known correctness gaps, integrated workflow verification and the required final evaluation. Plan the extensions in bounded increments:
 
 1. Specify operational permissions, closure/calendar rules and measurable acceptance criteria. The first PII scope, names of people and addresses, was set on 29 October 2026.
 2. Prepare the sanitized cost evidence from existing records without a new model run. The in-app usage view is implemented; the public bundle remains.
 3. Add and verify local PII filtering for names and addresses, preserving interpretation and source-evidence behavior. Basic injection checks follow later; evaluate an encoder only if the measured benefit justifies it.
-4. Prototype workshop availability and operational data changes in the experiment notebook workflow before integrating a shared store and workshop interface. Validate equivalent snapshots before introducing live updates or bookings.
+4. Prototype workshop availability and operational data changes in the experiment notebook workflow before integrating a shared store and workshop interface. A first workshop page, without a shared store, exists since 3 November 2026. Validate equivalent snapshots before introducing live updates or bookings.
 5. Use the multilingual research to scope bilingual review with the original kept beside the existing local translation, then local dictation in place of the current cloud transcription. Verify original evidence, language-aware guards and outbound privacy before enabling Chinese automatic processing; evaluate Singlish separately.
 6. Address operational transactions, concurrency and permissions before live use. Deployment for demonstrations was completed on 31 October 2026; real authentication remains future work.
 
-For the final presentation, the in-app usage view and cloud voice input can be shown as implemented, with their limits: cost figures are estimates from a stored price table, and voice sends audio to OpenAI and is unmeasured on real speech. Local translation is implemented but switched off since 31 October 2026; do not feature it as a sprint deliverable. Describe workshop-maintained availability in a shared operational store and a public cost evidence bundle as planned work, and local privacy filtering, injection checks and Chinese-English communication with local dictation as deferred research. Do not imply that PostgreSQL, a workshop portal, PII redaction, an injection classifier, evaluated multilingual support, bilingual review, local speech recognition or live production bookings are already implemented.
+Current scope: the in-app usage view, cloud voice input and workshop reports are implemented, with their limits. Cost figures are estimates from a stored price table; voice sends audio to OpenAI and is unmeasured on real speech; workshop reports are unauthenticated, apply from the next run and have no dated closures. Local translation is implemented but switched off since 31 October 2026. Workshop-maintained availability in a shared operational store and a public cost evidence bundle are planned; local privacy filtering, injection checks and Chinese-English communication with local dictation are deferred research. PostgreSQL, PII redaction, an injection classifier, evaluated multilingual support, bilingual review, local speech recognition and live production bookings are not implemented.
 
 ## Technical references
 

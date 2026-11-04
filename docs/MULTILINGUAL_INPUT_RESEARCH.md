@@ -54,7 +54,7 @@ For this arm64 Mac, [MLX-Audio](https://github.com/Blaizzy/mlx-audio) documents 
 | **MADLAD-400-3B-MT** | Apache 2.0; T5-based text translation across 400+ languages. The card flags general-domain training and unassessed production use; the published conversion/card has separate contributor provenance. [Model card](https://huggingface.co/google/madlad400-3b-mt), [original paper](https://arxiv.org/abs/2309.04662). | Optional older multilingual baseline. Additional language breadth is less valuable here than fact preservation. Its encoder-decoder runtime differs from a causal chat model. |
 | **NLLB-200-distilled-600M** | CC BY-NC 4.0. The card calls it a research model, excludes production deployment, and warns about inputs beyond its 512-token training lengths. [Model card](https://huggingface.co/facebook/nllb-200-distilled-600M). | Small research comparison only; do not choose it as the product default or infer commercial suitability from downloadable weights. |
 | **Gemma-SEA-LION-v4.5-E2B-IT** | AI Singapore regional instruction model, MIT per card; 2.3B effective parameters and 5.1B including embeddings. The card lists SEA adaptation, general/translation evaluation and adversarial robustness limits. [Model card](https://huggingface.co/aisingapore/Gemma-SEA-LION-v4.5-E2B-IT). | Optional regional meaning comparison, not a dedicated translation or injection detector. The reviewed card does not establish this checkpoint's Singlish or Mandarin dispatch accuracy. "E2B" is not the full resident parameter count. |
-| **Existing interpreter with original Chinese** | No new interpretation model is selected. Current extraction and verification contracts are documented in the [backend guide](backend/README.md). | Measure this path first against translation-assisted input. It can avoid an extra semantic conversion, but existing English-oriented validation must be extended and tested before Chinese processing is enabled. |
+| **Existing interpreter with original Chinese** | No new interpretation model is selected. Current extraction and verification contracts are documented in the [backend guide](../backend/README.md). | Measure this path first against translation-assisted input. It can avoid an extra semantic conversion, but existing English-oriented validation must be extended and tested before Chinese processing is enabled. |
 | **Tencent Hy-SimulMT-30B-A3B** | Released 26 October 2026 for bidirectional Chinese-English simultaneous speech translation; translated speech needs a configured TTS service. [Publisher card](https://huggingface.co/tencent/Hy-SimulMT-30B-A3B). | Defer. Continuous interpretation and speech output exceed editable dictation. A3B denotes active MoE capacity, not a model with only 3B total weights. |
 
 Do not deploy every candidate. Start with one MT model and the existing interpreter; add the ASR pair later. Recheck current licenses, templates, revisions and library APIs when implementation starts. Downloads, custom model code and local services require a deliberate project-local setup step; none is authorized by this document alone.
@@ -107,7 +107,7 @@ These synthetic examples illustrate proposed checks; they are not a reviewed tes
 
 ## Privacy and injection checks
 
-The [local protection roadmap](FURTHER_IMPLEMENTATION.md#2-local-pii-filtering) still applies. Extend its scope explicitly for Chinese text and mixed-language messages:
+The [local protection roadmap](../FURTHER_IMPLEMENTATION.md#2-local-pii-filtering) still applies. Extend its scope explicitly for Chinese text and mixed-language messages:
 
 - Cover original text, translations, transcripts, structured fields, errors, graph state and external traces. Test whether a translation expands or restores a masked value; preserve stable aliases and protect the mapping locally.
 - English entity recognition is insufficient evidence for Chinese names/addresses. Presidio's default models/recognizers are English; additional languages require NLP and recognizer/context configuration. [Presidio multilingual documentation](https://github.com/data-privacy-stack/presidio/blob/main/docs/analyzer/languages.md).
@@ -171,7 +171,7 @@ It follows this research's dictation rules: push-to-talk for one request, an edi
 
 It departs from the local-execution recommendation. The recording leaves the host for OpenAI, contrary to "do not send recordings to an external provider by default". The route is therefore off unless the API runs with `ALLOW_PAID_PROCESSING=1`, the same switch as processing, and neither recording nor transcript is stored. Spoken names or addresses reach the provider before any text PII filter could act.
 
-English is the supported language. A transcript containing Chinese characters is marked experimental in the interface, because the cancellation, date and quantity checks still read English only. Accuracy, latency and cost on real speech, Singapore English pronunciation, Singlish and code-switching are unmeasured. OpenAI listed $0.0045 per minute of audio when checked on 29 October 2026. A local recognizer such as Qwen3-ASR remains the recommended replacement behind the same editable flow. The [system design](docs/system-design.md#voice-input-decision-29-october-2026) records the decision and alternatives.
+English is the supported language. A transcript containing Chinese characters is marked experimental in the interface, because the cancellation, date and quantity checks still read English only. Accuracy, latency and cost on real speech, Singapore English pronunciation, Singlish and code-switching are unmeasured. OpenAI listed $0.0045 per minute of audio when checked on 29 October 2026. A local recognizer such as Qwen3-ASR remains the recommended replacement behind the same editable flow. The [system design](system-design.md#voice-input-decision-29-october-2026) records the decision and alternatives.
 
 ## Implemented local translation, 30 October 2026
 
@@ -179,7 +179,7 @@ The first translation candidate above, Tencent Hy-MT2-1.8B, now runs on the host
 
 It follows this research in running locally, keeping identifiers protected and leaving Python's scheduling authority unchanged. It departs from it in two ways. The translation replaces the original instead of appearing beside it, contrary to "do not silently replace the source conversation", so exact-source evidence and the dispatcher's view are English only. And processing always reads the translation; direct Chinese interpretation was not compared.
 
-Measured on an M2 Pro with 16 GB, with 12 made-up messages including four of the examples above (not the proposed test suite): about 2.6 s for the first Chinese Send after start-up, then a median 0.27 s, and 2.2 GB peak memory. The 8-bit model matched the unquantized one word for word on 11 of 12 messages; a 4-bit conversion matched 4. Two observations bear on the guards above. 换别的车间 became "has been transferred to another workshop", turning an instruction into a statement. 暂停 became "Suspended", which the existing cancellation check does not recognize; it has no hold or suspend pattern in English either. Quantities, dates, negation and intent are not validated after translation. The [system design](docs/system-design.md#local-translation-decision-30-october-2026) records the decision and alternatives.
+Measured on an M2 Pro with 16 GB, with 12 made-up messages including four of the examples above (not the proposed test suite): about 2.6 s for the first Chinese Send after start-up, then a median 0.27 s, and 2.2 GB peak memory. The 8-bit model matched the unquantized one word for word on 11 of 12 messages; a 4-bit conversion matched 4. Two observations bear on the guards above. 换别的车间 became "has been transferred to another workshop", turning an instruction into a statement. 暂停 became "Suspended", which the existing cancellation check does not recognize; it has no hold or suspend pattern in English either. Quantities, dates, negation and intent are not validated after translation. The [system design](system-design.md#local-translation-decision-30-october-2026) records the decision and alternatives.
 
 ## Implementation touchpoints and sequence
 
@@ -187,12 +187,12 @@ These are existing integration boundaries to review, not files changed by this r
 
 | Existing location | Future work to design and verify |
 |---|---|
-| [Chat composer](frontend/components/Composer.tsx) | Language preference and a labeled translation beside the original (Send currently saves only the English). Editable dictation exists through the cloud increment; a local recognizer would replace the backend call, not this flow. Retain the save-versus-process boundary and retry behavior. |
-| [Chat API](backend/fastapi_routes/chat.py) | Explicit original/derived provenance and snapshot representation; Send now calls `order_intake_from_chat/translate_message.py`. The audio boundary is `POST /chat/transcriptions` (5 MB maximum, paid-call switch, nothing stored). |
-| [Extraction](backend/order_processing_into_tasks/extract_items.py) and [prompts](backend/order_processing_into_tasks/model_prompts.py) | Multilingual original evidence, derived context, correct ownership and exact quotation semantics. |
-| [Task verification](backend/order_processing_into_tasks/verify_tasks.py) | Supported Chinese date/quantity expressions, cancellation/negation/exclusion checks and trusted-record reconciliation. |
-| [Pipeline graph](backend/app_full_pipeline/pipeline_graph.py) | Redacted state before tracing, language/model/policy versions and reproducible derived-output reuse. |
-| [Frontend guide](frontend/README.md) and [backend guide](backend/README.md) | Document the selected subset only after implementation and measurement. |
+| [Chat composer](../frontend/components/Composer.tsx) | Language preference and a labeled translation beside the original (Send currently saves only the English). Editable dictation exists through the cloud increment; a local recognizer would replace the backend call, not this flow. Retain the save-versus-process boundary and retry behavior. |
+| [Chat API](../backend/fastapi_routes/chat.py) | Explicit original/derived provenance and snapshot representation; Send now calls `order_intake_from_chat/translate_message.py`. The audio boundary is `POST /chat/transcriptions` (5 MB maximum, paid-call switch, nothing stored). |
+| [Extraction](../backend/order_processing_into_tasks/extract_items.py) and [prompts](../backend/order_processing_into_tasks/model_prompts.py) | Multilingual original evidence, derived context, correct ownership and exact quotation semantics. |
+| [Task verification](../backend/order_processing_into_tasks/verify_tasks.py) | Supported Chinese date/quantity expressions, cancellation/negation/exclusion checks and trusted-record reconciliation. |
+| [Pipeline graph](../backend/app_full_pipeline/pipeline_graph.py) | Redacted state before tracing, language/model/policy versions and reproducible derived-output reuse. |
+| [Frontend guide](../frontend/README.md) and [backend guide](../backend/README.md) | Document the selected subset only after implementation and measurement. |
 
 Suggested increments, after the core correctness and required evaluation priorities:
 
@@ -204,4 +204,4 @@ Suggested increments, after the core correctness and required evaluation priorit
 
 ## Current status, 31 October 2026
 
-Multilingual expansion is deferred under the current [product priorities](docs/project-plan.md). The local translation implementation is retained but disabled by default, and its MLX runtime is an optional dependency extra. The research above does not establish bilingual review, local voice recognition or measured Singlish/code-switching support.
+Multilingual expansion is deferred under the current [product priorities](project-plan.md). The local translation implementation is retained but disabled by default, and its MLX runtime is an optional dependency extra. The research above does not establish bilingual review, local voice recognition or measured Singlish/code-switching support.

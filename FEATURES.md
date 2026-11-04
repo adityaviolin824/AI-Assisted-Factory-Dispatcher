@@ -1,20 +1,20 @@
 # Capabilities and evidence
 
-SweaterCo Dispatch Copilot reads factory requests, calculates workshop options and records dispatcher decisions. Implementation status and recorded evidence through 30 October 2026 are summarized below. See the [product overview](README.md), [backend guide](backend/README.md) and [frontend guide](frontend/README.md).
+SweaterCo Dispatch Copilot reads factory requests, calculates workshop options and records dispatcher decisions. Implementation status and recorded evidence through 3 November 2026 are summarized below. See the [product overview](README.md), [backend guide](backend/README.md) and [frontend guide](frontend/README.md).
 
 ## Implemented workflow
 
 | Capability | Behavior |
 |---|---|
-| Shared operations chat | Named messages, retained source text, retry identity, shared history and stable TXT snapshots. |
+| Shared operations chat | Each message keeps its sender's name and original text, and a resent message is saved only once. Everyone sees one shared history, and the dispatcher processes a fixed text copy of it. |
 | Demo sign-in and roles | A name and a role, Team member, Dispatcher or Workshop, for each browser tab, without passwords or authentication; messages carry the signed-in name. Team members get the Chat page only, including **Clear chat**, which asks "Are you sure?" on the page and then empties the conversation for everyone while snapshots, runs and plans stay. The dispatcher gets the Dispatcher page only: **See chat history** shows the chat read-only, and dispatch processing starts there. |
 | Checked voice input | **Record** turns one short spoken request into text in the message box through OpenAI's `gpt-transcribe`; the worker checks and edits it before **Send**. English is supported and Mandarin is experimental. The API refuses it without paid-processing permission. |
-| Local Chinese translation | Optional and disabled by default. With the configuration switch on and the optional runtime/model installed, **Send** saves a message containing Chinese as its English translation, made on the host by Tencent's Hy-MT2-1.8B (8-bit, MLX), so processing reads English. A translation that changes an order or workshop ID is refused. No per-message charge; the original Chinese is not kept. |
+| Local Chinese translation | Optional and switched off. When switched on, **Send** saves a Chinese message as its English translation, made locally by Tencent's Hy-MT2-1.8B; a translation that changes an order or workshop ID is refused. It was checked on 12 made-up messages only. |
 | Explicit processing | On the Dispatcher page, **Prepare chat for dispatch** captures a snapshot; **Start dispatch workflow** sends it into the language/validation/allocation pipeline. The API requires paid-processing permission. |
-| Evidence-backed interpretation | Owned extraction, independent jobs, bounded follow-up candidates, task versions and source checks. |
-| Deterministic planning | Capability, status, caps, preferences and exclusions; delivery, cost, expected rework and queue calculations. |
+| Evidence-backed interpretation | Each message is extracted once, even when it also appears as context; several jobs in one message stay separate; a follow-up with more than six possible tasks goes to review; a correction creates a new task version; each fact must cite a real source message. |
+| Deterministic planning | Python checks each workshop's categories, status and batch cap and the request's preferences and exclusions, then calculates delivery, cost, expected rework and queue effects. |
 | Workshop reports | A workshop reports whether it is taking new work, its pieces per day, days of work already booked and pickup lead time (3 November 2026). Each run fixes these values when it starts and the planning rules use them; a later report applies from the next run. The Dispatcher page lists reported changes. |
-| Uncertainty visibility | Clarifications, processing/link reviews and provisional warnings remain separate from approved rows. |
+| Uncertainty visibility | Requests needing clarification, uncertain links and provisional warnings stay visible, separate from approved rows. |
 | Dispatcher control | Correct facts and quantity, complete an identified request, add batches, fix destinations, check applicable warnings and cancel a request so it reserves no workshop time. |
 | Unsaved preview | **Check workshop options** calculates the whole pending choice set without saving or resuming the graph. |
 | One approval | **Approve all** calculates once, preserves manual destinations, replans flexible work and saves the change report immediately. |
@@ -57,7 +57,7 @@ The harness requires a workshop even when every eligible option is late; its ada
 | Extended chat | 222 parsed lines, including 220 labelled messages | Interleaving, unknown orders, contradictory facts and review propagation. |
 | Golden set | 100 cases across 149 messages | 85 jointly feasible cases and 15 deliberate exceptions. |
 
-AI authored the golden scenarios after development experiments. Three team members divided the work and comprehensively hand-reviewed every case and message. The reconciled version 2 key was frozen before initial scored runs. The [review record](backend/docs/evaluation/extended_dispatch_100_REVIEW.md) preserves the returned workbook, corrections and hashes; automated consistency checks are separate from human review.
+AI generated the golden scenarios after development experiments. Three team members then checked every case and message by hand. The reconciled version 2 key was frozen before initial scored runs. The [review record](backend/docs/evaluation/extended_dispatch_100_REVIEW.md) preserves the returned workbook, corrections and hashes; automated consistency checks are separate from human review.
 
 | Golden-set result | Test 10 run 1 | Test 10 run 2 | Test 11 automatic | Test 11 key-informed review |
 |---|---:|---:|---:|---:|
@@ -74,7 +74,7 @@ The supplied 30-request Test 7 replay reached 30/30 readiness agreement after a 
 
 ## Verification and observability
 
-Latest recorded checks, on 3 November 2026 after workshop reports, passed 184 offline backend tests, 96 Playwright tests, type checking, lint and the frontend build. The backend categories total 184: 27 processing, 25 allocation, 15 harness, 23 graph, 43 dispatcher review, 11 run-report, 4 final-score, 11 run/review API, 19 chat API and 6 workshop report checks.
+Latest recorded checks, on 3–4 November 2026 after workshop reports and a review pass, passed 184 offline backend tests, 97 Playwright tests, type checking, lint and the frontend build. The backend categories total 184: 27 processing, 25 allocation, 15 harness, 23 graph, 43 dispatcher review, 11 run-report, 4 final-score, 11 run/review API, 19 chat API and 6 workshop report checks.
 
 Checks cover hand-worked scheduling cases, source/schema contracts, task versions, queue accounting, partial plans, graph/standalone equivalence, refusal, preview without writes, approval, re-review and chat snapshots. Recorded mutation checks establish detection of selected deliberately broken rules. Some checks depend on local notebooks/saved runs excluded from publication. Browser tests use controlled API responses; a backend chat test also executes the pipeline with saved model answers.
 
@@ -86,22 +86,18 @@ Optional LangSmith tracing records graph execution, including cached runs. The h
 
 - The 24 October cancellation check recognizes only listed wording. It does not read negation ("do not cancel") or a later instruction that supersedes a cancellation, and wording before the first order ID in a message counts for every order named in it, so it can flag the wrong order. Each such mistake asks for review rather than allocating. Only a replay of saved answers has measured it, not a fresh run; the historical golden scores are unchanged.
 - Separate explanation faithfulness, held-out generalization and real dispatcher effort are not established.
-- Internal navigation can discard unsaved choices; saved/new lateness consent differs in whole-submission refusal behavior.
-- Failed processing records can remain beside added replacement batches.
-- Chat/CSV deadline disagreement has no automatic discrepancy alert.
-- Voice input is not measured on real speech. It sends audio to OpenAI; local speech recognition, Singapore English pronunciation, Singlish and Mandarin-English code-switching are not evaluated.
-- Translation was checked on 12 made-up messages only. Only order and workshop IDs are checked afterwards; quantities, dates, negation and intent are not, and Chinese hold wording translated as "suspended" is not recognized as a possible hold. It runs only on Apple silicon.
+- Moving to another page inside the app can discard unsaved dispatcher choices without a warning.
+- If the chat and `orders.csv` give different deadlines, there is no automatic alert.
+- Voice input sends audio to OpenAI and is not measured on real speech; Singapore English, Singlish and Mandarin are not evaluated.
 - Authentication, clarification replies, multiple channels, live assignments and production tracking are not implemented.
-- The hosted demo (Vercel frontend, Render backend, deployed 31 October 2026) has a sign-in that labels users but does not authenticate them: anyone can choose Dispatcher or any workshop, any team member can clear the shared chat, and the API has no access control. Its saved chat, runs, reviews and workshop reports are reset when the backend restarts.
+- The hosted demo (Vercel frontend, Render backend, deployed 31 October 2026) has a sign-in that labels users but does not authenticate them. Its saved chat, runs, reviews and workshop reports are reset when the backend restarts.
 
 ## Planned extensions
 
 The [further implementation roadmap](FURTHER_IMPLEMENTATION.md), updated 29 October 2026, proposes:
 
 - Shared order/workshop records in PostgreSQL, with authenticated workshop updates for dated closures and permitted capacity changes. Automatic planning would check affected production dates and recheck changes before approval. A first, unauthenticated version of workshop reports, applied from the next run, exists since 3 November 2026.
-- Local PII filtering before model calls and external tracing, while preserving operational identifiers and source-evidence checks. The first scope is names of people and addresses. Deferred on 31 October 2026 in favor of deeper dispatch features.
-- Basic prompt-injection detection with visible review, measured false positives and optional later evaluation of a local encoder classifier. Deferred on 31 October 2026.
+- Deferred on 31 October 2026 in favor of deeper dispatch features: local filtering of people's names and addresses before model calls, basic prompt-injection checks, and bilingual Chinese-English review with local voice recognition. The [model and workflow research](docs/MULTILINGUAL_INPUT_RESEARCH.md) records the candidates and proposed checks.
 - A sanitized public evidence bundle for reproducing recorded model-cost estimates without publishing full run records. The in-app usage view covers runs held locally; the public bundle is still to be prepared.
-- Bilingual Chinese-English review (deferred on 31 October 2026), with original messages retained beside the translation and bilingual clarification. Chinese-to-English translation at Send exists; keeping the original, Chinese-aware hold/cancellation checks and English-to-Chinese replies do not. Local voice recognition would replace the current cloud transcription behind the same editable transcript. Singlish and Mandarin-English code-switching require separate evaluation. The [model and workflow research](MULTILINGUAL_INPUT_RESEARCH.md) records candidates, language-aware validation, privacy boundaries and proposed acceptance checks.
 
 These extensions are not implemented or measured. A database alone does not provide workshop access controls, current availability or live booking guarantees. The [project plan](docs/project-plan.md) defines priorities. The [engineering log](docs/engineering-log.md) retains dated investigation and verification evidence; [experiments](experiments/README.md) preserves historical notebook stages rather than current application contracts.

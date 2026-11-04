@@ -109,13 +109,13 @@ npm run build
 npm test
 ```
 
-The latest recorded checks, on 3 November 2026 after the workshop reports, passed 96 Playwright tests, including the three voice-recording tests, type checking, lint and the production build.
+The latest recorded checks, on 3–4 November 2026 after the workshop reports and a review pass, passed 97 Playwright tests, including the three voice-recording tests, type checking, lint and the production build.
 
 Playwright uses the Chromium executable configured in [playwright.config.ts](playwright.config.ts); `CHROMIUM_PATH` can select an existing compatible binary. The default references a locally installed browser, so a clean checkout needs an available browser executable. Tests simulate backend responses; they do not process paid requests or establish production accuracy. Voice tests record from Chromium's fake microphone (`--use-fake-ui-for-media-stream`, `--use-fake-device-for-media-stream`) and answer the transcription request themselves, so no real speech is recognised and no model is called. Some backend integration checks additionally depend on local saved runs and notebook references excluded from publication.
 
 ## Current limits
 
-- One shared conversation and one dispatcher; multiple channels are not implemented. The sign-in sorts the demo's users but is not authentication: anyone can choose Dispatcher or any workshop, any team member can clear the shared chat, and the backend does not check who sends a request.
+- One shared conversation and one dispatcher; multiple channels are not implemented. The sign-in sorts the demo's users but is not authentication.
 - Source-linked clarification replies and general-purpose AI question answering are not implemented.
 - Voice input sends audio to OpenAI and has not been measured on real speech. Mandarin is experimental; Singapore English pronunciation, Singlish and Mandarin-English code-switching are not evaluated. Local speech recognition remains future work.
 - A translated message shows only its English; the original Chinese is not kept, and the page does not mark the message as translated.

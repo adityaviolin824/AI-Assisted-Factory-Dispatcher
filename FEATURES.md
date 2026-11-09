@@ -94,7 +94,7 @@ Optional LangSmith tracing records graph execution, including cached runs. The h
 
 ## Planned extensions
 
-The [further implementation roadmap](FURTHER_IMPLEMENTATION.md), updated 29 October 2026, proposes:
+The [further implementation roadmap](docs/FURTHER_IMPLEMENTATION.md), updated 29 October 2026, proposes:
 
 - Shared order/workshop records in PostgreSQL, with authenticated workshop updates for dated closures and permitted capacity changes. Automatic planning would check affected production dates and recheck changes before approval. A first, unauthenticated version of workshop reports, applied from the next run, exists since 3 November 2026.
 - Deferred on 31 October 2026 in favor of deeper dispatch features: local filtering of people's names and addresses before model calls, basic prompt-injection checks, and bilingual Chinese-English review with local voice recognition. The [model and workflow research](docs/MULTILINGUAL_INPUT_RESEARCH.md) records the candidates and proposed checks.

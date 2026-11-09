@@ -31,7 +31,8 @@ from datetime import date, datetime
 from pathlib import Path
 from unittest import mock
 
-from notebook_reference import BACKEND_DIR, CHAT_FILE, definitions_source, load_notebook_05, top_level_definitions
+from notebook_reference import (BACKEND_DIR, CHAT_FILE, definitions_source, load_notebook_05, needs_local_files,
+                                top_level_definitions)
 from test_processing_modules import logic, module_definitions, offline_modules, undefined_names
 
 from order_intake_from_chat.read_chat_messages import read_messages
@@ -58,7 +59,7 @@ NEW = {
     "task_allocation_to_workshops.recommend_one_task": ["batch_pieces"],
     "run_allocation": ["main"],
 }
-# Moved from notebook 05, then changed on purpose (see docs/legacy/ALLOCATION_MODULARIZATION_PLAN.md): routing
+# Moved from notebook 05, then changed on purpose (see docs/engineering-log.md, 15 October 2026): routing
 # and the duplicate-order check moved out of plan_tasks into route_tasks; summarize_plan also lists
 # the duplicate-order reviews and the inputs without an outcome; plan_allocation takes (run_dir,
 # state, messages), calls route_tasks, records created_at, keeps a copy of every plan in
@@ -265,6 +266,7 @@ def module_plan(state, messages, run_dir):
         return allocation_plan.plan_allocation(run_dir, copy.deepcopy(state), messages)
 
 
+@needs_local_files
 class SameAsNotebook(unittest.TestCase):
     """The modules against notebook 05's code, loaded in memory as saved."""
 
@@ -307,6 +309,7 @@ class SameAsNotebook(unittest.TestCase):
         self.assertIsInstance(allocation_settings_and_data.DISPATCH_DATE, date)
 
 
+@needs_local_files
 class ControlledChecks(unittest.TestCase):
     """Notebook 05's controlled checks C1-C14 on the modules: made-up tasks with hand-worked
     answers, using the real CSV values. Each plan is also compared with the notebook's plan_tasks.
@@ -424,6 +427,7 @@ class ControlledChecks(unittest.TestCase):
         self.assertEqual(rank_candidates(tied, "minimize_tardiness", DEFAULT_HYBRID_WEIGHTS)[0], ["W2", "W1"])
 
 
+@needs_local_files
 class RoutingCases(unittest.TestCase):
     """Each route, including a ready task that shares its order with a request that is not ready."""
 
@@ -523,6 +527,7 @@ class NotebookSavedPlan(unittest.TestCase):
         assert_same_plan(self, json.loads(json.dumps(plan)), saved)
 
 
+@needs_local_files
 class EndToEndPlan(unittest.TestCase):
     """Notebook 05's whole graph against process_messages then plan_saved_run, on the supplied chat
     file, both from saved answers.
@@ -566,6 +571,7 @@ class EndToEndPlan(unittest.TestCase):
         self.assertEqual(len(covered), 30)
 
 
+@needs_local_files
 class PlanFiles(unittest.TestCase):
     """plan.json is the latest plan, the one the pipeline reads; every plan is also kept in plan-history/."""
 
@@ -660,6 +666,7 @@ def api_failure():
     return RuntimeError("API request failed (injected); inspect its saved trace.")
 
 
+@needs_local_files
 class PartialRuns(unittest.TestCase):
     """An incomplete processing run still gets a plan, marked partial, with every input accounted for.
 

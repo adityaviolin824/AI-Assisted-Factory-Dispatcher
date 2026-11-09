@@ -13,6 +13,7 @@ AI-assisted reconciliation applied the human comments and documented preference 
 - The [returned workbook](extended_dispatch_100_human_team_review.xlsx) is preserved byte for byte. It retains the original approval/discussion statuses and comments.
 - It records 91 case rows as Approved and 9 as Discuss; 147 message rows as Approved and 2 as Discuss. The discussion notes are reconciled below and retained verbatim in the key's provenance.
 - Individual reviewer-name and review-date columns are blank. The recorded review scope is three-person, line-by-line coverage; 21 October is the reconciliation date, not a per-reviewer timestamp.
+- The workbook's Read me sheet is the unchanged template text written before the review. Its "Review state" line ("No human review or sign-off has been recorded") and its sign-off counters, which need a name and date, describe that template, not the returned review. Its offline-check command points to a local file that is not published.
 - The AI draft key and original review template are retained as history. They are not the active evaluation answers.
 
 ## Reconciled decisions

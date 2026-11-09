@@ -40,7 +40,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.errors import GraphRecursionError
 
-from notebook_reference import CHAT_FILE, definitions_source, load_notebook_05, top_level_definitions
+from notebook_reference import CHAT_FILE, definitions_source, load_notebook_05, needs_local_files, top_level_definitions
 from test_allocation_modules import api_failure, assert_same_plan, failing_model_calls, pinned_settings
 from test_dispatcher_review import block_network, no_decisions, pinned_review_settings, record, row, without
 from test_processing_modules import (logic, module_definitions, offline_modules, paid_requests, read_run,
@@ -62,14 +62,14 @@ MOVED = {
         "link_items", "extract_batch", "verify_tasks", "save_outputs", "after_link",
         "recursion_limit"],
 }
-# Moved from notebook 05, then changed on purpose (see docs/legacy/LANGGRAPH_MODULARIZATION_PLAN.md):
+# Moved from notebook 05, then changed on purpose (see docs/engineering-log.md, 15 October 2026):
 # plan_allocation calls the allocation module's plan_allocation; build_graph always goes on from
 # save_outputs to plan_allocation (after_save removed); run_graph names its LangSmith run "full-pipeline".
-# Since 20 October 2026 (DISPATCHER_REVIEW_GRAPH_PLAN.md) the graph pauses for the dispatcher:
+# Since 20 October 2026 (docs/engineering-log.md) the graph pauses for the dispatcher:
 # PipelineState has the review keys, plan_allocation also calculates the first review, build_graph
 # compiles with a checkpointer and adds the review loop, and run_graph runs on a new thread to the
-# first pause. Since 3 November 2026 (DISPATCHER_REVIEW_PLAN.md) start_run also saves the run's fixed
-# workshop facts as workshops.json.
+# first pause. Since 3 November 2026 start_run also saves the run's fixed workshop facts as
+# workshops.json ("Workshop reports decision" in docs/system-design.md).
 CHANGED = {
     "app_full_pipeline.pipeline_graph": ["PipelineState", "start_run", "plan_allocation", "build_graph", "run_graph"],
 }
@@ -123,6 +123,7 @@ def as_json(value):
     return json.loads(json.dumps(value))
 
 
+@needs_local_files
 class SameAsNotebook(unittest.TestCase):
     """The graph module against notebook 05's code, loaded in memory as saved."""
 
@@ -168,6 +169,7 @@ class SameAsNotebook(unittest.TestCase):
                          set(self.notebook["build_graph"]().get_graph().nodes) | {"dispatcher_review", "save_review"})
 
 
+@needs_local_files
 class EndToEnd(unittest.TestCase):
     """Notebook 05's graph, the module graph (to the dispatcher's first pause) and the two steps
     (process_messages then plan_saved_run) on the supplied chat file, all from saved answers.
@@ -248,6 +250,7 @@ class EndToEnd(unittest.TestCase):
         self.assertEqual((review["status"], review["final_ids"]), ("draft", []))
 
 
+@needs_local_files
 class DispatcherReview(unittest.TestCase):
     """The dispatcher's answers to a paused run of the supplied chat file, kept by an InMemorySaver."""
 
@@ -358,6 +361,7 @@ class DispatcherReview(unittest.TestCase):
         self.assert_files(set())
 
 
+@needs_local_files
 class StepLimits(unittest.TestCase):
     """recursion_limit and RESUME_RECURSION_LIMIT hold, and the smallest limits are as stated."""
 
@@ -380,6 +384,7 @@ class StepLimits(unittest.TestCase):
         self.assertEqual(pipeline_graph.RESUME_RECURSION_LIMIT, 10)
 
 
+@needs_local_files
 class SqliteRunnerScripts(unittest.TestCase):
     """run_full_pipeline.py pauses a run in a SQLite file and ends; resume_dispatcher_review.py later
     shows and answers it with a new connection and a newly built graph.
@@ -436,6 +441,7 @@ class SqliteRunnerScripts(unittest.TestCase):
         self.assertIn("has no paused dispatcher review", self.run_script(resume_dispatcher_review, thread_id))
 
 
+@needs_local_files
 class EmptyAndStoppedRuns(unittest.TestCase):
     """Runs that end early, and a run that finishes incomplete."""
 

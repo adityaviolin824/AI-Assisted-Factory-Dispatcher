@@ -1,5 +1,5 @@
 // The dispatcher's unsaved choices. They live only in page memory until Approve all: nothing here
-// sends a request, recalculates or stores anything (FRONTEND_PLAN.md, section 7).
+// sends a request, recalculates or stores anything (see "Dispatcher interaction" in frontend/README.md).
 import type { Decision } from "./types";
 
 // One task's pending choices. A field left out means "keep what the review shows".

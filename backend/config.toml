@@ -28,8 +28,8 @@ folder = "output"
 # Changing one stage's model makes only that stage's requests new (and paid);
 # the other stages keep reusing their saved answers.
 # Every stage was "gpt-4.1-mini" until 14 Oct 2026. Intake moved to a reasoning model first, to test
-# follow-up labelling (see ../docs/follow-up-linking-diagnosis-2026-10-14.md); link and verify followed
-# later that day (see ../docs/engineering-log.md).
+# follow-up labelling; link and verify followed later that day (see ../docs/engineering-log.md,
+# 14 October 2026).
 intake = "gpt-5.6-luna"  # split each message into items
 link = "gpt-5.6-luna"    # attach a follow-up to the task it belongs to
 verify = "gpt-5.6-luna"  # check each task against its original messages

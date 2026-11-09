@@ -52,7 +52,7 @@ ORD-296 and ORD-299 are present as source rows, but their corresponding scenario
 
 ## Offline verification
 
-From `backend/`:
+The checker is not published. In a workspace that contains it, run from `backend/`:
 
 ```text
 uv run --offline --no-sync python experimentation_notebooks/testing/check_extended_dispatch_100.py

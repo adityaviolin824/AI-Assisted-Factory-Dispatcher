@@ -1,5 +1,6 @@
 # workshop_updates.py: the workshops' own reports of their current state, and the fixed copy of the
-# workshop facts that each dispatch run plans with (3 November 2026, DISPATCHER_REVIEW_PLAN.md).
+# workshop facts that each dispatch run plans with (3 November 2026; see "Workshop reports decision"
+# in docs/system-design.md).
 #
 # Flow:   PUT /workshops/{workshop_id} -> save_report -> REPORTS_FILE.
 #         start_run (pipeline_graph.py) -> freeze_for_run -> <run folder>/workshops.json.

@@ -32,6 +32,8 @@ Run commands from `backend/`, using the project-local `uv` environment.
 
 Obtain approval before any run that could make paid model calls. A previously free run does not establish that the current flow is fully cached.
 
+**Credentials.** Paid calls need `OPENAI_API_KEY`. The scripts and the API's processing and voice routes read it, and the optional LangSmith settings such as `LANGSMITH_TRACING`, from `backend/.env`, which Git ignores; a variable already set in the environment takes precedence. Copy [`.env.example`](.env.example) to `.env` to start; `ALLOW_PAID_PROCESSING` is not read from that file, so set it when starting the server. Without a key, processing stops at the first request that has no saved answer ("OPENAI_API_KEY is not configured"), a fully cached run still works, and voice input returns an error.
+
 ## Minimal container and split hosting
 
 The root [Dockerfile](../Dockerfile) uses a Python 3.13.14 slim builder and runtime. The builder uses locked `uv` dependencies; the final image receives only the virtual environment and backend source. `uv` itself, package caches, notebook/test material and model weights are excluded. Pandas, Streamlit and the full `langchain` package are development dependencies; production uses `langchain-openai` and its required core dependencies. Translation remains an unselected optional extra. Voice remains available through the OpenAI API and needs no local speech runtime.
@@ -295,6 +297,8 @@ The latest recorded baseline is **184 offline tests** (3 November 2026, after wo
 ```text
 uv run python -m unittest discover -s tests -v
 ```
+
+The full suite needs local files that are not published: notebooks 05 and 06 in `experimentation_notebooks/`, notebook 05's saved model answers, saved runs in `output/runs/` and the mock chat app. Without them, the tests that read them are skipped with the reason "needs the unpublished notebooks 05 and 06, their saved answers and saved runs" (`needs_local_files` in `tests/notebook_reference.py`). On a copy of the published files only, on 9 November 2026, the suite ran 184 tests: 71 passed, 113 were skipped for missing local files and none failed.
 
 They cover declared notebook differences, exact prompts/schemas, source dates, routing, C1-C14, queue reservations, saved-state comparisons, cached end-to-end paths, graph equivalence, injected failures, partial accounting, history and provisional warnings. The dispatcher review tests compare the modules with notebook 06's Part 8 on 13 saved runs and one decision sequence, check every answer refusal, and pause, close and resume a run on a temporary SQLite file. Tests block model calls and network connections and disable tracing. Passing them establishes the checked implementation properties, not semantic accuracy on unseen messages. Some reference comparisons and saved-state checks require local notebooks or run artifacts excluded from the public repository; a clean checkout does not include those fixtures.
 

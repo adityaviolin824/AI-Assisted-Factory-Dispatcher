@@ -3,7 +3,7 @@
 Historical investigation and implementation record, 15 October 2026. Steps 1-6 replaced stored holds with provisional warnings. The checks at that increment were offline; subsequent experiments are in the [evaluation history](../docs/evaluation/PROMPT_TESTING_RESULTS.md). The source and plan descriptions below refer to that investigation date; current review and reallocation are in the [backend guide](../README.md).
 
 - **Problem write-up:** [Held tasks and unresolved follow-ups](../problems_solved/held_tasks_and_unresolved_followups.md).
-- **Backlog:** Pending improvements, issues 1, 4, 5 and 12.
+- **Backlog:** Pending improvements, issues 1, 4, 5 and 12. The backlog and the AI-agent instructions (`backend/AGENTS.md`) named in step 6 are local working files that are not published.
 
 ## Problem
 

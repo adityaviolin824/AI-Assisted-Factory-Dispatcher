@@ -112,7 +112,7 @@ export function finalizeRun(runId: string, decisions: Decision[]) {
   });
 }
 
-// Chat bridge: backend/fastapi_routes/chat.py (BACKEND_PROPOSAL.md, section 1).
+// Chat bridge: backend/fastapi_routes/chat.py.
 
 export function listMessages() {
   return request<ChatMessage[]>("/chat/messages");

@@ -226,8 +226,8 @@ export type Decision =
 
 export type Answer = { decisions: Decision[]; then: "review_again" | "approve_all" };
 
-// Chat bridge: backend/fastapi_routes/chat.py (BACKEND_PROPOSAL.md, section 1). The fields follow
-// the mock chat's storage and export (backend/experimentation_notebooks/mock_frontend/PLAN.md).
+// Chat bridge: backend/fastapi_routes/chat.py. The fields follow the chat storage and export in
+// backend/order_intake_from_chat/chat_storage.py.
 export type ChatMessage = { message_id: number; sender: string; raw_text: string; received_at_utc: string };
 
 // The dates from config.toml that processing uses, such as "2026-04-01" (GET /chat/dates).

@@ -34,6 +34,7 @@ from fastapi import HTTPException
 from fastapi.testclient import TestClient
 from langgraph.checkpoint.sqlite import SqliteSaver
 
+from notebook_reference import needs_local_files
 from test_dispatcher_review import block_network, no_decisions, pinned_review_settings, record, row, without
 from test_pipeline_graph import T8, as_json, choose, paused_run, read_json
 from test_processing_modules import undefined_names
@@ -59,6 +60,7 @@ def setUpModule():
     block_network()
 
 
+@needs_local_files
 class Endpoints(unittest.TestCase):
     """The endpoints, with the runs folder and the checkpoint file in a temporary folder."""
 

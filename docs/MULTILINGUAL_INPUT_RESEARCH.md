@@ -1,6 +1,6 @@
 # Chinese, bilingual review and voice input research
 
-Research date: 29 October 2026. Status: proposed extension; no model installation, inference experiment or application implementation has been performed for this research. Later on 29 October, a separate cloud dictation increment was implemented; see [Implemented cloud dictation](#implemented-cloud-dictation-29-october-2026). On 30 October, local Chinese-to-English translation at Send was implemented with this research's first translation candidate; see [Implemented local translation](#implemented-local-translation-30-october-2026). The other local recommendations below are unchanged and unmeasured.
+Research date: 29 October 2026. Status: deferred since 31 October 2026, with translation switched off by default (see [Current status](#current-status-31-october-2026)). It began as a proposed extension; no model installation, inference experiment or application implementation has been performed for this research. Later on 29 October, a separate cloud dictation increment was implemented; see [Implemented cloud dictation](#implemented-cloud-dictation-29-october-2026). On 30 October, local Chinese-to-English translation at Send was implemented with this research's first translation candidate; see [Implemented local translation](#implemented-local-translation-30-october-2026). The other local recommendations below are unchanged and unmeasured.
 
 ## Recommendation and product purpose
 
@@ -107,7 +107,7 @@ These synthetic examples illustrate proposed checks; they are not a reviewed tes
 
 ## Privacy and injection checks
 
-The [local protection roadmap](../FURTHER_IMPLEMENTATION.md#2-local-pii-filtering) still applies. Extend its scope explicitly for Chinese text and mixed-language messages:
+The [local protection roadmap](FURTHER_IMPLEMENTATION.md#2-local-pii-filtering) still applies. Extend its scope explicitly for Chinese text and mixed-language messages:
 
 - Cover original text, translations, transcripts, structured fields, errors, graph state and external traces. Test whether a translation expands or restores a masked value; preserve stable aliases and protect the mapping locally.
 - English entity recognition is insufficient evidence for Chinese names/addresses. Presidio's default models/recognizers are English; additional languages require NLP and recognizer/context configuration. [Presidio multilingual documentation](https://github.com/data-privacy-stack/presidio/blob/main/docs/analyzer/languages.md).

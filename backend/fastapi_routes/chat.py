@@ -1,6 +1,6 @@
 # chat.py: HTTP endpoints for the operations chat: send and read messages, capture snapshots, and
-# process one snapshot (agreed 21 October 2026 in frontend/BACKEND_PROPOSAL.md, section 1; built
-# 23 October 2026).
+# process one snapshot (agreed 21 October 2026, built 23 October 2026; see docs/system-design.md,
+# section 5).
 #
 # Send, history and snapshots call the mock chat's functions, copied into
 # order_intake_from_chat/chat_storage.py, and make no model call. GET /chat/dates (24 October 2026)

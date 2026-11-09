@@ -6,7 +6,7 @@ import SignInStatus from "@/components/SignInStatus";
 import ThemeSwitch from "@/components/ThemeSwitch";
 import "./globals.css";
 
-// Archivo labels and calculated values; its width axis gives the expanded headings (DESIGN.md).
+// Archivo labels and calculated values; its width axis gives the expanded headings.
 const archivo = Archivo({ subsets: ["latin"], axes: ["wdth"], variable: "--font-archivo" });
 // Literata is kept for words a person wrote: chat messages and quoted source messages.
 const literata = Literata({ subsets: ["latin"], axes: ["opsz"], variable: "--font-literata" });

@@ -1,4 +1,5 @@
-# workshops.py: the routes of the Workshop page (3 November 2026, DISPATCHER_REVIEW_PLAN.md).
+# workshops.py: the routes of the Workshop page (3 November 2026; see "Workshop reports decision"
+# in docs/system-design.md).
 #
 # GET /workshops lists the eight workshops with their recorded (CSV) values, current values and last
 # report. PUT /workshops/{workshop_id} saves one workshop's report. The next dispatch run plans with

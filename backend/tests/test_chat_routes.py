@@ -51,7 +51,7 @@ from fastapi.testclient import TestClient
 from langgraph.checkpoint.sqlite import SqliteSaver
 from openai import OpenAIError
 
-from notebook_reference import CHAT_FILE, top_level_definitions
+from notebook_reference import CHAT_FILE, needs_local_files, top_level_definitions
 from test_dispatcher_review import block_network, pinned_review_settings
 from test_pipeline_graph import paused_run
 from test_processing_modules import logic, module_definitions, offline_modules, undefined_names
@@ -102,6 +102,7 @@ def store_supplied_chat(database):
 
 class SameCodeAsMock(unittest.TestCase):
 
+    @needs_local_files
     def test_moved_code_has_the_mock_logic(self):
         mock_definitions = top_level_definitions(MOCK_APP.read_text(encoding="utf-8"))
         moved = module_definitions(chat_storage)
@@ -253,6 +254,7 @@ class Endpoints(unittest.TestCase):
         self.assertEqual((cleared.status_code, cleared.json()), (200, {"deleted": 0}))
         self.assertFalse(self.chat_dir.exists())
 
+    @needs_local_files
     def test_processing_a_snapshot_of_the_supplied_chat_pauses_for_the_dispatcher(self):
         store_supplied_chat(chat_storage.DATABASE)
         snapshot = self.capture()

@@ -2,6 +2,7 @@
 
 load_notebook_05 runs notebook 05's definitions cells in a temporary folder and blocks every API call.
 load_notebook_06_part_8 runs notebook 06's dispatcher calculation and decision helpers for one run folder.
+needs_local_files skips a test that reads files the published repository does not include.
 """
 import ast
 import contextlib
@@ -11,6 +12,7 @@ import os
 import shutil
 import sys
 import types
+import unittest
 from datetime import date
 from pathlib import Path
 
@@ -27,6 +29,14 @@ NOTEBOOK_06 = BACKEND_DIR / "experimentation_notebooks/06-dispatcher-workflow.ip
 # The 23 saved model answers of notebook 05. The tests copy them; they never write here.
 SAVED_ANSWERS = BACKEND_DIR / "experimentation_notebooks/output/order-pipeline-mvp/response-cache"
 CHAT_FILE = BACKEND_DIR / "data/dispatch_requests.txt"
+# The notebooks, their saved answers, the mock chat app and the saved runs are not published. On a
+# copy without them, a test that reads them is skipped with this reason instead of failing.
+LOCAL_FILES = [NOTEBOOK_05, NOTEBOOK_06, SAVED_ANSWERS,
+               BACKEND_DIR / "experimentation_notebooks/mock_frontend/app.py",
+               BACKEND_DIR / "output/runs/2026-10-14_14-40-08"]
+HAS_LOCAL_FILES = all(path.exists() for path in LOCAL_FILES)
+needs_local_files = unittest.skipUnless(
+    HAS_LOCAL_FILES, "needs the unpublished notebooks 05 and 06, their saved answers and saved runs")
 
 
 class CacheMiss(RuntimeError):

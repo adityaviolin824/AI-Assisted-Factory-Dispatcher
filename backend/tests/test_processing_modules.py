@@ -39,8 +39,9 @@ from datetime import date
 from pathlib import Path
 from unittest import mock
 
-from notebook_reference import (CHAT_FILE, SAVED_ANSWERS, CacheMiss, definitions_source, load_notebook_05,
-                                notebook_prompt, refuse_api_call, top_level_definitions)
+from notebook_reference import (CHAT_FILE, HAS_LOCAL_FILES, SAVED_ANSWERS, CacheMiss, definitions_source,
+                                load_notebook_05, needs_local_files, notebook_prompt, refuse_api_call,
+                                top_level_definitions)
 from order_intake_from_chat.read_chat_messages import read_messages
 from order_processing_into_tasks import (
     create_and_link_tasks, extract_items, model_calls_with_cache, model_prompts, processing_run, settings_and_data,
@@ -143,7 +144,8 @@ VERIFY_PROMPT_CHANGES = [
      "  Unconfirmed dates and unresolved contradictions need clarification. Copy relative delivery words exactly,\n"
      '  such as "by end of next week": Python turns them into a date or asks for one.\n'),
 ]
-NOTEBOOK_VERIFY_PROMPT = notebook_prompt("VERIFY_PROMPT")
+# Read only when notebook 05 is here; every test that uses it is skipped without it.
+NOTEBOOK_VERIFY_PROMPT = notebook_prompt("VERIFY_PROMPT") if HAS_LOCAL_FILES else None
 # Response formats. Their JSON schema is part of every request's key, so it must equal the notebook's.
 SCHEMAS = {
     "order_processing_into_tasks.extract_items": ["ExtractedItem", "IntakeBatch"],
@@ -329,6 +331,7 @@ def paid_requests(calls):
     return sum(not record.get("reused_response") for record in calls.values())
 
 
+@needs_local_files
 class SameAsNotebook(unittest.TestCase):
     """The modules against notebook 05's code, loaded in memory as saved."""
 
@@ -390,6 +393,7 @@ class SameAsNotebook(unittest.TestCase):
         self.assertEqual(len(messages), 30)
 
 
+@needs_local_files
 class EndToEnd(unittest.TestCase):
     """Notebook 05's graph and process_messages on the supplied chat file, both from saved answers."""
 
@@ -440,6 +444,7 @@ class EndToEnd(unittest.TestCase):
         self.assertEqual(self.module_state, self.module_run["state"])
 
 
+@needs_local_files
 class EmptyInput(unittest.TestCase):
     """Repair I03 on the modules: an empty or blank chat file makes no run folder."""
 
@@ -455,6 +460,7 @@ class EmptyInput(unittest.TestCase):
             self.assertFalse((work_dir / "runs").exists())
 
 
+@needs_local_files
 class StageModelSwap(unittest.TestCase):
     """Changing one stage's model in config.toml makes only that stage's requests new."""
 
@@ -476,6 +482,7 @@ class StageModelSwap(unittest.TestCase):
         self.assertEqual((len(run["calls"]), paid_requests(run["calls"])), (10, 0))
 
 
+@needs_local_files
 class ReasoningEffort(unittest.TestCase):
     """A stage with a reasoning effort sends and records the effort instead of the temperature."""
 
@@ -505,6 +512,7 @@ class ReasoningEffort(unittest.TestCase):
         self.assertEqual(run["manifest"]["reasoning_effort"], {"intake": "high"})
 
 
+@needs_local_files
 class SavedAnswerEncoding(unittest.TestCase):
     """Saved answers are read as UTF-8, also on a computer whose default text encoding is another one."""
 

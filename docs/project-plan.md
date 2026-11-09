@@ -1,6 +1,6 @@
 # Project plan
 
-Updated: 4 November 2026. This document separates implemented capabilities, recorded verification and remaining work for SweaterCo Dispatch Copilot. The [backend guide](../backend/README.md) and [frontend guide](../frontend/README.md) describe operation; the [system design](system-design.md) defines the current contracts.
+Updated: 9 November 2026. This document separates implemented capabilities, recorded verification and remaining work for SweaterCo Dispatch Copilot. The [backend guide](../backend/README.md) and [frontend guide](../frontend/README.md) describe operation; the [system design](system-design.md) defines the current contracts.
 
 ## Product objective
 
@@ -35,7 +35,7 @@ Current product work prioritizes workshop-informed dispatch and a clear, usable 
 4. **Use existing evaluation evidence.** Consolidate required submission material and retain limitations. No new dataset, model sweep, supplementary benchmark or usability study is scheduled as a separate sprint workstream; functional/regression verification of changed code remains required.
 5. **Keep the deployment demo-ready and prepare handover.** Retain input identity, settings, evidence and setup requirements. The frontend runs on Vercel at [ai-assisted-factory-dispatcher.vercel.app](https://ai-assisted-factory-dispatcher.vercel.app/) and the backend on Render, deployed on 31 October 2026 from the Python-slim image checked locally under a 512 MiB limit; full-processing peak memory remains unmeasured. No persistent disk is attached, so hosted chat, runs and reviews are lost when the backend restarts or redeploys, and a daily cleanup job is not needed. Preserve the shared-workspace boundary; see the [backend guide](../backend/README.md#minimal-container-and-split-hosting).
 
-Chinese/bilingual expansion, PII filtering and additional prompt-injection checks are deferred. Translation is disabled by default through its existing configuration; the implementation is retained. The [further implementation roadmap](../FURTHER_IMPLEMENTATION.md) preserves earlier technical research.
+Chinese/bilingual expansion, PII filtering and additional prompt-injection checks are deferred. Translation is disabled by default through its existing configuration; the implementation is retained. The [further implementation roadmap](FURTHER_IMPLEMENTATION.md) preserves earlier technical research.
 
 On 29 October 2026, the in-app model-usage view and cloud voice input were implemented. The subsequent PII-first extension order is superseded by the 31 October sprint priorities.
 
@@ -83,15 +83,15 @@ Future acceptance checks include changed status/capacity between preview and com
 
 A first, unauthenticated workshop screen exists since 3 November 2026 ([above](#workshop-reports-3-november-2026)): reports apply from the next run, and a report cannot lift a factory suspension. The rest of this section remains proposed. An authenticated workshop screen should let staff record their own temporary closures and permitted capacity changes through the backend API. A one-week closure must affect automatic eligibility when the proposed production period overlaps it; checking only the dispatch date is insufficient. Date boundaries, calendars and reopening behavior need an explicit policy before calendar-aware estimates are implemented. Administrative suspension and other workshops' data remain outside workshop-edit permissions.
 
-Retain versions and an audit history, recheck relevant changes before approval, and flag existing affected work without silently transferring accepted assignments. Preserve the current manual-override contract while defining future operational authorization. The [roadmap](../FURTHER_IMPLEMENTATION.md#1-shared-operational-data-and-workshop-availability) records alternatives and acceptance checks. Keep supplied CSVs and the historical simulator unchanged.
+Retain versions and an audit history, recheck relevant changes before approval, and flag existing affected work without silently transferring accepted assignments. Preserve the current manual-override contract while defining future operational authorization. The [roadmap](FURTHER_IMPLEMENTATION.md#1-shared-operational-data-and-workshop-availability) records alternatives and acceptance checks. Keep supplied CSVs and the historical simulator unchanged.
 
 ## Planned privacy, injection checks and public evidence
 
 - **Local PII filtering (deferred on 31 October 2026 in favor of deeper dispatch features; retained as research):** the first scope is names of people and addresses (decided 29 October 2026). Free-text names and addresses need local entity recognition, such as Presidio with a local NLP model, which is a new dependency requiring approval; validating the masked input needs an authorized paid run. Use stable aliases, protect model calls and external tracing, preserve order facts and exact-source checks, and measure misses, unnecessary masking and added latency. Voice recordings reach the transcription model before any text filter.
-- **Basic prompt-injection checks:** kept as future work (29 October 2026). Begin with an explainable local signature set and visible review of flagged input. Aho-Corasick is an optional matching optimization; a local encoder classifier needs separate evaluation. Preserve legitimate corrections and do not describe these checks as complete protection.
+- **Basic prompt-injection checks (deferred on 31 October 2026; retained as research):** kept as future work on 29 October 2026. Begin with an explainable local signature set and visible review of flagged input. Aho-Corasick is an optional matching optimization; a local encoder classifier needs separate evaluation. Preserve legitimate corrections and do not describe these checks as complete protection.
 - **Public cost evidence:** the in-app usage view is implemented (29 October 2026). Still planned: export selected sanitized usage records and the historical price/calculation method. The retained 22 October run reproduces a $0.0757 model-usage estimate for 128 calls; raw run folders remain excluded. Keep historical estimates, local response reuse, provider-cached input and human review costs distinct.
 
-Implementation details, verification criteria and the proposed sequence are centralized in [Further implementation](../FURTHER_IMPLEMENTATION.md). No privacy/security measurement, database implementation or new paid run is established by this planning update.
+Implementation details, verification criteria and the proposed sequence are centralized in [Further implementation](FURTHER_IMPLEMENTATION.md). No privacy/security measurement, database implementation or new paid run is established by this planning update.
 
 ## Planned Chinese-English communication
 
@@ -147,6 +147,10 @@ DeepEval examples are local reference material, not an integrated evaluation ser
 
 The original brief requires a final evaluation report with metric rationale, dataset construction, per-category results, at least 10 analysed failures and further measurement plans. Presentation claims must distinguish current capabilities, historical evidence and planned work.
 
+### Evaluation version disclosure
+
+The 100-case human-reviewed key was frozen before the three fresh scored runs. **The only later fix prompted by this set was CASE-097 / ORD-297: a cancelled order was incorrectly recommended to W1. There was no other tuning on the set.** On 24 October 2026, a general possible-cancellation/hold readiness blocker and an explicit dispatcher `cancel` decision addressed it. The original scores describe the pre-fix version. The post-fix saved-answer replay recorded **81/85** expected allocations, **15/15** exceptions held and **0 unsafe**, without new model calls; it is distinct from the key-informed review result and does not measure fresh accuracy. No fresh held-out result for the revised version is established. The [failure-case catalogue](../evaluation/failure-case-analysis.md) analyses 18 failures individually.
+
 ## Deferred work and records
 
-Authentication, multiple live channels, local speech recognition and measured voice accuracy, operational assignment transactions, workshop notifications, live queue ownership and general-purpose question answering remain future work. Deployment was completed on 31 October 2026 for demonstration access; the planned name-and-role sign-in is not authentication. The [engineering log](engineering-log.md) records dated causes, changes and verification; the [evaluation guide](../evaluation/README.md) indexes measured results.
+Authentication, multiple live channels, local speech recognition and measured voice accuracy, operational assignment transactions, workshop notifications, live queue ownership and general-purpose question answering remain future work. Deployment was completed on 31 October 2026 for demonstration access; the name-and-role sign-in (implemented 31 October 2026) is not authentication. The [engineering log](engineering-log.md) records dated causes, changes and verification; the [evaluation guide](../evaluation/README.md) indexes measured results.

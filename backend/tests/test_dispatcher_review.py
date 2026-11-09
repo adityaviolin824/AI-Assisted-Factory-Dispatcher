@@ -46,7 +46,7 @@ from datetime import date
 from pathlib import Path
 from unittest import mock
 
-from notebook_reference import load_notebook_06_part_8, notebook_06_cell, top_level_definitions
+from notebook_reference import load_notebook_06_part_8, needs_local_files, notebook_06_cell, top_level_definitions
 from test_allocation_modules import NOTEBOOK_SETTINGS, pinned_settings
 from test_processing_modules import logic, module_definitions, undefined_names
 
@@ -168,6 +168,7 @@ def answer(*decisions, then="review_again"):
     return {"decisions": list(decisions), "then": then}
 
 
+@needs_local_files
 class SameCodeAsNotebook(unittest.TestCase):
     """The modules against notebook 06's cells, read as saved."""
 
@@ -207,6 +208,7 @@ class SameCodeAsNotebook(unittest.TestCase):
                 self.assertEqual(set(DROPPED) & set(definitions), set())
 
 
+@needs_local_files
 class SameResultsAsNotebook(unittest.TestCase):
     """The module review and notebook 06's review on copies of the saved runs, planned again with today's rules."""
 
@@ -276,6 +278,7 @@ class SameResultsAsNotebook(unittest.TestCase):
             self.assertEqual(record(module_review, T12)["status"], "accepted_late")
 
 
+@needs_local_files
 class ControlledDecisions(unittest.TestCase):
     """Notebook 06's controlled decision checks (check_notebook_06.py) without per-row approval, on a
     copy of the 30-request run. The decisions are examples that nobody made.
@@ -652,6 +655,7 @@ class ControlledDecisions(unittest.TestCase):
         self.assertTrue(all((self.run_dir / name).read_bytes() == data for name, data in source.items()))
 
 
+@needs_local_files
 class ApplyAnswer(unittest.TestCase):
     """The dispatcher's answers on a copy of the 30-request run."""
 

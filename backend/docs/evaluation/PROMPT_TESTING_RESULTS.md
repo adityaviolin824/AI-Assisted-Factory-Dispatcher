@@ -566,7 +566,7 @@ The allocation rules made no error. The most important fix is a Python cancellat
 
 - Two runs show that variation exists, not how large it is.
 - The wording is templated, and every chat deadline equals its CSV date, so this is a best case for clean chat.
-- Several documents still say no paid run has been made on this set: the [set's README](../../data/extended_dispatch_100/README.md), [NEW_TEST_SETS_PLAN.md](NEW_TEST_SETS_PLAN.md), `CLAUDE_HANDOFF.md` and the key's `evaluation_boundary`. They were left unchanged.
+- Several documents still say no paid run has been made on this set: the [set's README](../../data/extended_dispatch_100/README.md), [NEW_TEST_SETS_PLAN.md](NEW_TEST_SETS_PLAN.md), a local handoff note and the key's `evaluation_boundary`. They were left unchanged.
 
 ## Test 9: a full run with the dispatcher's review through the API (20 Oct 2026)
 
@@ -1085,7 +1085,7 @@ The table lists every line where at least one run on this file differs from the 
 - **R22:** "ORD-083 ready to dispatch. 1000 hoodies for Maple & Co, back by Mar 23."
   - Luna kept intent `allocation` but asked: "The evidence says ORD-083 is ready to dispatch, while the lookup lists its current stage as WASHING; confirm the current stage/status before dispatch."
   - The conflict is real: `orders.csv` lists ORD-083 as `IN_PROGRESS` at stage `WASHING`, with its last activity on 2026-03-30. The prompt's rule "If facts conflict without a clear update, ask which applies" supports the question.
-  - This experiment, however, does not check order status. The prompt says "COMPLETE is allowed in this experiment", and status checks belong to the future live flow (`AGENTS.md`). ORD-020 (R07) has the same status and stage, and Luna did not raise it there.
+  - This experiment, however, does not check order status. The prompt says "COMPLETE is allowed in this experiment", and status checks belong to the future live flow ([system design](../../../docs/system-design.md#4-deterministic-allocation)). ORD-020 (R07) has the same status and stage, and Luna did not raise it there.
 
 ### Cost and time
 

@@ -1,4 +1,4 @@
-/* Two themes share every rule below; only these colour settings differ (DESIGN.md, fourth pass).
+/* Two themes share every rule below; only these colour settings differ.
    Dark is the default. The app bar's switch sets data-theme="light" on <html> for the sage-and-white
    theme. State marks mean the same in both and differ by shape as well as colour: dashed gold is
    waiting or provisional, a single red line needs attention, a double green line is approved and
@@ -773,7 +773,7 @@ fieldset.lock {
 }
 
 /* Each message is a card across the full width: the chat is one shared log read by many people,
-   not a two-person messenger, so there are no left and right bubbles (DESIGN.md). Messages are
+   not a two-person messenger, so there are no left and right bubbles. Messages are
    transcript lines, not panels, so they take the seam line rather than the green rim. */
 .timeline li {
   margin: 0 0 12px;

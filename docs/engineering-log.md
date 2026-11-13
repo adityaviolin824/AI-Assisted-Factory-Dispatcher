@@ -4,6 +4,10 @@ Dated investigation and verification records. Each entry describes the implement
 
 Public entries retain technical findings, causes, changes and evidence limits. Conversational commissioning and personal attribution have been removed; the original records are retained in the local archive. Development used AI assistance; human dataset review is documented separately. Some entries name local working files that are not published, such as AI-agent instructions (`AGENTS.md`), handoffs and build plans; those names record what changed and are not links. No historical test result below is a newly rerun result.
 
+## 2026-11-09: Check evaluation wording across Markdown
+
+- Corrected an older evaluation draft and clarified proposal wording in the evaluation records and archived copies. CASE-097 / ORD-297 prompted the sole golden-set change. The dispatcher-choice repair came from a separate test on the 30 supplied requests. The historical scores, evaluation inputs and replay evidence were retained.
+
 ## 2026-11-09: Public repository review before the final release
 
 - **Scope:** a check of every tracked file for secrets, personal and course-administration details, links to unpublished files, broken links, claims that differ from the source, unfinished features and fresh-clone behavior. Secret patterns found 0 matches in the tracked files and in the full history; a positive control with fake keys was detected.
@@ -718,8 +722,8 @@ The copy was checked first: no local paths and no secrets.
   - **CASE-070:** `possible_deadline_words` splits "Send out ORD-270, ... today" at the comma and returns `['today']` when called directly. The task was therefore blocked as needing a date.
   - **CASE-032 (run 1 only):** verification made "eligible on-time workshops" an unhandled constraint.
 - **Files:**
-  - **New:** `backend/docs/evaluation/GOLDEN_100_RUN_REPORT.md`, with the verdict, funnel and cause diagrams, the per-case evidence, the exceptions and the ranked fixes.
-  - **New charts:** four SVG charts in `backend/docs/evaluation/golden_100_charts/` (headline tiles, plan outcomes, failing cases by stage and the best case after fixes), so the report shows the dashboard's charts on GitHub, which does not render HTML pages.
+  - **New:** `backend/docs/evaluation/GOLDEN_100_RUN_REPORT.md`, with the verdict, funnel and cause diagrams, per-case evidence, exceptions and ranked improvement proposals.
+  - **New charts:** four SVG charts in `backend/docs/evaluation/golden_100_charts/` show the headline results, plan outcomes, failing cases by stage and an untested projection for several proposals. The projection was separate from the measured results.
     - They use the validated two-colour palette from the dataviz guidance and switch to dark colours with the reader's system theme.
     - They were rendered in both themes with macOS Quick Look and checked by eye.
     - The script that draws them stayed outside the repository.

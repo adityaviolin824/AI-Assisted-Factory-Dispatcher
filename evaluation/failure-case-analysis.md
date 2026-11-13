@@ -2,7 +2,7 @@
 
 Evidence reviewed **4 November 2026**. This catalogue assembles **18 individually analysed development and evaluation failures** for the final evaluation report. It uses dated investigations, recorded model runs, current source and targeted offline checks. Analysis and documentation used AI assistance; this is not a new human annotation study.
 
-These are 18 case studies across the application's development, not 18 new failures on one evaluation set. Eleven have implemented code fixes, one improved in a later recorded model configuration, one has a conservative mitigation, and five have no recorded semantic fix. Historical model failures do not establish how often the current configuration would fail on new answers.
+These 18 case studies span development tests, interface tests and the golden-set runs. Only F13 (CASE-097 / ORD-297) prompted a change based on the golden set. The other implemented repairs came from separate development or interface tests. Historical model failures describe the configurations used in those runs.
 
 ## Evidence and counting rules
 

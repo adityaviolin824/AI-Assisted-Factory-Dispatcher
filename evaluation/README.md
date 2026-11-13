@@ -147,7 +147,7 @@ The recommendations met workshop eligibility and deadline rules, but one was sti
 2. **A sentence-level date check** to address CASE-070. It can be tested the same way.
 3. **An intake prompt clarification** for messages that only add a preference to an existing request. Testing a prompt change requires new model calls.
 
-The remaining changes are proposals. The original scores above remain unchanged; a source edit alone does not establish a new measured improvement.
+CASE-097 / ORD-297 prompted the only system change based on this set. The prompts and model stayed the same. The date and intake proposals above remain unimplemented. The original scores report the system before the cancellation change.
 
 ### Limits
 

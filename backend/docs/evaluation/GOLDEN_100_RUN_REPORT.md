@@ -1,6 +1,6 @@
 # Golden-set run report: 100 cases, two fresh runs (21 Oct 2026)
 
-Historical experiment record: the results below describe the implementation at the run date. A conservative possible-cancellation/hold guard was subsequently added to verification source on 24 October; it does not revise these scores. See the [current implementation](../../README.md).
+These results describe the implementation at the run date. CASE-097 / ORD-297 prompted the only subsequent system change based on the golden set, a conservative cancellation/hold guard and an explicit dispatcher cancel action added on 24 October. The prompts and model stayed the same. See the [current implementation](../../README.md) and the [separate saved-answer replay](END_TO_END_TEST_2026-10-22.md#11-follow-up-replay-24-october-2026-the-cancellation-check).
 
 Two paid runs of the full pipeline on the human-team golden set, scored after allocation. The dispatcher review was not used. Both runs used the same frozen configuration; Test 10 in [PROMPT_TESTING_RESULTS.md](PROMPT_TESTING_RESULTS.md) has the run record. The charts are SVG images in [golden_100_charts/](golden_100_charts/), drawn from the same numbers as the tables. They switch to dark colours when the reader's system uses a dark theme.
 
@@ -9,7 +9,7 @@ A third run, on 22 October 2026, used the same settings and also tested the disp
 ## Verdict
 
 - **Allocations:** 73 of 85 (run 1) and 80 of 85 (run 2) expected allocations were made. 14 of the 15 exceptions were correctly not allocated in both runs.
-- **One unsafe allocation in both runs.** CASE-097, "The customer has cancelled ORD-297. Do not allocate...", was recommended to W1. This is the most important fix.
+- **One unsafe allocation in both runs.** CASE-097, "The customer has cancelled ORD-297. Do not allocate...", was recommended to W1.
 - **No downstream workshop-rule or timeliness violation was observed.** Given the verified task inputs, every recommendation was on time and obeyed workshop rules. This does not excuse the upstream cancellation or lost preferences. Every failure started in the language stages (intake, linking, verification) or in one Python date check.
 - **Stable and random failures.** 6 failing cases repeat in both runs; 7 appear in run 1 only. Run-to-run variation alone moved the score by 7 cases.
 - **Cost:** about $0.07 and 10-11 minutes per run.
@@ -143,9 +143,9 @@ Preference matched 88 (run 1) and 93 (run 2). Every preference error is a conseq
 
 ## Improvement proposals at the time of the experiment
 
-Ranked by safety first, then cases recovered. These are proposals only; nothing has been implemented.
+These proposals were ranked by safety and estimated cases recovered. Only proposal 1 led to a system change. Proposals 2–7 remain unimplemented.
 
-| # | Fix | Stage | Recovers (run 1 / run 2) | Paid to test? | Risk |
+| # | Proposal | Stage | Estimated recovery (run 1 / run 2) | Paid to test? | Risk |
 |---|---|---|---|---|---|
 | 1 | **Python cancellation guard:** block a task whose evidence says its order is cancelled, or says not to allocate it, as `stated_piece_counts` does for quantities | verification (Python) | **removes the unsafe allocation** in both runs | No: replay the saved answers | Only match when the sentence names the task's order. The extended chat has "Don't allocate based on memory" (R196). |
 | 2 | Python written-date check: skip a whole sentence with a dispatch phrase and no delivery word, not each comma clause | verification (Python) | 1 / 1 (CASE-070) | No: replay | A real date inside a dispatch sentence still has a delivery word ("due", "back by"), so it is kept. Rerun the date tests. |
@@ -155,9 +155,9 @@ Ranked by safety first, then cases recovered. These are proposals only; nothing 
 | 6 | Verify prompt: "eligible on-time workshops" and "meets delivery" describe the default rule, not an extra condition | verify prompt | 1 / 0 (CASE-032) | Yes | Low |
 | 7 | Read a bare acknowledgement ("Thanks. That instruction is confirmed.") as non-task | intake | 0 allocations; 1 review row and 1 / 2 provisional rows | Yes | Low |
 
-![If fixes 1 to 3 work: run 1 goes from 73 to up to 82 of 85 correct, run 2 from 80 to up to 84, and unsafe allocations fall to 0 in both runs. An untested upper bound.](golden_100_charts/best-case.svg)
+![Untested projection for proposals 1–3. Run 1 could reach 82 of 85 from 73, and run 2 could reach 84 of 85 from 80. The projection assumes zero unsafe allocations.](golden_100_charts/best-case.svg)
 
-**Best case if fixes 1-3 work as intended (an untested upper bound):** 0 unsafe allocations, 82 / 84 correct. Fixes 1 and 2 are pure Python and can be proven free by replaying these two runs' saved answers.
+**Untested projection for proposals 1–3 together:** zero unsafe allocations, up to 82 correct in run 1 and 84 in run 2. The later replay measured only the cancellation change on Test 11's saved answers.
 
 ## Pre-registered expectations against the outcome
 

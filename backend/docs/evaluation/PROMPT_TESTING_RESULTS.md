@@ -560,7 +560,7 @@ Three of the four "decent" conditions were met in run 2, and two in run 1:
 - every non-allocation carries a stated reason: met;
 - no execution failure: met.
 
-The allocation rules made no error. The most important fix is a Python cancellation and pause guard. That guard and the written-date fix are pure Python, so they can be proven free by replaying these runs' saved answers. The intake and link fixes change cached requests and need paid runs, including the 30-request chat as a regression check. Ranked proposals with their risks: [golden-set run report](GOLDEN_100_RUN_REPORT.md).
+The allocator respected workshop rules and deadlines on the verified inputs. CASE-097 prompted the only system change based on the golden set, a cancellation safeguard and a dispatcher cancel action. A later replay of Test 11's saved answers checked that change. The written-date, intake and linking ideas remained proposals. See the [ranked proposals and risks](GOLDEN_100_RUN_REPORT.md#improvement-proposals-at-the-time-of-the-experiment).
 
 ### Limits
 
